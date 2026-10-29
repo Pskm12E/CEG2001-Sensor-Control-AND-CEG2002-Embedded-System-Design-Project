@@ -1,0 +1,4 @@
+/build/
+/local-network.json
+/libraries/RobotBench/src/NetworkConfig.h
+__pycache__/

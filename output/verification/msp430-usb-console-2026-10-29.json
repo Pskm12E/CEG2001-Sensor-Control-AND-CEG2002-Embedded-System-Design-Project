@@ -1,0 +1,85 @@
+{
+  "time": "2026-10-29T21:52:07.614354+08:00",
+  "port": "COM13",
+  "baud": 9600,
+  "checks_passed": 19,
+  "physical_interboard_link_tested": false,
+  "results": [
+    {
+      "check": "USB request/reply",
+      "response": "PONG MSP430\r\n"
+    },
+    {
+      "check": "help",
+      "response": "COMMANDS: PING, STATUS, ON, OFF, LOOPBACK\r\nAFTER CONVERTER/WIRING: LINK PING, LINK ON, LINK OFF\r\nS2 toggles local LED2. No motor or pump commands.\r\n"
+    },
+    {
+      "check": "initial status",
+      "response": "STATUS BOARD=MSP430F5529 LED2=OFF S2_PRESSES=0 UART0=IDLE UART_ERRORS=0 RX_DROPS=0 BENCH_ONLY\r\n"
+    },
+    {
+      "check": "LED2 on",
+      "response": "OK LED2 ON\r\n"
+    },
+    {
+      "check": "LED2 on status",
+      "response": "STATUS BOARD=MSP430F5529 LED2=ON S2_PRESSES=0 UART0=IDLE UART_ERRORS=0 RX_DROPS=0 BENCH_ONLY\r\n"
+    },
+    {
+      "check": "LED2 off",
+      "response": "OK LED2 OFF\r\n"
+    },
+    {
+      "check": "unknown command rejected",
+      "response": "ERR UNKNOWN COMMAND\r\n"
+    },
+    {
+      "check": "oversized command rejected",
+      "response": "ERR INVALID LINE\r\n"
+    },
+    {
+      "check": "invalid byte rejected",
+      "response": "ERR INVALID LINE\r\n"
+    },
+    {
+      "check": "rejected inputs kept LED2 off",
+      "response": "STATUS BOARD=MSP430F5529 LED2=OFF S2_PRESSES=0 UART0=IDLE UART_ERRORS=0 RX_DROPS=0 BENCH_ONLY\r\n"
+    },
+    {
+      "check": "lowercase and CRLF",
+      "response": "PONG MSP430\r\n"
+    },
+    {
+      "check": "fragmented command",
+      "response": "PONG MSP430\r\n"
+    },
+    {
+      "check": "internal UART0 loopback 1",
+      "response": "LOOPBACK PASS: 12 bytes, internal UART0 only\r\n"
+    },
+    {
+      "check": "internal UART0 loopback 2",
+      "response": "LOOPBACK PASS: 12 bytes, internal UART0 only\r\n"
+    },
+    {
+      "check": "internal UART0 loopback 3",
+      "response": "LOOPBACK PASS: 12 bytes, internal UART0 only\r\n"
+    },
+    {
+      "check": "internal UART0 loopback 4",
+      "response": "LOOPBACK PASS: 12 bytes, internal UART0 only\r\n"
+    },
+    {
+      "check": "internal UART0 loopback 5",
+      "response": "LOOPBACK PASS: 12 bytes, internal UART0 only\r\n"
+    },
+    {
+      "check": "missing Arduino times out",
+      "response": "LINK SENT: PING\r\nLINK TIMEOUT: no confirmed Arduino reply\r\n"
+    },
+    {
+      "check": "timeout recovery and final status",
+      "response": "STATUS BOARD=MSP430F5529 LED2=OFF S2_PRESSES=0 UART0=IDLE UART_ERRORS=0 RX_DROPS=0 BENCH_ONLY\r\n"
+    }
+  ]
+}

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Local camera and MSP430 bench monitor for the plant-care robot.">
+  <title>Plant robot monitor</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#workspace">Skip to workspace</a>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="/">Plant robot monitor</a>
+      <span class="badge">Local bench</span>
+    </div>
+  </header>
+  <main id="workspace" class="shell" tabindex="-1">
+    <div class="page-heading">
+      <div><h1>Robot workspace</h1><p>View the test plot and check the robot’s main controller.</p></div>
+      <button id="pause-updates" class="quiet" type="button" aria-pressed="false">Pause updates</button>
+    </div>
+    <noscript><p class="notice">Enable JavaScript to connect the controller and view the camera.</p></noscript>
+    <p id="server-message" class="notice" role="status" hidden></p>
+
+    <div class="workspace-grid">
+      <section class="camera-section" aria-labelledby="camera-title">
+        <div class="section-heading"><h2 id="camera-title">Test plot camera</h2><span id="camera-badge" class="badge">Off</span></div>
+        <div class="camera-view">
+          <video id="camera-video" autoplay muted playsinline aria-label="Live camera preview of the test plot" hidden></video>
+          <div id="camera-empty" class="camera-empty">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M17 12l3-5h8l3 5h8a4 4 0 014 4v21a4 4 0 01-4 4H9a4 4 0 01-4-4V16a4 4 0 014-4z"/><circle cx="24" cy="26" r="9"/></svg>
+            <strong id="camera-empty-title">Camera is off</strong>
+            <p>Connect the USB webcam to your laptop, then start the preview.</p>
+          </div>
+        </div>
+        <div class="camera-controls">
+          <div class="field"><label for="camera-select">Camera</label><select id="camera-select" name="camera"><option value="">Default camera</option></select></div>
+          <button id="camera-start" class="primary" type="button">Start camera</button>
+          <button id="camera-stop" type="button" disabled>Stop camera</button>
+          <button id="snapshot" type="button" disabled>Save image</button>
+        </div>
+        <p id="camera-message" class="helper" role="status">Preview stays in this browser. Pest detection is not connected yet.</p>
+        <p id="camera-error" class="error" role="alert" hidden></p>
+      </section>
+
+      <section class="controller-section" aria-labelledby="controller-title">
+        <div class="section-heading"><h2 id="controller-title">Robot MSP430</h2><span id="connection-badge" class="badge">Loading…</span></div>
+        <form id="connect-form" class="connection-form">
+          <div class="field"><label for="port-select">USB serial port</label><select id="port-select" name="port" aria-describedby="connection-message connection-error" required><option value="">Loading ports…</option></select></div>
+          <div class="button-row"><button id="connect" type="submit" disabled>Connect</button><button id="refresh-ports" type="button">Refresh ports</button><button id="disconnect" type="button" disabled>Disconnect</button></div>
+        </form>
+        <p id="connection-message" class="helper" role="status">Checking the local server…</p>
+        <p id="connection-error" class="error" role="alert" hidden></p>
+
+        <div class="readings-header"><h3>Board readings</h3><span id="reading-age">No reading yet</span></div>
+        <dl class="readings">
+          <div><dt>Green LED2</dt><dd id="led2">—</dd></div>
+          <div><dt>S2 presses</dt><dd id="s2-presses">—</dd></div>
+          <div><dt>UART errors</dt><dd id="uart-errors">—</dd></div>
+          <div><dt>Dropped bytes</dt><dd id="rx-drops">—</dd></div>
+        </dl>
+        <dl class="detail-readings"><div><dt>Board</dt><dd id="board-name">Waiting for connection</dd></div><div><dt>UART0 state</dt><dd id="uart-state">—</dd></div></dl>
+        <fieldset id="bench-controls" disabled>
+          <legend>Bench checks</legend>
+          <div class="button-row"><button type="button" data-command="PING">Ping board</button><button type="button" data-command="ON">LED2 on</button><button type="button" data-command="OFF">LED2 off</button><button type="button" data-command="LOOPBACK">Test internal UART</button></div>
+        </fieldset>
+        <p id="command-message" class="helper" role="status">These checks do not drive the car or run the pump.</p>
+      </section>
+    </div>
+
+    <section class="workflow-section" aria-labelledby="workflow-title">
+      <div class="section-heading"><h2 id="workflow-title">Planned workflow</h2><span class="badge">Jobs not connected</span></div>
+      <ol class="workflow">
+        <li><span class="step-number" aria-hidden="true">1</span><div><h3>Observe</h3><p>Laptop camera</p><span id="observe-status" class="step-state">Preview available</span></div></li>
+        <li><span class="step-number" aria-hidden="true">2</span><div><h3>Review</h3><p>Check a possible pest</p><span class="step-state">Pending</span></div></li>
+        <li><span class="step-number" aria-hidden="true">3</span><div><h3>Dispatch</h3><p>MSP430 checks the job</p><span class="step-state">Pending</span></div></li>
+        <li><span class="step-number" aria-hidden="true">4</span><div><h3>Travel</h3><p>Arduino follows the line</p><span class="step-state">Pending</span></div></li>
+        <li><span class="step-number" aria-hidden="true">5</span><div><h3>Spot-spray</h3><p>Bounded water dose</p><span class="step-state">Pending</span></div></li>
+        <li><span class="step-number" aria-hidden="true">6</span><div><h3>Verify</h3><p>Check sensor feedback</p><span class="step-state">Pending</span></div></li>
+      </ol>
+      <p class="helper">This is the intended sequence. The website does not yet send robot jobs or confirm spraying.</p>
+    </section>
+
+    <div class="lower-grid">
+      <section aria-labelledby="sensors-title" class="sensors-section">
+        <div class="section-heading"><h2 id="sensors-title">Robot &amp; dock</h2></div>
+        <dl class="sensor-list">
+          <div><dt>Line sensors <span>D2 left / D4 right</span></dt><dd>Not linked</dd></div>
+          <div><dt>Obstacle distance</dt><dd>Not linked</dd></div>
+          <div><dt>Tank level</dt><dd>Not linked</dd></div>
+          <div><dt>Pico W <span>Supporting controller</span></dt><dd>Not linked</dd></div>
+          <div><dt>Dock MSP430 <span>Second controller</span></dt><dd>Not linked</dd></div>
+        </dl>
+      </section>
+      <section aria-labelledby="events-title" class="events-section">
+        <div class="section-heading"><h2 id="events-title">Activity</h2><button id="export-events" class="quiet" type="button" disabled>Save log</button></div>
+        <p id="events-empty" class="helper">Connect the MSP430 to see its replies and button events.</p>
+        <div class="events-scroll" tabindex="0" role="region" aria-label="Recent activity log">
+          <ol id="events" class="events"></ol>
+        </div>
+      </section>
+    </div>
+    <footer><p>USB camera → laptop website. Robot MSP430 remains the main controller.</p><p id="local-time">Readings update once per second.</p></footer>
+  </main>
+</body>
+</html>

@@ -1,0 +1,45 @@
+# Local credentials and previous lab-board contents
+.env
+.env.*
+!.env.example
+**/board_backup_*/
+/Wireless_Link/local-network.json
+**/NetworkConfig.h
+*.pem
+*.key
+
+# Build output can contain embedded Wi-Fi credentials. Build locally instead.
+**/build/
+**/build-*/
+**/Debug/
+**/Release/
+*.uf2
+*.elf
+*.bin
+*.hex
+*.out
+*.o
+*.obj
+*.a
+*.map
+*.exe
+*.dll
+
+# Local tools, editor state and session notes
+/tmp/
+/work/
+**/.vscode/
+**/.idea/
+**/.metadata/
+**/.ccs-workspace/
+**/.theia/
+**/.venv/
+**/node_modules/
+**/__pycache__/
+*.pyc
+*.log
+*.pid
+.DS_Store
+Thumbs.db
+
+# Keep output/diagrams, PDF guides, screenshots and verification JSON in Git.

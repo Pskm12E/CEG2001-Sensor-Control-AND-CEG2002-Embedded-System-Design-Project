@@ -1,0 +1,52 @@
+Generated using the built-in image generation tool.
+
+INITIAL GENERATION PROMPT
+
+Use case: infographic-diagram / scientific-educational.
+Create ONE high-resolution landscape illustrated engineering infographic (approximately 16:10, ideally 2400 pixels or larger in width), suitable for a student to send to an embedded-systems professor. It should look like a polished photographic system-concept diagram: realistic cutout images of microcontroller boards, webcam, laptop, plants and a small wooden two-wheel robot, combined with precise readable labels and clean arrows. White background, bold navy typography, restrained green and blue outlines, pale blue panels, orange actuator arrows, green sensing/feedback arrows and purple wireless arrows. Strong visual hierarchy and generous whitespace. All text must be crisp and spelled correctly.
+
+This is a NEW conceptual proposal illustration, not a screenshot. No chat bubbles, messaging UI, phone frame, watermark, decorative wallpaper or university logos.
+
+Title, verbatim: "PLANT-MONITORING & WATERING ROBOT"
+Subtitle, verbatim: "Proposed prototype • One instrumented test plot • Manual servicing"
+
+The scope is a simplified plant-care robot with camera monitoring, soil-moisture sensing, line following, obstacle stop and a bounded water dose. Show ONE instrumented potted plant and ONE robot; do not add more mobile robots or duplicate controller boards.
+
+TOP THIRD: a neat controller/communications architecture with recognizable realistic board illustrations:
+- "CAMERA + LAPTOP": USB webcam aimed at the test plant and a laptop showing the plant image with short visible controls "Review", "Start", "Pause". Caption "Live view and user approval". The camera provides images for human review, not automatic diagnosis.
+- "MSP430 + BOOSTER BOARD": red MSP430-style board. Short caption "Moisture checks • Job supervision".
+- "ESP32 GATEWAY": black ESP32 board. Caption "Message relay".
+- "PICO W ON ROBOT": green Pico W board with its metal wireless shield. Caption "Navigation • Obstacle stop • Pump timing".
+Show webcam-to-laptop USB. Show laptop <-> ESP32 as USB serial, routing the line cleanly above the controller boxes if necessary. Show MSP430 <-> ESP32 as UART. Show ESP32 <-> Pico W as Wi-Fi. There must NOT be a direct wireless link from the MSP430 board itself. Label the wireless link "Commands / status". The Pico W shown in a detail panel and a small marker on the robot represents the same controller, not a second board.
+
+CENTRAL MAIN SCENE: large, realistic tabletop concept illustration. A small wooden two-deck robot chassis with two yellow driven wheels and a caster carries ONE small clear water tank, ONE pump, tubing/nozzle, a battery and a Pico W. Include compact driver modules and label them "Motor driver" and "Pump driver"; power does not come directly from controller GPIO. The robot sits on a black-tape route on a white surface beside a fixed potted leafy plant. Nozzle points towards the soil without spraying electronics. A distinct crossbar on the route beside the plant is labelled "Target stop marker". Show floor-facing IR sensors at the front of the robot with label "IR line sensors: follow tape". Show a forward-facing two-transducer ultrasonic sensor labelled "Ultrasonic: stop for obstacles", with a small obstacle farther along the route. Avoid depicting the robot moving into the obstacle. Label robot "Pico W + drivers". Label the plant "FIXED TEST PLANT".
+Show a two-prong soil-moisture probe inserted into the plant's soil and labelled "Soil-moisture sensor". Its signal cable/green arrow leads to the fixed MSP430 controller, labelled "ADC reading". This sensor stays in the plant; do NOT put it on the moving robot. Route this signal line cleanly around the scene. Add a green feedback arrow from watered soil back to the moisture reading labelled "Wait for soaking, then re-measure".
+Use just three clearly legible interaction callouts, with simple short wording:
+"Dry soil requests watering"
+"Obstacle overrides movement"
+"Watering changes the next soil reading"
+Clearly show that IR and ultrasonic outputs feed the Pico W local controller, which controls the wheel driver; do not draw sensors directly powering motors.
+
+BOTTOM STRIP: five numbered stages in a clean left-to-right sequence with small relevant icons and arrows. Exact stage labels:
+"1  Sense dry soil"
+"2  User approves"
+"3  Follow line + check obstacles"
+"4  Stop + limited water dose"
+"5  Wait + re-measure"
+Do not imply immediate soil remeasurement or unlimited repeated watering. Small note beneath the stages: "Further watering requires approval and dose limits."
+
+FOOTER: short prominent exact text "Manual water refill • Manual battery charging"
+Small secondary text: "Concept illustration • Sensor thresholds, stop-marker detection and hardware ratings require testing"
+
+STRICT EXCLUSIONS: no docking station, no automatic docking, no automatic refill hardware, no leak sensors, no charging contacts, no charger-status circuit, no treatment tank or chemical spraying, no wheel encoders unless needed in a decorative motor and never labelled, no tank-level or battery-voltage sensors in this simplified scope, no Arduino Uno, no unsupported claim of autonomous disease diagnosis. Keep the illustration readable and uncrowded; simplify detail before shrinking labels.
+
+FINAL CORRECTION PROMPT
+
+Edit this infographic with a precise technical correction. Preserve the title, white/navy/green visual style, main plant and robot illustration, five workflow stages, manual-refill/manual-charging footer, and all other content.
+Correct ONLY the controller communications in the top portion and the small garbled feedback label:
+1. Keep the top controller boxes in their present order: CAMERA + LAPTOP, ESP32 GATEWAY, MSP430 + BOOSTER BOARD, PICO W ON ROBOT.
+2. Keep laptop <-> ESP32 USB serial and ESP32 <-> MSP430 UART exactly as shown.
+3. REMOVE the purple Wi-Fi arrow currently between MSP430 and PICO W. The MSP430 has NO wireless radio.
+4. Draw a clean purple dashed double-headed Wi-Fi link explicitly from the ESP32 GATEWAY box to the PICO W ON ROBOT box. Route it in a dedicated horizontal corridor ABOVE the controller boxes, with short vertical down-turns reaching the top edge of the ESP32 and Pico boxes. It must pass over the MSP430 box without touching it. Enlarge the header/top area or lower the controller row slightly if necessary so the dashed link and its label have space below the subtitle, never overlap the title or existing labels. Label the link "Wi-Fi: commands / status". Absolutely no wireless link should originate or end at MSP430. Both arrowheads must clearly terminate at ESP32 and Pico W respectively.
+5. Replace the malformed small green feedback label with exact text "Wait for soaking, then re-measure", cleanly readable.
+Keep everything else unchanged. Do not add boards, tanks, docking, charging contacts or sensors.

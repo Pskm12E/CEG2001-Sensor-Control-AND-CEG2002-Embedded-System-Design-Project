@@ -1,0 +1,44 @@
+{
+  "software_tests_passed": 14,
+  "live_hardware_checks": [
+    "real MSP430 status received",
+    "PING acknowledged by board",
+    "ON acknowledged by board",
+    "OFF acknowledged by board",
+    "LOOPBACK acknowledged by board",
+    "final LED off and UART idle",
+    "disconnect marks last readings not live"
+  ],
+  "final_telemetry": {
+    "board": "MSP430F5529",
+    "led2": "OFF",
+    "s2_presses": 0,
+    "uart0": "IDLE",
+    "uart_errors": 0,
+    "rx_drops": 0
+  },
+  "actuators_tested": false,
+  "camera_hardware_tested": false,
+  "browser_checks": [
+    "page starts disconnected with camera off",
+    "USB connect renders verified hardware identity without lingering error",
+    "Ping button receives a new real board reply",
+    "LED on/off controls update confirmed telemetry",
+    "paused readings are not labelled live and bench controls pause",
+    "activity export contains real board replies",
+    "disconnect clears live readings and disables commands",
+    "stale telemetry is blanked and controls remain disabled (mocked stale response)",
+    "missing-port state gives an actionable empty state (mocked port list)",
+    "synthetic video preview and PNG capture work without microphone",
+    "Stop camera releases the preview",
+    "camera permission refusal provides a retry path (mocked denial)",
+    "keyboard skip link reaches main workspace",
+    "desktop, tablet and mobile layouts have no horizontal overflow",
+    "no uncaught browser JavaScript errors"
+  ],
+  "camera_test_source": "Chromium synthetic video only",
+  "browser": "Microsoft Edge headless",
+  "browser_js_errors": [],
+  "windows_single_server_reopen_verified": true,
+  "handoff": "One local server running; COM13 connected with fresh status; real camera off."
+}

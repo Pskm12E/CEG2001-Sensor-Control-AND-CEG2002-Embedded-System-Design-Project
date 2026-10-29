@@ -1,0 +1,108 @@
+{
+  "scope": "USB/Wi-Fi/onboard LED only; no MSP, sensor or actuator integration",
+  "ports": {
+    "esp32": "COM15",
+    "pico": "COM11"
+  },
+  "checks": [
+    {
+      "check": "ESP32 USB firmware identity",
+      "passed": true,
+      "evidence": "PONG ESP32_GATEWAY"
+    },
+    {
+      "check": "Pico USB firmware identity",
+      "passed": true,
+      "evidence": "PONG PICO_W_USB"
+    },
+    {
+      "check": "Wireless handshake",
+      "passed": true,
+      "evidence": "STATUS BOARD=ESP32_FIREBEETLE ROLE=LAPTOP_GATEWAY AP=READY PICO_LINK=UP MSP_LINK=NOT_CONNECTED BENCH_ONLY"
+    },
+    {
+      "check": "MSP link truthfully absent",
+      "passed": true,
+      "evidence": "STATUS BOARD=ESP32_FIREBEETLE ROLE=LAPTOP_GATEWAY AP=READY PICO_LINK=UP MSP_LINK=NOT_CONNECTED BENCH_ONLY"
+    },
+    {
+      "check": "USB to Wi-Fi round trip",
+      "passed": true,
+      "evidence": "ROBOT PONG PICO_W"
+    },
+    {
+      "check": "Pico status returned over Wi-Fi",
+      "passed": true,
+      "evidence": "ROBOT STATUS BOARD=PICO_W LED=OFF MSP_LINK=NOT_CONNECTED BENCH_ONLY"
+    },
+    {
+      "check": "Wireless LED ON acknowledgement",
+      "passed": true,
+      "evidence": "ROBOT LED=ON"
+    },
+    {
+      "check": "Independent Pico USB confirms LED ON",
+      "passed": true,
+      "evidence": "STATUS BOARD=PICO_W GATEWAY_LINK=UP LED=ON WIFI=3 TCP=CONNECTED MSP_LINK=NOT_CONNECTED BENCH_ONLY"
+    },
+    {
+      "check": "Wireless LED OFF acknowledgement",
+      "passed": true,
+      "evidence": "ROBOT LED=OFF"
+    },
+    {
+      "check": "Independent Pico USB confirms LED OFF",
+      "passed": true,
+      "evidence": "STATUS BOARD=PICO_W GATEWAY_LINK=UP LED=OFF WIFI=3 TCP=CONNECTED MSP_LINK=NOT_CONNECTED BENCH_ONLY"
+    },
+    {
+      "check": "Actuator command rejected",
+      "passed": true,
+      "evidence": "ERROR unsupported robot command"
+    },
+    {
+      "check": "Oversized USB line rejected",
+      "passed": true,
+      "evidence": "ERROR invalid or oversized USB line"
+    },
+    {
+      "check": "Binary USB line rejected",
+      "passed": true,
+      "evidence": "ERROR invalid or oversized USB line"
+    },
+    {
+      "check": "CRLF and recovery after invalid input",
+      "passed": true,
+      "evidence": "PONG ESP32_GATEWAY"
+    },
+    {
+      "check": "Precondition for disconnect test",
+      "passed": true,
+      "evidence": "ROBOT LED=ON"
+    },
+    {
+      "check": "Reconnect after ESP32 reset",
+      "passed": true,
+      "evidence": "STATUS BOARD=ESP32_FIREBEETLE ROLE=LAPTOP_GATEWAY AP=READY PICO_LINK=UP MSP_LINK=NOT_CONNECTED BENCH_ONLY"
+    },
+    {
+      "check": "LED cleared; old ON not replayed",
+      "passed": true,
+      "evidence": "STATUS BOARD=PICO_W GATEWAY_LINK=UP LED=OFF WIFI=3 TCP=CONNECTED MSP_LINK=NOT_CONNECTED BENCH_ONLY"
+    },
+    {
+      "check": "Fresh command after reconnect",
+      "passed": true,
+      "evidence": "ROBOT PONG PICO_W"
+    },
+    {
+      "check": "30 sustained wireless round trips with Pico USB monitor closed",
+      "passed": true,
+      "evidence": {
+        "replies": 30,
+        "maximum_latency_ms": 1469.0,
+        "failure": null
+      }
+    }
+  ]
+}

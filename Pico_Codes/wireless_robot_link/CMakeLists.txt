@@ -1,0 +1,17 @@
+cmake_minimum_required(VERSION 3.13)
+set(PICO_BOARD pico_w CACHE STRING "RP2040 Raspberry Pi Pico W")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+include(../pico_w_test/pico_sdk_import.cmake)
+project(wireless_robot_link C CXX ASM)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
+pico_sdk_init()
+add_executable(wireless_robot_link main.cpp ../../Wireless_Link/tests/protocol_tests.cpp)
+target_include_directories(wireless_robot_link PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}
+    ${CMAKE_CURRENT_LIST_DIR}/../../Wireless_Link/libraries/RobotBench/src)
+target_link_libraries(wireless_robot_link pico_stdlib pico_cyw43_arch_lwip_poll)
+target_compile_options(wireless_robot_link PRIVATE -Wall -Wextra)
+pico_enable_stdio_usb(wireless_robot_link 1)
+pico_enable_stdio_uart(wireless_robot_link 0)
+pico_add_extra_outputs(wireless_robot_link)
