@@ -23,6 +23,8 @@ Use the existing 4byte Server Manager and its Docker network and gateway:
 The image runs as a non-root user, contains only the dashboard files and its
 pinned Python dependency, and has a local HTTP health check. No USB devices,
 host folders, private network configuration or hardware credentials are mounted.
+Source files are assigned to the runtime user during the image build so the
+manager's restrictive checkout permissions do not prevent startup.
 The hosting mode refuses all USB commands. The default laptop launcher keeps
 its original local bench mode.
 
