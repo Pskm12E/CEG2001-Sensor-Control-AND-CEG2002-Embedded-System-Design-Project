@@ -118,9 +118,31 @@ py -3 -m venv .venv
 .\.venv\Scripts\python.exe server.py --open
 ```
 
-The server binds **127.0.0.1 only**, not the local network. It validates local
-Host/Origin headers and accepts only a small bench-command allowlist. Do not
-expose it publicly; this is a local lab tool, not a multi-user service.
+The default server binds **127.0.0.1 only**. It validates local Host/Origin
+headers and accepts only a small bench-command allowlist. Keep this USB-control
+mode on the laptop.
+
+## Hosted preview on 4byte
+
+The deployment target is **https://pest.4bytedigi.com**. The public version is a
+read-only preview: it displays the dashboard and supports camera preview and
+image downloads in the visitor's own browser. Camera images are not uploaded.
+The server cannot access the robot plugged into the laptop; telemetry and jobs
+remain unlinked. USB controls are hidden and all hosted command requests are
+refused by the server.
+
+The [deployment guide](../deploy/README.md) records the 4byte configuration.
+The Dockerfile uses this explicit mode:
+
+```sh
+python server.py --host 0.0.0.0 --port 8765 --public-origin https://pest.4bytedigi.com
+```
+
+`--public-origin` enables read-only hosting and allows only the named public
+host and local health checks. Non-loopback binding requires this option.
+Terminate public HTTPS at the existing server gateway/tunnel. This does not
+expose the laptop server, add robot control authentication, or connect a remote
+hardware bridge.
 
 ## Verification
 

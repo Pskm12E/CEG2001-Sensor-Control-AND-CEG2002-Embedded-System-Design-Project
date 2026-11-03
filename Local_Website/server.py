@@ -1,4 +1,4 @@
-"""Loopback-only robot bench dashboard. No motion or spray API exists."""
+"""Robot bench dashboard, with an optional read-only hosted preview."""
 from __future__ import annotations
 
 import argparse
@@ -60,7 +60,8 @@ def available_ports():
 
 
 class Bridge:
-    def __init__(self):
+    def __init__(self, hosted=False):
+        self.hosted = hosted
         self.lock = threading.RLock()
         self.lifecycle = threading.Lock()
         self.events = deque(maxlen=100)
@@ -74,7 +75,8 @@ class Bridge:
         self.worker = None
         self.stop = threading.Event()
         self.pending = queue.Queue(maxsize=8)
-        self.event("info", "Dashboard ready. Connect the robot MSP430 to read its bench status.")
+        self.event("info", "Hosted preview ready. The laptop-to-robot link is not connected."
+                   if hosted else "Dashboard ready. Connect the robot MSP430 to read its bench status.")
 
     def event(self, kind, message):
         with self.lock:
@@ -89,7 +91,7 @@ class Bridge:
             error = self.error
             if self.connected and not fresh:
                 error = "Waiting for a current MSP430 bench status reply."
-            return {"mode": "bench", "connection": {
+            return {"mode": "hosted" if self.hosted else "bench", "connection": {
                 "connected": self.connected, "port": self.port, "baud": 9600,
                 "error": error, "fresh": bool(fresh), "last_seen": self.last_seen},
                 "telemetry": dict(self.telemetry) if self.telemetry else None,
@@ -220,8 +222,11 @@ class DashboardServer(ThreadingHTTPServer):
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
         super().server_bind()
 
-    def __init__(self, address, bridge):
+    def __init__(self, address, bridge, public_origin=None):
         self.bridge = bridge
+        self.public_origin = public_origin
+        if public_origin and not bridge.hosted:
+            raise ValueError("Public hosting requires a read-only bridge.")
         super().__init__(address, Handler)
 
 
@@ -230,7 +235,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def _local_request(self):
         allowed = {f"localhost:{self.server.server_port}", f"127.0.0.1:{self.server.server_port}"}
-        return self.headers.get("Host") in allowed
+        if self.server.public_origin:
+            host = urlsplit(self.server.public_origin).netloc
+            allowed.update({host, f"{host}:443"})
+        return self.headers.get("Host", "").lower() in allowed
 
     def _reply(self, code, data, content_type="application/json; charset=utf-8"):
         if not isinstance(data, bytes):
@@ -254,7 +262,8 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/state":
             return self._reply(200, self.server.bridge.state())
         if path == "/api/ports":
-            return self._reply(200, {"ports": available_ports()})
+            return self._reply(200, {"ports": [] if self.server.public_origin else available_ports(),
+                                     "mode": "hosted" if self.server.public_origin else "bench"})
         if path == "/api/health":
             return self._reply(200, {"app": "robot-bench-dashboard", "version": 1})
         files = {"/": ("index.html", "text/html; charset=utf-8"),
@@ -275,6 +284,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._reply(403, {"error": "This dashboard only accepts local requests."})
         origin = self.headers.get("Origin")
         expected = {f"http://127.0.0.1:{self.server.server_port}", f"http://localhost:{self.server.server_port}"}
+        if self.server.public_origin:
+            expected.add(self.server.public_origin)
         if origin is not None and origin not in expected:
             return self._reply(403, {"error": "Cross-site commands are not allowed."})
         if self.headers.get("Content-Type", "").split(";")[0] != "application/json":
@@ -288,6 +299,10 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError("Expected a JSON object")
         except (ValueError, UnicodeDecodeError):
             return self._reply(400, {"error": "Invalid JSON request."})
+        # Consume the bounded request body before refusing hosted commands, so
+        # closing the socket cannot discard unread data and reset the response.
+        if self.server.public_origin:
+            return self._reply(403, {"error": "USB controls are available only in the laptop dashboard."})
         try:
             path = urlsplit(self.path).path
             if path == "/api/connect":
@@ -313,11 +328,23 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--host", choices=("127.0.0.1", "0.0.0.0"), default="127.0.0.1")
+    parser.add_argument("--public-origin", help="HTTPS origin for a read-only hosted preview")
     parser.add_argument("--open", action="store_true", help="Open the local page in the default browser")
     args = parser.parse_args()
-    bridge = Bridge()
+    if args.public_origin:
+        origin = urlsplit(args.public_origin)
+        if (origin.scheme != "https" or not origin.hostname or origin.username or origin.password
+                or origin.port is not None or origin.path or origin.query or origin.fragment):
+            parser.error("--public-origin must be an HTTPS origin such as https://pest.4bytedigi.com")
+        args.public_origin = args.public_origin.lower()
+    if args.host != "127.0.0.1" and not args.public_origin:
+        parser.error("Non-loopback hosting requires --public-origin and runs read-only.")
+    if args.open and args.public_origin:
+        parser.error("Use --open only for the local laptop dashboard.")
+    bridge = Bridge(hosted=bool(args.public_origin))
     try:
-        server = DashboardServer(("127.0.0.1", args.port), bridge)
+        server = DashboardServer((args.host, args.port), bridge, args.public_origin)
     except OSError:
         if args.open:
             try:
@@ -329,8 +356,9 @@ def main():
             except (OSError, ValueError):
                 pass
         raise SystemExit(f"Port {args.port} is in use. Open the existing dashboard or choose --port 8766.")
-    url = f"http://127.0.0.1:{args.port}"
-    print(f"Robot dashboard: {url}\nLocal computer only. Ctrl+C closes the server.", flush=True)
+    url = args.public_origin or f"http://127.0.0.1:{args.port}"
+    mode = "Read-only hosted preview." if args.public_origin else "Local computer only."
+    print(f"Robot dashboard: {url}\n{mode} Ctrl+C closes the server.", flush=True)
     if args.open:
         webbrowser.open(url)
     try:

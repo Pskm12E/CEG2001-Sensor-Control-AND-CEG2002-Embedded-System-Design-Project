@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-03",
+  "mode": "hosted",
+  "public_https_verified": false,
+  "camera": "synthetic only",
+  "checks": [
+    "Hosted mode is explicit; USB controls hidden; no fake telemetry or server errors",
+    "Synthetic camera starts/stops and snapshot downloads; no physical camera used",
+    "390px mobile viewport has no horizontal overflow"
+  ],
+  "page_errors": []
+}

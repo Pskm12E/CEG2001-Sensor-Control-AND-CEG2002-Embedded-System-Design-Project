@@ -2,7 +2,7 @@
 
 const $ = (id) => document.getElementById(id);
 const ui = Object.fromEntries([
-  "pause-updates", "server-message", "camera-video", "camera-empty", "camera-empty-title", "camera-badge",
+  "deployment-mode", "pause-updates", "server-message", "camera-video", "camera-empty", "camera-empty-title", "camera-badge",
   "camera-select", "camera-start", "camera-stop", "snapshot", "camera-message", "camera-error",
   "connect-form", "port-select", "connect", "refresh-ports", "disconnect", "connection-badge",
   "connection-message", "connection-error", "reading-age", "led2", "s2-presses", "uart-errors", "rx-drops",
@@ -37,32 +37,38 @@ async function api(path, body) {
     if (!response.ok) throw new Error(result.error || `Request failed (${response.status}). Try again.`);
     return result;
   } catch (error) {
-    if (error.name === "AbortError") throw new Error("The local server did not respond. Check that the website launcher is running, then try again.");
-    if (error instanceof TypeError) throw new Error("Cannot reach the local server. Start the website launcher, then refresh this page.");
+    if (error.name === "AbortError") throw new Error("The dashboard server did not respond. Try again in a moment.");
+    if (error instanceof TypeError) throw new Error("Cannot reach the dashboard server. Check your connection, then refresh this page.");
     throw error;
   } finally { window.clearTimeout(timeout); }
 }
 
 function updateControls() {
+  const hosted = state?.mode === "hosted";
   const connected = Boolean(state?.connection?.connected && serverAvailable);
   const fresh = Boolean(state?.connection?.fresh);
-  ui.connect.disabled = connected || connectionBusy || portBusy || !ui["port-select"].value || !serverAvailable;
+  ui.connect.disabled = hosted || connected || connectionBusy || portBusy || !ui["port-select"].value || !serverAvailable;
   ui.disconnect.disabled = !connected || connectionBusy;
   ui["port-select"].disabled = connected || connectionBusy || portBusy;
-  ui["refresh-ports"].disabled = portBusy || connectionBusy;
-  ui["bench-controls"].disabled = !connected || !fresh || paused || commandBusy || connectionBusy;
+  ui["refresh-ports"].disabled = hosted || portBusy || connectionBusy;
+  ui["bench-controls"].disabled = hosted || !connected || !fresh || paused || commandBusy || connectionBusy;
   ui["export-events"].disabled = !(state?.events?.length);
 }
 
 function renderState() {
+  const hosted = state?.mode === "hosted";
+  text("deployment-mode", hosted ? "Hosted preview" : "Local bench");
+  ui["connect-form"].hidden = hosted;
+  ui["bench-controls"].hidden = hosted;
   const connection = state?.connection || {};
   const connected = Boolean(connection.connected && serverAvailable);
   const fresh = connected && connection.fresh && !paused;
-  text("connection-badge", !serverAvailable ? "Offline" : paused ? "Updates paused" : fresh ? "Connected" : connected ? "Waiting for reply" : "Disconnected");
+  text("connection-badge", !serverAvailable ? "Offline" : hosted ? "Not linked" : paused ? "Updates paused" : fresh ? "Connected" : connected ? "Waiting for reply" : "Disconnected");
   ui["connection-badge"].className = `badge${fresh ? " good" : connected ? " warning" : ""}`;
   const lastSeen = connection.last_seen ? formattedTime(connection.last_seen) : null;
   text("reading-age", paused ? "Paused; readings may be old" : fresh && lastSeen ? `Updated ${lastSeen}` : lastSeen ? `Last reading ${lastSeen}` : "No reading yet");
-  text("connection-message", connected ? `${connection.port} at 9600 baud. Close this connection before using another serial terminal.` : "Choose the MSP430 Application UART port, usually COM13. Close any terminal using it first.");
+  text("connection-message", hosted ? "USB bench checks run on the laptop. This server is not linked to the robot." : connected ? `${connection.port} at 9600 baud. Close this connection before using another serial terminal.` : "Choose the MSP430 Application UART port, usually COM13. Close any terminal using it first.");
+  ui["command-message"].hidden = hosted;
   if (connection.error) message("connection-error", connection.error);
   else if (fresh) message("connection-error", "");
   const telemetry = fresh ? state.telemetry : null;
@@ -125,7 +131,7 @@ async function refreshPorts() {
     const result = await api("/api/ports");
     ui["port-select"].replaceChildren();
     const ports = Array.isArray(result.ports) ? result.ports : [];
-    if (!ports.length) ui["port-select"].add(new Option("No MSP430 Application UART found", ""));
+    if (!ports.length) ui["port-select"].add(new Option(result.mode === "hosted" ? "USB controls are available on the laptop" : "No MSP430 Application UART found", ""));
     for (const port of ports) ui["port-select"].add(new Option(`${port.device} — ${port.description}`, port.device));
     const chosen = ports.find((port) => port.device === previous) || ports.find((port) => port.suggested) || ports[0];
     if (chosen) ui["port-select"].value = chosen.device;

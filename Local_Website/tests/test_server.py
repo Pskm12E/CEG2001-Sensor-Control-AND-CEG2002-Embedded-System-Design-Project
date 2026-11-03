@@ -134,5 +134,55 @@ class HttpTests(unittest.TestCase):
         self.assertEqual(headers["Permissions-Policy"], "camera=(self), microphone=()")
 
 
+class HostedHttpTests(unittest.TestCase):
+    def test_hosted_preview_is_read_only_and_host_restricted(self):
+        bridge = server.Bridge(hosted=True)
+        http = server.DashboardServer(("127.0.0.1", 0), bridge, "https://pest.4bytedigi.com")
+        thread = threading.Thread(target=http.serve_forever, daemon=True)
+        thread.start()
+        url = f"http://127.0.0.1:{http.server_port}"
+
+        def request(path, body=None, host="pest.4bytedigi.com"):
+            data = json.dumps(body).encode() if body is not None else None
+            req = Request(url + path, data=data,
+                          headers={"Host": host, "Content-Type": "application/json"})
+            try:
+                return urlopen(req, timeout=3)
+            except HTTPError as response:
+                return response
+
+        try:
+            with patch.object(server, "available_ports") as ports, patch.object(bridge, "connect") as connect:
+                for path in ("/", "/styles.css", "/app.js", "/api/health"):
+                    with self.subTest(path=path), request(path) as response:
+                        self.assertEqual(response.status, 200)
+                with request("/api/state") as response:
+                    state = json.load(response)
+                    self.assertEqual(state["mode"], "hosted")
+                    self.assertFalse(state["connection"]["connected"])
+                    self.assertIsNone(state["telemetry"])
+                with request("/api/ports") as response:
+                    self.assertEqual(json.load(response)["ports"], [])
+                for path, body in (("/api/connect", {"port": "COM13"}),
+                                   ("/api/command", {"command": "ON"}), ("/api/disconnect", {})):
+                    with self.subTest(path=path), request(path, body) as response:
+                        self.assertEqual(response.status, 403)
+                ports.assert_not_called()
+                connect.assert_not_called()
+                for host in ("attacker.example", "pest.4bytedigi.com.attacker.example"):
+                    with self.subTest(host=host), request("/api/state", host=host) as response:
+                        self.assertEqual(response.status, 403)
+                with urlopen(url + "/api/health", timeout=3) as response:
+                    self.assertEqual(response.status, 200)
+        finally:
+            http.shutdown()
+            http.server_close()
+            thread.join()
+
+    def test_public_host_cannot_enable_usb_bridge(self):
+        with self.assertRaises(ValueError):
+            server.DashboardServer(("127.0.0.1", 0), server.Bridge(), "https://pest.4bytedigi.com")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
