@@ -1,0 +1,18 @@
+{
+  "date": "2026-11-03",
+  "url": "https://pest.4bytedigi.com",
+  "public_https_verified": true,
+  "checks": {
+    "/": 200,
+    "/styles.css": 200,
+    "/app.js": 200,
+    "/api/health": 200,
+    "/api/state": 200,
+    "/api/ports": 200,
+    "POST /api/connect": 403,
+    "POST /api/command": 403,
+    "POST /api/disconnect": 403
+  },
+  "page_errors": [],
+  "camera": "not started; synthetic behavior tested separately"
+}

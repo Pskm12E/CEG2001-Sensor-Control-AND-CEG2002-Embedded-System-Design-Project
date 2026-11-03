@@ -148,6 +148,10 @@ video, so actual image quality/pest visibility still needs checking.
 [Website guide](Local_Website/README.md) ·
 [MSP430 commands and future UART wiring](MSP430_Code/robot_usb_console/README.md)
 
+**Hosted preview:** [pest.4bytedigi.com](https://pest.4bytedigi.com) runs on the
+4byte server. Camera preview stays in the visitor's browser; USB bench controls
+remain on the laptop. See the [hosting configuration](deploy/README.md).
+
 ### 3. Test Arduino navigation separately
 
 Use Arduino IDE with **Arduino Uno** / AVR core **1.8.8**. Choose one sketch:

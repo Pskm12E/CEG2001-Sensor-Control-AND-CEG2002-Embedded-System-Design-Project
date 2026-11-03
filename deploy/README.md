@@ -2,6 +2,12 @@
 
 Requested address: **https://pest.4bytedigi.com**.
 
+Live and verified on **3 November 2026**. The dashboard, stylesheet, JavaScript,
+health, state and port endpoints return HTTP 200 over public HTTPS. USB command
+requests return HTTP 403. Desktop and mobile browser checks passed with no page
+errors. Camera start/stop and image download were checked separately with
+synthetic video; the physical camera was not accessed.
+
 Use the existing 4byte Server Manager and its Docker network and gateway:
 
 | Setting | Value |
@@ -25,6 +31,11 @@ existing deployment gateway (`http://127.0.0.1:9080`) in the server's locally
 managed Cloudflare tunnel, and a proxied DNS CNAME for `pest` pointing to that
 tunnel. Preserve all existing tunnel routes and DNS records. No new server or
 Cloudflare tunnel is needed.
+
+The `pest` proxied CNAME now targets the existing
+`dc054a50-d5b1-4c37-b12a-b2c89d11ca56.cfargotunnel.com` tunnel. The tunnel's
+hostname entry points to the existing gateway. GitHub updates on the selected
+hosting branch automatically rebuild this app through Server Manager.
 
 Verify `/`, `/styles.css`, `/app.js`, `/api/health` and `/api/state` over public
 HTTPS after publication. State must report `mode: hosted`, no live telemetry and
