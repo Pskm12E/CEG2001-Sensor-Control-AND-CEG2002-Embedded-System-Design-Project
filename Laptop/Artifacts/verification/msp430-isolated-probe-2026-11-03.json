@@ -1,0 +1,36 @@
+{
+  "time": "2026-11-03T18:40:26.874170+08:00",
+  "scope": "MSP USB-only after user removed P3.3/P3.4 wires",
+  "ports": [
+    {
+      "port": "COM14",
+      "description": "MSP Debug Interface (COM14)"
+    },
+    {
+      "port": "COM12",
+      "description": "Arduino Uno (COM12)"
+    },
+    {
+      "port": "COM13",
+      "description": "MSP Application UART1 (COM13)"
+    }
+  ],
+  "responses": [
+    {
+      "command": "\n",
+      "response": ""
+    },
+    {
+      "command": "PING\n",
+      "response": ""
+    },
+    {
+      "command": "STATUS\n",
+      "response": ""
+    },
+    {
+      "command": "HELP\n",
+      "response": ""
+    }
+  ]
+}

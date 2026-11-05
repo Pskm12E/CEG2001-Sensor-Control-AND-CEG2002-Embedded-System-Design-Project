@@ -1,0 +1,16 @@
+{
+  "time": "2026-11-03T19:36:12.889889+08:00",
+  "msp_port": "COM13",
+  "uno_port": "COM12",
+  "user_confirmed_motor_battery_disconnected": true,
+  "user_reported_wiring": "P3.3 -> D5; D6 -> 1k -> P3.4; junction -> two 2.2k in parallel -> GND",
+  "divider_voltage_measured": false,
+  "user_reported_wire_colours": "Uno D6 green -> divider -> yellow MSP P3.4",
+  "dedicated_common_ground_independently_verified": false,
+  "actuators_tested": false,
+  "internal_loopback_tested": false,
+  "results": [],
+  "all_checks_passed": false,
+  "error": "could not open port 'COM13': FileNotFoundError(2, 'The system cannot find the file specified.', None, 2)",
+  "checks_passed": 0
+}

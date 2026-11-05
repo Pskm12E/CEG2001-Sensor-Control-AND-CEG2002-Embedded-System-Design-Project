@@ -1,0 +1,74 @@
+SNAPSHOT before USB probe
+PC=0x4504
+SP=0x43f8
+SR=0x0
+P4IN=0x4d
+P4SEL=0x0
+P4MAP45=0xb0c
+UCSCTL4=0x44
+UCA1CTLW0=0x1
+UCA1BRW=0x0
+UCA1MCTL=0x0
+UCA1STAT=0x0
+UCA1ICTL=0x200
+SEVERE: identifier not found: ticks
+SEVERE: Error evaluating "ticks": identifier not found: ticks
+ticks: JavaException: com.ti.ccstudio.scripting.environment.ScriptingException: Error evaluating "ticks": identifier not found: ticks
+SEVERE: identifier not found: uartErrors
+SEVERE: Error evaluating "uartErrors": identifier not found: uartErrors
+uartErrors: JavaException: com.ti.ccstudio.scripting.environment.ScriptingException: Error evaluating "uartErrors": identifier not found: uartErrors
+SEVERE: identifier not found: rxDrops
+SEVERE: Error evaluating "rxDrops": identifier not found: rxDrops
+rxDrops: JavaException: com.ti.ccstudio.scripting.environment.ScriptingException: Error evaluating "rxDrops": identifier not found: rxDrops
+SEVERE: identifier not found: usbRx
+	 at (usbRx).head
+SEVERE: Error evaluating "usbRx.head": identifier not found: usbRx
+	 at (usbRx).head
+usbRx.head: JavaException: com.ti.ccstudio.scripting.environment.ScriptingException: Error evaluating "usbRx.head": identifier not found: usbRx
+	 at (usbRx).head
+SEVERE: identifier not found: usbRx
+	 at (usbRx).tail
+SEVERE: Error evaluating "usbRx.tail": identifier not found: usbRx
+	 at (usbRx).tail
+usbRx.tail: JavaException: com.ti.ccstudio.scripting.environment.ScriptingException: Error evaluating "usbRx.tail": identifier not found: usbRx
+	 at (usbRx).tail
+SEVERE: identifier not found: usbLine
+	 at (usbLine).used
+SEVERE: Error evaluating "usbLine.used": identifier not found: usbLine
+	 at (usbLine).used
+usbLine.used: JavaException: com.ti.ccstudio.scripting.environment.ScriptingException: Error evaluating "usbLine.used": identifier not found: usbLine
+	 at (usbLine).used
+SEVERE: identifier not found: usbLine
+	 at (usbLine).discard
+SEVERE: Error evaluating "usbLine.discard": identifier not found: usbLine
+	 at (usbLine).discard
+usbLine.discard: JavaException: com.ti.ccstudio.scripting.environment.ScriptingException: Error evaluating "usbLine.discard": identifier not found: usbLine
+	 at (usbLine).discard
+SEVERE: identifier not found: linkMode
+SEVERE: Error evaluating "linkMode": identifier not found: linkMode
+linkMode: JavaException: com.ti.ccstudio.scripting.environment.ScriptingException: Error evaluating "linkMode": identifier not found: linkMode
+b'\n' -> b''
+b'PING\n' -> b''
+b'STATUS\n' -> b''
+PROBE_EXIT=0
+SNAPSHOT after USB probe
+PC=0x1001e
+SP=0x43f8
+SR=0x1b
+P4IN=0x5d
+P4SEL=0x30
+P4MAP45=0xb0c
+UCSCTL4=0x244
+UCA1CTLW0=0x80
+UCA1BRW=0x6d
+UCA1MCTL=0x4
+UCA1STAT=0x0
+UCA1ICTL=0x201
+ticks=23
+uartErrors=0
+rxDrops=0
+usbRx.head=0
+usbRx.tail=0
+usbLine.used=0
+usbLine.discard=0
+linkMode=0

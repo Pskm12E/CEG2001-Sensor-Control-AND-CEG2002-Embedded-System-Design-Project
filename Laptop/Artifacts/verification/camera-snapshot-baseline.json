@@ -1,0 +1,136 @@
+{
+  "scope": "Existing snapshot preview baseline",
+  "frames": 3,
+  "seconds": 3.5563907623291016,
+  "fps": 0.8435518480638731,
+  "samples": [
+    {
+      "time": 1793882297.6820724,
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 561,
+        "captured_at": 1793882296.1491191,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 6619,
+        "crc32": "2E7D47C2"
+      }
+    },
+    {
+      "time": 1793882298.186222,
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 562,
+        "captured_at": 1793882297.7598882,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 6596,
+        "crc32": "1A4B4FD8"
+      }
+    },
+    {
+      "time": 1793882298.6898005,
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 562,
+        "captured_at": 1793882297.7598882,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 6596,
+        "crc32": "1A4B4FD8"
+      }
+    },
+    {
+      "time": 1793882299.1932924,
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 562,
+        "captured_at": 1793882297.7598882,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 6596,
+        "crc32": "1A4B4FD8"
+      }
+    },
+    {
+      "time": 1793882299.7118366,
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 563,
+        "captured_at": 1793882299.3840215,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 6598,
+        "crc32": "586B68A1"
+      }
+    },
+    {
+      "time": 1793882300.2310052,
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 563,
+        "captured_at": 1793882299.3840215,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 6598,
+        "crc32": "586B68A1"
+      }
+    },
+    {
+      "time": 1793882300.7344937,
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 563,
+        "captured_at": 1793882299.3840215,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 6598,
+        "crc32": "586B68A1"
+      }
+    },
+    {
+      "time": 1793882301.2384632,
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 564,
+        "captured_at": 1793882301.0000067,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 6569,
+        "crc32": "528EE6FB"
+      }
+    }
+  ]
+}

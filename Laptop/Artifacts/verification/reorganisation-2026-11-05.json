@@ -1,0 +1,39 @@
+{
+  "tested_at": "2026-11-05",
+  "scope": "Repository reorganisation; hardware packed away; no firmware upload or deployment",
+  "groups": [
+    "Car",
+    "Laptop",
+    "Docking_Station"
+  ],
+  "dashboard_tests_passed": 42,
+  "host_assertions": {
+    "uno": 133,
+    "msp": 22,
+    "desk_bridge": 531,
+    "video_decoder": 4021,
+    "direct_uart_bridge": 58,
+    "archived_i2c_bridge": 305
+  },
+  "local_links_passed": 126,
+  "pre_move_manifest_files_present": 207,
+  "dated_reports_preserved_byte_for_byte": 63,
+  "private_config_preserved": true,
+  "private_credentials_in_publishable_files": false,
+  "binaries_or_private_images_staged": false,
+  "dashboard_launch_from_new_directory": "passed; HTML/CSS/JS/health/state/OpenCV loaded, disconnected and read-only",
+  "firmware_builds": {
+    "arduino_uno": "passed",
+    "msp430_esp_uart": "passed",
+    "desk_pico_w": "passed",
+    "firebeetle_esp32": "passed",
+    "xiao_wireless_camera": "passed"
+  },
+  "no_physical_retest": true,
+  "no_upload": true,
+  "no_deployment": true,
+  "hosting_branch_unchanged": true,
+  "publish_branch": "codex/organize-device-folders",
+  "pending": [],
+  "passed": true
+}

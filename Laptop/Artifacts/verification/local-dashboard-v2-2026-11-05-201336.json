@@ -1,0 +1,93 @@
+{
+  "tested_at": "2026-11-05T20:13:31.150596+08:00",
+  "checks": [
+    {
+      "check": "Only Pico candidates in robot USB selector",
+      "passed": true
+    },
+    {
+      "check": "Fresh real MSP430 status through desk Pico Wi-Fi",
+      "passed": true
+    },
+    {
+      "check": "Uno acknowledged and stopped",
+      "passed": true
+    },
+    {
+      "check": "Repeated live dashboard updates",
+      "passed": false
+    }
+  ],
+  "passed": false,
+  "actuators_tested": false,
+  "robot_state": {
+    "mode": "local",
+    "read_only": true,
+    "connection": {
+      "connected": true,
+      "port": "COM11",
+      "baud": 115200,
+      "error": null,
+      "fresh": true,
+      "last_seen": "2026-11-05T12:13:31.320+00:00"
+    },
+    "links": {
+      "pico": "UP",
+      "wifi": "UP",
+      "esp": "UP",
+      "msp": "UP",
+      "uno": "READY"
+    },
+    "telemetry": {
+      "uno_link": "READY",
+      "run": 0,
+      "calibration": "NEEDED",
+      "left": "NC",
+      "right": "NC",
+      "led2": "OFF",
+      "flags": 96,
+      "result": 0,
+      "pending": 0,
+      "uart_errors": 1,
+      "rx_drops": 0,
+      "bad_frames": 0,
+      "board": "MSP430F5529",
+      "firmware": "SUPERVISOR_V2"
+    },
+    "events": [
+      {
+        "id": 1,
+        "time": "2026-11-05T12:12:49.833+00:00",
+        "kind": "info",
+        "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+      },
+      {
+        "id": 2,
+        "time": "2026-11-05T12:13:31.265+00:00",
+        "kind": "connection",
+        "message": "Opened desk Pico on COM11; verifying firmware."
+      },
+      {
+        "id": 3,
+        "time": "2026-11-05T12:13:31.267+00:00",
+        "kind": "board",
+        "message": "PONG PICO_DESK_BRIDGE_V1"
+      },
+      {
+        "id": 4,
+        "time": "2026-11-05T12:13:31.320+00:00",
+        "kind": "connection",
+        "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+      }
+    ],
+    "camera": {
+      "connected": false,
+      "port": null,
+      "sensor": null,
+      "error": null,
+      "sequence": 0,
+      "captured_at": null
+    }
+  },
+  "error": "Repeated live dashboard updates"
+}

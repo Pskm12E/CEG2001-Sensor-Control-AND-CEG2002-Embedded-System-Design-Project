@@ -1,226 +1,128 @@
 # Pest-Monitoring & Spot-Spraying Robot
 
-**CEG2001 Sensor Control · CEG2002 Embedded System Design**
+CEG2001 Sensors and Control · CEG2002 Embedded System Design
 
-**Version 1 — `v1.0.0` · 29 October 2026**
+**The MSP430 on the car is the main embedded controller.** The laptop provides
+local video/display and the current blue-square practice detector. A trained
+YOLO insect model and automatic stop/spray jobs remain planned. Demonstration
+spraying is intended to use water.
 
-A student prototype that combines plant observation, sensor feedback and a mobile
-robot for targeted treatment. The intended demonstration uses **water** in place
-of pesticide. The **MSP430 on the robot is the main embedded controller**; the
-other boards provide communication, navigation and dock support.
-
-Version 1 is a collection of working bench programs and a local dashboard.
-**It is not yet a complete autonomous pest-detection or spraying system.**
-
-[Start testing](#start-testing) · [Diagrams](docs/diagrams/README.md) ·
-[Wiring](docs/wiring.md) · [Version 1 notes](CHANGELOG.md) ·
-[Documents and test evidence](output/README.md)
-
-## What works in Version 1
-
-| Area | Included and checked | Remaining work |
-| --- | --- | --- |
-| Robot MSP430 | USB commands, LED controls, button handling, internal UART loopback; 19 USB checks passed | Robot job state machine and physical board-to-board links |
-| ESP32 ↔ Pico W | Private Wi-Fi link, request/reply, Pico LED controls, timeout/reconnection; 19 checks passed, including 30 sustained round trips | MSP430 bridge and website integration |
-| Arduino Uno | Separate motor, IR calibration, line-following and UART bench sketches; compiled control checks | Reliable track calibration, physical steering validation, MSP430 command integration |
-| Local website | MSP430 bench telemetry, event log, LED/loopback controls, local camera preview | Pest detection, job approval/dispatch and sensor/spray telemetry |
-| Dock | Placement and controller role documented | Second MSP430/Booster firmware, sensors and communication |
-
-Earlier motor operation was reported by the project user. The later line-following
-session exposed a loose motor-supply wire; its repair and full track test are still
-pending. A serial message such as `MODE=FORWARD` confirms the requested output,
-not that a wheel actually moved.
-
-## Where each board goes
-
-| Device | Placement | Responsibility |
-| --- | --- | --- |
-| USB webcam + laptop | Beside the test plant/trap | Images, local website and future detection/user review |
-| ESP32 FireBeetle DFR0478 | Beside the laptop, connected by USB | Laptop end of the wireless link |
-| Raspberry Pi Pico W (RP2040) | On the robot | Robot end of the wireless link |
-| MSP430F5529 LaunchPad | On the robot | **Main controller:** future sensor/job decisions and authorization |
-| Arduino Uno R3 | On the robot | Wheels through L298N; left/right IR line sensors |
-| Second MSP430 + Booster | At the dock | Future local docking/refill control |
-
-```mermaid
-flowchart LR
-  subgraph Desk[Beside the test plant]
-    Webcam[USB webcam] -->|USB| Laptop[Laptop: website and serial tools]
-    Laptop <-->|USB bench commands| ESP[ESP32 gateway]
-  end
-  subgraph Robot[On the robot]
-    Pico[Pico W: wireless link]
-    Main[MSP430: MAIN CONTROLLER]
-    Uno[Arduino Uno: wheels and line sensors]
-    Pico -. future wired bridge .-> Main
-    Main -. future command and status link .-> Uno
-  end
-  ESP <-->|Wi-Fi bench link tested| Pico
-  Laptop <-->|Current dashboard: direct USB| Main
-  Main -. communication pending .-> Dock[Second MSP430 + Booster at dock]
-```
-
-Solid links show current connection roles; dashed links are future integration.
-The ESP32 console and MSP430 website are **separate tests** in this release.
-The website does not yet communicate through the ESP32/Pico route.
-
-## Start testing
-
-Clone the repository:
-
-```powershell
-git clone https://github.com/Pskm12E/CEG2001-Sensor-Control-AND-CEG2002-Embedded-System-Design-Project.git
-cd CEG2001-Sensor-Control-AND-CEG2002-Embedded-System-Design-Project
-```
-
-To reproduce this snapshot later, check out `v1.0.0`. Upload only the sketch for
-the test you intend to run: each upload replaces that board's previous program.
-COM numbers below are from the original laptop and can change on another machine.
-
-### 1. Try the ESP32 and Pico wireless link
-
-**Already programmed boards:** connect both to laptop USB using data cables.
-The MSP430 and Uno are not needed. Leave external GPIO wiring disconnected for
-this onboard-LED test. The ESP32 creates its own network; the laptop does not need
-to switch away from its internet Wi-Fi.
-
-Open the **ESP32** serial port (**COM15** on the original laptop), select
-**115200 baud**, **New Line**, and send:
-
-| Command | Expected result |
-| --- | --- |
-| `STATUS` | `PICO_LINK=UP` once connected |
-| `ROBOT PING` | `ROBOT PONG PICO_W` |
-| `ROBOT LED ON` | Pico onboard LED turns on |
-| `ROBOT LED OFF` | Pico onboard LED turns off |
-| `ROBOT STATUS` | Pico state and `MSP_LINK=NOT_CONNECTED BENCH_ONLY` |
-
-The Pico USB port was **COM11**. Its own console accepts `PING`, `STATUS`, `HELP`.
-`MSP_LINK=NOT_CONNECTED` is expected: the MSP bridge has not been implemented.
-
-**Fresh build:** install Arduino CLI/IDE with Espressif core **3.3.12**, plus
-Pico SDK **2.3.1** and its C/C++ toolchain. Generate a private network configuration
-before building either board:
-
-```powershell
-python Wireless_Link/configure.py
-```
-
-Build/upload both boards with that same configuration. Neither the password nor
-compiled firmware containing it is stored in Git. On the original Windows setup,
-`./Wireless_Link/build.ps1` builds both. Its tool paths are machine-specific;
-review them on a new computer. The ESP32 target is `esp32:esp32:firebeetle32`;
-the Pico target is `pico_w`, not Pico 2.
-
-See the [complete wireless build/upload guide](Wireless_Link/README.md).
-For Arduino CLI builds, include `--libraries ./Wireless_Link/libraries`; the
-`RobotBench` helper library is local to this repository.
-
-### 2. Try the robot MSP430 and website
-
-Use [MSP430_Code/robot_usb_console](MSP430_Code/robot_usb_console/README.md),
-the current MSP430F5529 bench project. Import it into TI Code Composer Studio,
-build for **MSP430F5529**, and upload if it is not already installed. The project
-was verified with CCS **21.0.1** and TI MSP430 compiler **21.6.3.LTS**.
-
-For a fresh Python setup, run from the repository root:
-
-```powershell
-py -3 -m venv Local_Website/.venv
-./Local_Website/.venv/Scripts/python.exe -m pip install -r Local_Website/requirements.txt
-./Local_Website/.venv/Scripts/python.exe Local_Website/server.py --open
-```
-
-Then:
-
-1. Open **http://127.0.0.1:8765** and plug in the robot MSP430 by USB.
-2. Select **MSP Application UART1** — previously **COM13** — and connect.
-3. Try Ping or LED2 On/Off. Press S2 to check the button count.
-4. Plug the USB webcam into the **laptop**, then start the camera preview.
-
-The dashboard uses **9600 baud** and only accepts the MSP Application UART.
-Do not select its debug interface (previously COM14). Close other serial tools
-using the same port. The site runs locally; camera tests so far used synthetic
-video, so actual image quality/pest visibility still needs checking.
-
-![Version 1 local dashboard](output/verification/dashboard-live.png)
-
-[Website guide](Local_Website/README.md) ·
-[MSP430 commands and future UART wiring](MSP430_Code/robot_usb_console/README.md)
-
-**Hosted preview:** [pest.4bytedigi.com](https://pest.4bytedigi.com) runs on the
-4byte server. Camera preview stays in the visitor's browser; USB bench controls
-remain on the laptop. See the [hosting configuration](deploy/README.md).
-
-### 3. Test Arduino navigation separately
-
-Use Arduino IDE with **Arduino Uno** / AVR core **1.8.8**. Choose one sketch:
-
-| Sketch | Purpose |
-| --- | --- |
-| [uno_forward_test](Arudino_Code/uno_forward_test/uno_forward_test.ino) | `f` drives continuously; `s` stops. No automatic timeout. |
-| [ir_line_test](Arudino_Code/ir_line_test/README.md) | Read and calibrate two digital IR sensors; motor outputs held stopped. |
-| [line_follow_car](Arudino_Code/line_follow_car/README.md) | Calibrate with `w`/`b`, start with `f`, stop with `s`. Both sensors see black when centred. |
-| [uart_link_bench](Arudino_Code/uart_link_bench/README.md) | Future MSP-to-Uno LED/serial test; compiled, physical link not yet tested. |
-
-All Uno USB tests use **115200 baud**. The navigation pin map is left IR **D2**,
-right IR **D4**, and L298N IN1–IN4 on **D7–D10**. Keep motor power disconnected
-while uploading; verify supply, enable jumpers and polarity before a wheel test.
-Read the [wiring guide](docs/wiring.md) before connecting the boards together.
-
-## Repository guide
+## Find the code
 
 ```text
-Arudino_Code/       Uno motor, IR, line-following and UART bench sketches
-ESP32_Code/         Laptop wireless gateway
-Pico_Codes/         Current wireless link plus earlier independent experiments
-MSP430_Code/        Robot MSP430 projects, build helpers and tests
-Wireless_Link/     Shared protocol, private-config generator, setup and placement
-Local_Website/     Local Python server, browser UI and tests
-docs/              Wiring, diagram gallery and Version 1 documentation
-output/            Saved diagrams, historical PDF guide, screenshots and test reports
-CHANGELOG.md       Version 1 scope and verification
+Car/
+  MSP430/                   Main robot supervisor
+  Arduino_Uno/              IR sensors and L298N wheel control
+  ESP32_Gateway/             FireBeetle private Wi-Fi and MSP430 UART
+  XIAO_ESP32S3_Camera/       Car-mounted wireless camera
+  Archive/                  Earlier Pico/ESP32 experiments
+Laptop/
+  Dashboard/                Local app and OpenCV blue-square detector
+  Pico_W/                   Desk Pico USB/Wi-Fi video and status relay
+  YOLO_Model/               Future insect model; no trained weights yet
+  Tools/Communication/      Shared protocol, private config, builds and tests
+  Documentation/            Wiring and diagram index
+  Artifacts/                Diagrams, historical PDF and test evidence
+  Deployment/               Hosted-preview notes
+  Archive/                  Earlier laptop-side gateway
+Docking_Station/
+  MSP430/                   Planned second controller; firmware not written
+  Booster_Board/            Planned dock peripherals and pin documentation
 ```
 
-`Arudino_Code` keeps the original folder spelling so existing project paths work.
-The older Pico motor sketch is an experiment, **not** the current motor controller.
-The current motor role belongs to the Uno.
+[Car guide](Car/README.md) · [Laptop guide](Laptop/README.md) ·
+[Dock plan](Docking_Station/README.md) ·
+[Folder migration and path changes](Laptop/Documentation/folder-organisation.md)
 
-## Diagrams and documents
+## Start the existing system
 
-- [Diagram gallery](docs/diagrams/README.md): current layout, planned workflow and older concepts.
-- [Detailed board-placement diagram](Wireless_Link/board-placement.md).
-- [Current wiring and unassigned links](docs/wiring.md).
-- [Earlier plant-care setup PDF](output/pdf/plant-care-robot-setup-guide.pdf): historical, not the current wiring authority.
-- [All saved artifacts and reports](output/README.md).
+1. Power the car ESP32, MSP430, Uno and XIAO camera. Keep motor power off for
+   camera/communication-only testing.
+2. Connect the **desk Pico W** to laptop USB. The camera uses power-bank USB-C;
+   its video travels wirelessly.
+3. Open **[Laptop/Dashboard/Start Dashboard.cmd](Laptop/Dashboard/Start%20Dashboard.cmd)**.
+4. In the local page at **http://127.0.0.1:8765**, select the Pico port and Connect.
+5. Start the XIAO camera, then Start detection to test the blue square.
 
-Older concept pictures contain superseded controller roles and unimplemented
-charging/refill features. They are retained as design history; use the current
-README and wiring guide to decide what is connected today.
+```text
+Car camera ── Wi-Fi ── FireBeetle AP ── Wi-Fi ── Desk Pico ── USB ── Laptop
+                           |
+                      UART 9600
+                           |
+                    MAIN car MSP430
+                           |
+                   UART + TX divider
+                           |
+                     Arduino Uno ── L298N ── wheels
+```
 
-## Verification and next milestone
+Only the desk Pico needs a laptop USB data connection during normal use. The
+laptop keeps its usual internet connection. The car controllers still require
+their own USB power; wheel motors use the separate AA supply.
 
-Saved results are dated **29 October 2026** and describe the tested bench setup:
+The local dashboard sends **read-only checks**. Detection does not send stop,
+movement or pump commands. A detected blue square is a colour/shape match, not
+insect identification or proof of nozzle alignment.
 
-- [MSP430 USB report](output/verification/msp430-usb-console-2026-10-29.json): 19 checks passed.
-- [Wireless report](output/verification/wireless-bench-2026-10-29.json): 19 checks passed, including 30 sustained requests and gateway-reset recovery.
-- [Dashboard report](output/verification/local-dashboard-2026-10-29.json): software, live-board and browser checks; camera tests used synthetic video.
-- Uno line-following helper assertions passed at compile time; they do not replace a physical track test.
+## Current programs and verification
 
-Software-only dashboard tests:
+| Device / feature | Current source | Status |
+| --- | --- | --- |
+| Main car MSP430 | [robot_supervisor](Car/MSP430/robot_supervisor/README.md), built with `-EspUart` | Supervisor and Uno status link working |
+| Arduino Uno | [msp_line_follow](Car/Arduino_Uno/msp_line_follow/README.md) | Integrated controller; physical IR calibration/track testing still needed |
+| Car ESP32 | [robot_wifi_gateway](Car/ESP32_Gateway/robot_wifi_gateway/robot_wifi_gateway.ino) | Private AP and UART bridge working |
+| XIAO camera | [xiao_camera_wifi](Car/XIAO_ESP32S3_Camera/xiao_camera_wifi/xiao_camera_wifi.ino) | Wireless 320 × 240 video, tested about 15 fps |
+| Desk Pico | [laptop_wifi_bridge](Laptop/Pico_W/laptop_wifi_bridge/main.cpp) | Video and robot-status relay working |
+| Laptop detection | [blue_detector.py](Laptop/Dashboard/blue_detector.py) | Blue-square test working; positive live test confirmed by project user |
+| YOLO / insect recognition | [YOLO_Model](Laptop/YOLO_Model/README.md) | Planned; no trained model files |
+| Spray and dock | [Docking_Station](Docking_Station/README.md) | Not integrated |
+
+Before folder reorganisation, 42 dashboard software tests passed and an actual
+150-frame annotated stream test measured 15.14 fps with independent robot-status
+updates. These are dated results, not a claim of complete autonomous operation.
+See the [saved evidence](Laptop/Artifacts/README.md) and the migration document
+for checks rerun after moving the source.
+
+## Build without uploading
+
+The current firmware remains on the boards after the folders move. Rebuilding
+is needed only when changing firmware. Use the existing private network settings
+for all radio builds:
 
 ```powershell
-./Local_Website/.venv/Scripts/python.exe -m unittest discover -s Local_Website/tests -v
+python Laptop/Tools/Communication/configure.py
+./Laptop/Tools/Communication/build_direct.ps1
+./Laptop/Tools/Communication/build_desk_pico.ps1
+./Car/XIAO_ESP32S3_Camera/build_camera_wifi.ps1
 ```
 
-The next milestone is the **main MSP430 command/status bridge**, followed by
-sensor validation, navigation feedback and a bounded water-spray job. The dock
-controller and pest-recognition evaluation remain future work. No complete
-battery/pump/charging wiring has been approved by these bench tests.
+These scripts compile only. They use the original Windows Arduino, CCS and Pico
+SDK installations, whose tool paths may need changing on another computer.
+Arduino Uno source/sketch folder names remain matched for Arduino IDE.
+Older standalone tests are labelled in each device README; flashing them replaces
+that board's integrated firmware.
 
-## Files kept local
+For a new laptop Python environment, follow [the dashboard setup](Laptop/Dashboard/README.md).
+Software-only checks from the repository root:
 
-Wi-Fi credentials, old lab-board backups, firmware binaries, temporary tools,
-logs and private session notes are excluded from Git. Firmware binaries can
-embed network passwords; build them locally. Dependencies are installed separately.
-Existing third-party notices, including Raspberry Pi's SDK helper licence, are retained.
+```powershell
+python -m unittest discover -s Laptop/Dashboard/tests -p "test_*.py" -v
+python Car/Arduino_Uno/tests/check_supervised_control.py
+python Car/MSP430/tests/check_supervisor_logic.py
+python Laptop/Tools/Communication/tests/check_desk_pico.py
+python Laptop/Tools/Communication/tests/check_video_receiver.py
+```
+
+## Diagrams, history and files kept local
+
+- [Current boards and wiring](Laptop/Tools/Communication/board-placement.md)
+- [Diagram gallery](Laptop/Documentation/diagrams/README.md)
+- [Proposed YOLO on the laptop](Laptop/Artifacts/diagrams/yolo-laptop-architecture-2026-11-05.png)
+- [Version 1 release history](CHANGELOG.md): tag `v1.0.0` preserves the original layout.
+- [Hosted preview configuration](Laptop/Deployment/README.md): the reorganisation
+  branch is separate from the currently deployed branch; no deployment is made.
+
+Wi-Fi credentials, generated network headers, compiled firmware, private camera
+images, old board backups, local tools and session notes are excluded from Git.
+Build output can embed passwords, so build it locally. Dated test JSON and
+historical PDFs retain their original contents. Third-party licences are preserved.

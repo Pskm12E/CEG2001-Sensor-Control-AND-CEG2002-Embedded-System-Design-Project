@@ -1,0 +1,456 @@
+{
+  "user_confirmed_powerbank": true,
+  "camera_USB_present": false,
+  "samples": [
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": "Waiting for fresh robot status through the Pico. Check power to the ESP32, MSP430 and Uno.",
+        "fresh": false,
+        "last_seen": null
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "STALE",
+        "uno": "UNKNOWN"
+      },
+      "telemetry": null,
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T13:07:19.562+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Wireless camera video also arrives through the Pico."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T13:08:19.269+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T13:08:19.270+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V2"
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "PICO_WIFI",
+        "sensor": "XIAO ESP32-S3",
+        "error": null,
+        "sequence": 0,
+        "source_sequence": 0,
+        "captured_at": null,
+        "transport": "WIFI_VIA_PICO",
+        "width": 320,
+        "height": 240,
+        "corrupt_frames": 0,
+        "streaming": false,
+        "fps": 0,
+        "frame_age_ms": null,
+        "generation": 1
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": "Waiting for fresh robot status through the Pico. Check power to the ESP32, MSP430 and Uno.",
+        "fresh": false,
+        "last_seen": null
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "STALE",
+        "uno": "UNKNOWN"
+      },
+      "telemetry": null,
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T13:07:19.562+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Wireless camera video also arrives through the Pico."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T13:08:19.269+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T13:08:19.270+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V2"
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "PICO_WIFI",
+        "sensor": "XIAO ESP32-S3",
+        "error": null,
+        "sequence": 0,
+        "source_sequence": 0,
+        "captured_at": null,
+        "transport": "WIFI_VIA_PICO",
+        "width": 320,
+        "height": 240,
+        "corrupt_frames": 0,
+        "streaming": false,
+        "fps": 0,
+        "frame_age_ms": null,
+        "generation": 1
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": "Waiting for fresh robot status through the Pico. Check power to the ESP32, MSP430 and Uno.",
+        "fresh": false,
+        "last_seen": null
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "STALE",
+        "uno": "UNKNOWN"
+      },
+      "telemetry": null,
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T13:07:19.562+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Wireless camera video also arrives through the Pico."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T13:08:19.269+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T13:08:19.270+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V2"
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "PICO_WIFI",
+        "sensor": "XIAO ESP32-S3",
+        "error": null,
+        "sequence": 0,
+        "source_sequence": 0,
+        "captured_at": null,
+        "transport": "WIFI_VIA_PICO",
+        "width": 320,
+        "height": 240,
+        "corrupt_frames": 0,
+        "streaming": false,
+        "fps": 0,
+        "frame_age_ms": null,
+        "generation": 1
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": "Waiting for fresh robot status through the Pico. Check power to the ESP32, MSP430 and Uno.",
+        "fresh": false,
+        "last_seen": null
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "STALE",
+        "uno": "UNKNOWN"
+      },
+      "telemetry": null,
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T13:07:19.562+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Wireless camera video also arrives through the Pico."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T13:08:19.269+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T13:08:19.270+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V2"
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "PICO_WIFI",
+        "sensor": "XIAO ESP32-S3",
+        "error": null,
+        "sequence": 0,
+        "source_sequence": 0,
+        "captured_at": null,
+        "transport": "WIFI_VIA_PICO",
+        "width": 320,
+        "height": 240,
+        "corrupt_frames": 0,
+        "streaming": false,
+        "fps": 0,
+        "frame_age_ms": null,
+        "generation": 1
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": "Waiting for fresh robot status through the Pico. Check power to the ESP32, MSP430 and Uno.",
+        "fresh": false,
+        "last_seen": null
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "STALE",
+        "uno": "UNKNOWN"
+      },
+      "telemetry": null,
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T13:07:19.562+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Wireless camera video also arrives through the Pico."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T13:08:19.269+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T13:08:19.270+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V2"
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "PICO_WIFI",
+        "sensor": "XIAO ESP32-S3",
+        "error": null,
+        "sequence": 0,
+        "source_sequence": 0,
+        "captured_at": null,
+        "transport": "WIFI_VIA_PICO",
+        "width": 320,
+        "height": 240,
+        "corrupt_frames": 0,
+        "streaming": false,
+        "fps": 0,
+        "frame_age_ms": null,
+        "generation": 1
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T13:08:21.824+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 23,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T13:07:19.562+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Wireless camera video also arrives through the Pico."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T13:08:19.269+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T13:08:19.270+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V2"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T13:08:21.824+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "PICO_WIFI",
+        "sensor": "XIAO ESP32-S3",
+        "error": null,
+        "sequence": 0,
+        "source_sequence": 0,
+        "captured_at": null,
+        "transport": "WIFI_VIA_PICO",
+        "width": 320,
+        "height": 240,
+        "corrupt_frames": 0,
+        "streaming": false,
+        "fps": 0,
+        "frame_age_ms": null,
+        "generation": 1
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T13:08:22.344+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 23,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T13:07:19.562+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Wireless camera video also arrives through the Pico."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T13:08:19.269+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T13:08:19.270+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V2"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T13:08:21.824+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        },
+        {
+          "id": 5,
+          "time": "2026-11-05T13:08:22.324+00:00",
+          "kind": "camera",
+          "message": "VIDEO OK ON"
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "PICO_WIFI",
+        "sensor": "XIAO ESP32-S3",
+        "error": null,
+        "sequence": 7,
+        "source_sequence": 7,
+        "captured_at": 1793884102.7762182,
+        "transport": "WIFI_VIA_PICO",
+        "width": 320,
+        "height": 240,
+        "corrupt_frames": 0,
+        "bytes": 3924,
+        "crc32": "C25EA5EF",
+        "streaming": true,
+        "fps": 15.3,
+        "frame_age_ms": 47,
+        "generation": 1
+      }
+    }
+  ],
+  "passed": true
+}

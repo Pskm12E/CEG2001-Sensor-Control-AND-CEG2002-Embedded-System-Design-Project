@@ -1,0 +1,102 @@
+{
+  "tested_at": "2026-11-05T16:23:07.458326+08:00",
+  "scope": "Check ESP -> Pico -> MSP I2C and MSP -> Uno stop/status, with motors unpowered.\n\nNo start, calibration, reset, flash or supply-switching commands are sent.\n",
+  "ports": {
+    "esp": "COM15",
+    "msp": "COM13"
+  },
+  "checks": [
+    {
+      "check": "MSP USB identity",
+      "passed": true,
+      "evidence": "PONG MSP430 SUPERVISOR_V2"
+    },
+    {
+      "check": "MSP I2C firmware loaded",
+      "passed": true,
+      "evidence": {
+        "BOARD": "MSP430F5529",
+        "FW": "SUPERVISOR_V2",
+        "LINK": "READY",
+        "RUN": "0",
+        "CAL": "NEEDED",
+        "L2": "NC",
+        "R4": "NC",
+        "LED2": "OFF",
+        "FLAGS": "96",
+        "RESULT": "0",
+        "PENDING": "0",
+        "UART_ERRORS": "0",
+        "RX_DROPS": "0",
+        "BAD_FRAMES": "0",
+        "BRIDGE": "I2C_V1"
+      }
+    },
+    {
+      "check": "ESP USB identity",
+      "passed": true,
+      "evidence": "PONG ESP32_GATEWAY"
+    },
+    {
+      "check": "Pico Wi-Fi connection",
+      "passed": true,
+      "evidence": "STATUS BOARD=ESP32_FIREBEETLE ROLE=LAPTOP_GATEWAY AP=READY PICO_LINK=UP MSP_LINK=NOT_CONNECTED FW=BRIDGE2"
+    },
+    {
+      "check": "Pico radio reply",
+      "passed": true,
+      "evidence": "ROBOT PONG PICO_W"
+    },
+    {
+      "check": "Fresh physical I2C MSP response",
+      "passed": false,
+      "evidence": "ROBOT MSP ERROR NOT_CONNECTED"
+    }
+  ],
+  "transcript": [
+    {
+      "port": "COM13",
+      "command": "PING",
+      "lines": [
+        "PONG MSP430 SUPERVISOR_V2"
+      ]
+    },
+    {
+      "port": "COM13",
+      "command": "STATUS",
+      "lines": [
+        "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=0 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=I2C_V1"
+      ]
+    },
+    {
+      "port": "COM15",
+      "command": "PING",
+      "lines": [
+        "PONG ESP32_GATEWAY"
+      ]
+    },
+    {
+      "port": "COM15",
+      "command": "STATUS",
+      "lines": [
+        "STATUS BOARD=ESP32_FIREBEETLE ROLE=LAPTOP_GATEWAY AP=READY PICO_LINK=UP MSP_LINK=NOT_CONNECTED FW=BRIDGE2"
+      ]
+    },
+    {
+      "port": "COM15",
+      "command": "ROBOT PING",
+      "lines": [
+        "ROBOT PONG PICO_W"
+      ]
+    },
+    {
+      "port": "COM15",
+      "command": "ROBOT MSP STATUS",
+      "lines": [
+        "ROBOT MSP ERROR NOT_CONNECTED"
+      ]
+    }
+  ],
+  "passed": false,
+  "error": "Fresh physical I2C MSP response: ROBOT MSP ERROR NOT_CONNECTED"
+}

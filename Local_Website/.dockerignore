@@ -1,6 +1,0 @@
-*
-!Dockerfile
-!requirements.txt
-!server.py
-!static/
-!static/**

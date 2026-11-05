@@ -1,0 +1,10 @@
+*
+!Dockerfile
+!requirements.txt
+!server.py
+!desk_bridge.py
+!camera_usb.py
+!camera_radio.py
+!blue_detector.py
+!static/
+!static/**

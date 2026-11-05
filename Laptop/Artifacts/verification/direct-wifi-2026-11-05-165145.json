@@ -1,0 +1,163 @@
+{
+  "tested_at": "2026-11-05T16:51:45.534589+08:00",
+  "scope": "Verify direct ESP firmware over USB; optionally check UART and Wi-Fi HTTP.\nNever sends start, calibration, reset, flash or spray commands.\n",
+  "checks": [
+    {
+      "check": "New ESP direct Wi-Fi identity",
+      "passed": true,
+      "evidence": "PONG ESP32_DIRECT_WIFI_V1"
+    },
+    {
+      "check": "Private AP and new UART pins configured",
+      "passed": true,
+      "evidence": "STATUS BOARD=ESP32_FIREBEETLE FW=DIRECT_WIFI_V1 AP=READY MSP_LINK=NOT_CONNECTED MSP_UART_RX=16 MSP_UART_TX=17 IP=192.168.4.1"
+    },
+    {
+      "check": "Reject F",
+      "passed": true,
+      "evidence": "F"
+    },
+    {
+      "check": "Reject START",
+      "passed": true,
+      "evidence": "START"
+    },
+    {
+      "check": "Reject SPRAY",
+      "passed": true,
+      "evidence": "SPRAY"
+    },
+    {
+      "check": "Reject W",
+      "passed": true,
+      "evidence": "W"
+    },
+    {
+      "check": "Reject B",
+      "passed": true,
+      "evidence": "B"
+    },
+    {
+      "check": "Reject C",
+      "passed": true,
+      "evidence": "C"
+    },
+    {
+      "check": "Reject ROBOT MSP START",
+      "passed": true,
+      "evidence": "ROBOT MSP START"
+    },
+    {
+      "check": "JSON identifies MSP as main controller",
+      "passed": true,
+      "evidence": {
+        "board": "ESP32_FIREBEETLE",
+        "firmware": "DIRECT_WIFI_V1",
+        "main_controller": "MSP430F5529",
+        "ap_ready": true,
+        "msp_link": "NOT_CONNECTED",
+        "fresh": false,
+        "age_ms": null,
+        "telemetry": null,
+        "error": "MSP UART reply timed out",
+        "pending_id": 3818371750,
+        "stop_id": 0,
+        "stop_state": "NONE"
+      }
+    },
+    {
+      "check": "Unwired MSP is truthfully unavailable",
+      "passed": true,
+      "evidence": {
+        "board": "ESP32_FIREBEETLE",
+        "firmware": "DIRECT_WIFI_V1",
+        "main_controller": "MSP430F5529",
+        "ap_ready": true,
+        "msp_link": "NOT_CONNECTED",
+        "fresh": false,
+        "age_ms": null,
+        "telemetry": null,
+        "error": "MSP UART reply timed out",
+        "pending_id": 3818371750,
+        "stop_id": 0,
+        "stop_state": "NONE"
+      }
+    },
+    {
+      "check": "Unwired STOP is not queued",
+      "passed": true,
+      "evidence": "MSP STOP"
+    }
+  ],
+  "exchanges": [
+    {
+      "command": "PING",
+      "lines": [
+        "PONG ESP32_DIRECT_WIFI_V1"
+      ]
+    },
+    {
+      "command": "STATUS",
+      "lines": [
+        "STATUS BOARD=ESP32_FIREBEETLE FW=DIRECT_WIFI_V1 AP=READY MSP_LINK=NOT_CONNECTED MSP_UART_RX=16 MSP_UART_TX=17 IP=192.168.4.1"
+      ]
+    },
+    {
+      "command": "F",
+      "lines": [
+        "ERROR unsupported command"
+      ]
+    },
+    {
+      "command": "START",
+      "lines": [
+        "ERROR unsupported command"
+      ]
+    },
+    {
+      "command": "SPRAY",
+      "lines": [
+        "ERROR unsupported command"
+      ]
+    },
+    {
+      "command": "W",
+      "lines": [
+        "ERROR unsupported command"
+      ]
+    },
+    {
+      "command": "B",
+      "lines": [
+        "ERROR unsupported command"
+      ]
+    },
+    {
+      "command": "C",
+      "lines": [
+        "ERROR unsupported command"
+      ]
+    },
+    {
+      "command": "ROBOT MSP START",
+      "lines": [
+        "ERROR unsupported command"
+      ]
+    },
+    {
+      "command": "STATE",
+      "lines": [
+        "{\"board\":\"ESP32_FIREBEETLE\",\"firmware\":\"DIRECT_WIFI_V1\",\"main_controller\":\"MSP430F5529\",\"ap_ready\":true,\"msp_link\":\"NOT_CONNECTED\",\"fresh\":false,\"age_ms\":null,\"telemetry\":null,\"error\":\"MSP UART reply timed out\",\"pending_id\":3818371750,\"stop_id\":0,\"stop_state\":\"NONE\"}"
+      ]
+    },
+    {
+      "command": "MSP STOP",
+      "lines": [
+        "ERROR MSP unavailable or busy; request not queued"
+      ]
+    }
+  ],
+  "uart_wired_passed": false,
+  "wifi_http_passed": false,
+  "usb_passed": true
+}

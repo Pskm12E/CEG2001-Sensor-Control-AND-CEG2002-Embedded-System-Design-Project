@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased — 2026-11-05
+
+- Organised current sources into Car, Laptop and Docking_Station, with device
+  guides, labelled archived experiments and an old-to-new path map.
+- Preserved the main car MSP430, Uno wheel control, car ESP32 access point,
+  wireless XIAO camera and desk Pico architecture.
+- Included continuous wireless video and the laptop OpenCV blue-square test.
+  Trained YOLO, detection-triggered stopping/spraying and dock firmware remain planned.
+- Updated builders, imports, relative includes, launch paths and documentation.
+  Regenerated build output; kept private settings and binaries out of Git.
+- Kept the Version 1 tag and deployed hosting branch unchanged.
+
 ## Version 1 — v1.0.0 — 2026-10-29
 
 First source release of the CEG2001/CEG2002 pest-monitoring and spot-spraying

@@ -1,0 +1,58 @@
+Create a NEW, extremely legible, polished engineering infographic for a student robotics project, wide landscape, approximately 2400x1700, white background, navy headings, pale blue DESK zone and pale green CAR zone. Educational board-and-connections poster with realistic recognizable small illustrations of laptop, green Raspberry Pi Pico W, black DFRobot FireBeetle ESP32 board, red TI MSP430F5529 LaunchPad, blue Arduino Uno, small Seeed XIAO ESP32-S3 Sense with camera lens and 2.4GHz antenna, red L298N and two yellow gearmotor wheels. Generous spacing, precise large text, restrained clean arrows, no decorative scenery. Prioritize exact readable text over extra detail. This is the UPDATED WORKING architecture, 5 November 2026, not the old layout.
+
+TITLE: "ROBOT SYSTEM — UPDATED BOARDS & CONNECTIONS"
+SUBTITLE on navy bar: "MSP430 is the MAIN robot controller"
+Small date: "Current prototype • 5 Nov 2026"
+
+MANDATORY placement, with large enclosing colored zones:
+LEFT approximately 27%: "BESIDE THE LAPTOP" zone contains LAPTOP and PICO W. Laptop and Pico connected by BLUE double arrow "USB: data + power". Laptop bullets "Local dashboard" and "Live video + robot status", small URL "127.0.0.1:8765". Pico bullets "Desk Wi-Fi / USB relay" and "No GPIO wires to the car".
+RIGHT approximately 70%: "ON THE CAR" zone contains FIREBEETLE ESP32 (left), ROBOT MSP430 (center, visually dominant with red MAIN CONTROLLER badge), ARDUINO UNO (right). Draw purple bidirectional "Private 2.4 GHz Wi-Fi" connection between desk Pico and car FireBeetle. ESP32 bullets "Private Wi-Fi access point" and "UART bridge to MSP430". ESP32 and MSP430 connected by TEAL bidirectional arrow "3.3 V UART • 9600 baud". MSP430 bullets "Main supervisor" and "Supervises Arduino Uno". MSP430 and Uno connected by TEAL bidirectional arrow "UART • 9600 baud". Uno bullets "IR line sensing" and "Wheel control through L298N". Add subtle amber "IR calibration pending".
+WITHIN THE CAR ZONE, upper row above FireBeetle: small XIAO ESP32-S3 SENSE CAMERA card, photo-like camera board. Bullets "OV3660 camera", "Live video: 320 × 240, ~15 fps". Purple Wi-Fi arrow from camera to FireBeetle AP, clearly label "Camera joins SAME private Wi-Fi". The AP routes camera data to the desk Pico, NOT to the MSP430. A power-bank icon and gray arrow to camera labelled "USB-C: POWER ONLY". Do not draw any USB DATA line from camera to laptop or any GPIO line from camera to MSP430.
+Below Arduino: two IR sensor icons and L298N motor driver connected to two yellow wheel motors. Show "Left IR → D2" and "Right IR → D4", label "IR power: 3.3 V + GND". L298N takes motor signals from Uno; wheels only connect through L298N. Separate small 4×AA pack arrow to L298N labelled "Separate motor supply".
+
+Under main zones put three tidy wiring detail boxes, text large enough to read:
+BOX 1 "ESP32 ↔ MAIN MSP430"
+"IO17 TX → P4.2 RX"
+"IO16 RX ← P4.1 TX"
+"GND ↔ GND"
+"3.3 V logic; direct signal connection"
+
+BOX 2 "MAIN MSP430 ↔ UNO"
+"P3.3 TX → Uno D5 RX"
+"P3.4 RX ← divider ← Uno D6 TX"
+"GND ↔ GND"
+Highlight "Keep the Uno TX voltage divider"
+Small accurate schematic text:
+"Uno D6 → 1 kΩ → RX junction → MSP P3.4"
+"RX junction → (2.2 kΩ ∥ 2.2 kΩ) → GND"
+The two 2.2 kΩ resistors are PARALLEL, not series.
+
+BOX 3 "UNO ↔ L298N ↔ WHEELS"
+"D7 → IN1     D8 → IN2"
+"D9 → IN3     D10 → IN4"
+"OUT1 / OUT2 → left motor"
+"OUT3 / OUT4 → right motor"
+"Uno GND ↔ L298N GND"
+"ENA + ENB enable jumpers fitted"
+
+Below boxes, two visually distinct horizontal flow ribbons:
+BLUE: "VIDEO TO PC: Camera → ESP32 private Wi-Fi AP → Pico → USB → Laptop"
+TEAL: "STATUS TO PC: Uno → MSP430 → ESP32 → Wi-Fi → Pico → USB → Laptop"
+Small note "Dashboard currently provides read-only checks; movement and spray commands are not enabled."
+
+BOTTOM small gray dashed PLANNED area with 2 cards:
+"DOCK: MSP430 #2 + BOOSTER" / "Dock sensors + refill control: planned" / "Pins and communication not integrated"
+"SPRAY PUMP + DRIVER" / "MSP430-authorised spraying: planned" / "Hardware and pins pending"
+
+Bottom status strip: "WORKING: live wireless video + robot telemetry" and "NEXT: IR calibration, pest detection, spraying and dock integration"
+Tiny power note: "ESP32, MSP430 and Uno keep their existing USB power supplies. Motor power stays separate."
+
+STRICT ACCURACY:
+- Pico is BESIDE LAPTOP. FireBeetle ESP32, robot MSP430, Uno and XIAO camera are ON CAR.
+- No Pico-to-MSP430 I2C wiring exists in this current design. Omit the old GP4/GP5/P3.0/P3.1 and 4.7k pull-up details entirely.
+- Camera is WORKING, powered by power bank, WIRELESS video through ESP AP and Pico.
+- Laptop is connected by USB to PICO, not FireBeetle and not camera.
+- MSP430 remains main robot authority; video relay does not make ESP32 or Pico the main robot controller.
+- Do not invent pump pins, charging contacts, autonomous pest recognition, ADC connections, completed docking, motion feedback or tested line following.
+- No passwords, SSID credentials, claims of zero lifetime UART errors, or old NOT_CONNECTED warnings.
+- Wiring arrows must terminate on the correct cards. Do not overcrowd or cross text. Draw all content inside margins.

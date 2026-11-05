@@ -3,7 +3,7 @@
 .env.*
 !.env.example
 **/board_backup_*/
-/Wireless_Link/local-network.json
+**/local-network.json
 **/NetworkConfig.h
 *.pem
 *.key
@@ -12,6 +12,7 @@
 **/build/
 **/build-*/
 **/Debug/
+**/Debug_wifi/
 **/Release/
 *.uf2
 *.elf
@@ -28,6 +29,11 @@
 # Local tools, editor state and session notes
 /tmp/
 /work/
+/Laptop/Artifacts/camera-private/
+**/models/*.pt
+**/models/*.onnx
+/Laptop/YOLO_Model/*.pt
+/Laptop/YOLO_Model/*.onnx
 **/.vscode/
 **/.idea/
 **/.metadata/
@@ -42,4 +48,4 @@
 .DS_Store
 Thumbs.db
 
-# Keep output/diagrams, PDF guides, screenshots and verification JSON in Git.
+# Keep Laptop/Artifacts/diagrams, PDF guides, screenshots and verification JSON in Git.

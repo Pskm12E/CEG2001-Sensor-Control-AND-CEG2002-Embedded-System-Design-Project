@@ -1,0 +1,10 @@
+{
+  "tested_at": "2026-11-05T18:42:04.670049+08:00",
+  "scope": "Verify direct ESP firmware over USB; optionally check UART and Wi-Fi HTTP.\nNever sends start, calibration, reset, flash or spray commands.\n",
+  "checks": [],
+  "exchanges": [],
+  "uart_wired_passed": false,
+  "wifi_http_passed": false,
+  "usb_passed": false,
+  "error": "Cannot configure port, something went wrong. Original message: PermissionError(13, 'A device attached to the system is not functioning.', None, 31)"
+}

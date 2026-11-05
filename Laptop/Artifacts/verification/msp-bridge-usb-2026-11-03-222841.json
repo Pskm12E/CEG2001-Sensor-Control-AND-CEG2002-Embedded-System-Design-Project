@@ -1,0 +1,157 @@
+{
+  "time": "2026-11-03T22:28:41.455522+08:00",
+  "scope": "MSP USB after I2C endpoint upload; no movement/calibration",
+  "physical_i2c_tested": false,
+  "checks": [
+    {
+      "check": "Supervisor identity",
+      "passed": true,
+      "evidence": "PONG MSP430 SUPERVISOR_V2\r\n"
+    },
+    {
+      "check": "Local stop command accepted",
+      "passed": true,
+      "evidence": "STOP REQUESTED\r\nSTOP CONFIRMED\r\nLINK READY; STOPPED\r\n"
+    },
+    {
+      "check": "USB status reply 1",
+      "passed": true,
+      "evidence": "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=I2C_V1\r\n"
+    },
+    {
+      "check": "I2C firmware identity and stopped 1",
+      "passed": true,
+      "evidence": "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=I2C_V1"
+    },
+    {
+      "check": "USB status reply 2",
+      "passed": true,
+      "evidence": "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=I2C_V1\r\n"
+    },
+    {
+      "check": "I2C firmware identity and stopped 2",
+      "passed": true,
+      "evidence": "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=I2C_V1"
+    },
+    {
+      "check": "USB status reply 3",
+      "passed": true,
+      "evidence": "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=3 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=I2C_V1\r\n"
+    },
+    {
+      "check": "I2C firmware identity and stopped 3",
+      "passed": true,
+      "evidence": "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=3 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=I2C_V1"
+    },
+    {
+      "check": "USB status reply 4",
+      "passed": true,
+      "evidence": "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=I2C_V1\r\n"
+    },
+    {
+      "check": "I2C firmware identity and stopped 4",
+      "passed": true,
+      "evidence": "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=I2C_V1"
+    },
+    {
+      "check": "USB status reply 5",
+      "passed": true,
+      "evidence": "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=I2C_V1\r\n"
+    },
+    {
+      "check": "I2C firmware identity and stopped 5",
+      "passed": true,
+      "evidence": "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=I2C_V1"
+    }
+  ],
+  "statuses": [
+    {
+      "BOARD": "MSP430F5529",
+      "FW": "SUPERVISOR_V2",
+      "LINK": "READY",
+      "RUN": "0",
+      "CAL": "NEEDED",
+      "L2": "NC",
+      "R4": "NC",
+      "LED2": "OFF",
+      "FLAGS": "96",
+      "RESULT": "0",
+      "PENDING": "0",
+      "UART_ERRORS": "1",
+      "RX_DROPS": "0",
+      "BAD_FRAMES": "0",
+      "BRIDGE": "I2C_V1"
+    },
+    {
+      "BOARD": "MSP430F5529",
+      "FW": "SUPERVISOR_V2",
+      "LINK": "READY",
+      "RUN": "0",
+      "CAL": "NEEDED",
+      "L2": "NC",
+      "R4": "NC",
+      "LED2": "OFF",
+      "FLAGS": "96",
+      "RESULT": "0",
+      "PENDING": "0",
+      "UART_ERRORS": "1",
+      "RX_DROPS": "0",
+      "BAD_FRAMES": "0",
+      "BRIDGE": "I2C_V1"
+    },
+    {
+      "BOARD": "MSP430F5529",
+      "FW": "SUPERVISOR_V2",
+      "LINK": "READY",
+      "RUN": "0",
+      "CAL": "NEEDED",
+      "L2": "NC",
+      "R4": "NC",
+      "LED2": "OFF",
+      "FLAGS": "96",
+      "RESULT": "0",
+      "PENDING": "3",
+      "UART_ERRORS": "1",
+      "RX_DROPS": "0",
+      "BAD_FRAMES": "0",
+      "BRIDGE": "I2C_V1"
+    },
+    {
+      "BOARD": "MSP430F5529",
+      "FW": "SUPERVISOR_V2",
+      "LINK": "READY",
+      "RUN": "0",
+      "CAL": "NEEDED",
+      "L2": "NC",
+      "R4": "NC",
+      "LED2": "OFF",
+      "FLAGS": "96",
+      "RESULT": "0",
+      "PENDING": "0",
+      "UART_ERRORS": "1",
+      "RX_DROPS": "0",
+      "BAD_FRAMES": "0",
+      "BRIDGE": "I2C_V1"
+    },
+    {
+      "BOARD": "MSP430F5529",
+      "FW": "SUPERVISOR_V2",
+      "LINK": "READY",
+      "RUN": "0",
+      "CAL": "NEEDED",
+      "L2": "NC",
+      "R4": "NC",
+      "LED2": "OFF",
+      "FLAGS": "96",
+      "RESULT": "0",
+      "PENDING": "0",
+      "UART_ERRORS": "1",
+      "RX_DROPS": "0",
+      "BAD_FRAMES": "0",
+      "BRIDGE": "I2C_V1"
+    }
+  ],
+  "usb_passed": true,
+  "uno_stop_ack_observed": true,
+  "uno_link_stable_ready": true
+}

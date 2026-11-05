@@ -1,0 +1,30 @@
+SNAPSHOT direct UART build running
+P4IN=127
+P4DIR=128
+P4SEL=6
+P4MAP1=12
+P4MAP2=11
+P4MAP4=0
+P4MAP5=0
+ticks=9
+linked=1
+running=0
+peerFlags=96
+uartErrors=0
+rxDrops=0
+badFrames=0
+SNAPSHOT one second later
+P4IN=127
+P4DIR=128
+P4SEL=6
+P4MAP1=12
+P4MAP2=11
+P4MAP4=0
+P4MAP5=0
+ticks=20
+linked=1
+running=0
+peerFlags=96
+uartErrors=0
+rxDrops=0
+badFrames=0

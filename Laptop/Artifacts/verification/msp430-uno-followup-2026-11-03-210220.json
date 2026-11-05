@@ -1,0 +1,23 @@
+{
+  "time": "2026-11-03T21:02:20.553519+08:00",
+  "scope": "MSP console only; no Uno USB reset; no actuator commands",
+  "results": [
+    {
+      "command": "LINK PING",
+      "response": "LINK SENT: PING\r\nLINK PASS: PONG UNO\r\n"
+    },
+    {
+      "command": "LINK PING",
+      "response": "LINK SENT: PING\r\nLINK PASS: PONG UNO\r\n"
+    },
+    {
+      "command": "LINK PING",
+      "response": "LINK SENT: PING\r\nLINK PASS: PONG UNO\r\n"
+    },
+    {
+      "command": "STATUS",
+      "response": "STATUS BOARD=MSP430F5529 LED2=OFF S2_PRESSES=0 UART0=IDLE UART_ERRORS=0 RX_DROPS=0 BENCH_ONLY\r\n"
+    }
+  ],
+  "sync": ""
+}

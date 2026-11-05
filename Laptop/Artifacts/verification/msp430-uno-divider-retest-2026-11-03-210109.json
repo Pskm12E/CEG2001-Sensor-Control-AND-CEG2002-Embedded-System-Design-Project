@@ -1,0 +1,76 @@
+{
+  "time": "2026-11-03T21:01:09.899466+08:00",
+  "msp_port": "COM13",
+  "uno_port": "COM12",
+  "user_confirmed_motor_battery_disconnected": true,
+  "user_reported_wiring": "P3.3 -> D5; D6 -> 1k -> P3.4; junction -> two 2.2k in parallel -> GND",
+  "divider_voltage_measured": false,
+  "user_reported_wire_colours": "Uno D6 green -> divider -> yellow MSP P3.4",
+  "dedicated_common_ground_independently_verified": false,
+  "actuators_tested": false,
+  "internal_loopback_tested": false,
+  "results": [
+    {
+      "check": "MSP430 USB ping",
+      "passed": true,
+      "elapsed_ms": 78.0,
+      "response": "PONG MSP430\r\n"
+    },
+    {
+      "check": "MSP430 initial status",
+      "passed": true,
+      "elapsed_ms": 172.0,
+      "response": "STATUS BOARD=MSP430F5529 LED2=OFF S2_PRESSES=0 UART0=IDLE UART_ERRORS=0 RX_DROPS=0 BENCH_ONLY\r\n"
+    },
+    {
+      "check": "Uno communication sketch identity",
+      "passed": true,
+      "elapsed_ms": 0.0,
+      "response": "PONG UNO\r\n"
+    },
+    {
+      "check": "Uno motor outputs disabled",
+      "passed": true,
+      "elapsed_ms": 0.0,
+      "response": "STATUS LED=OFF MOTORS=DISABLED\r\n"
+    },
+    {
+      "check": "MSP430 LED2 on",
+      "passed": true,
+      "elapsed_ms": 93.0,
+      "response": "OK LED2 ON\r\n"
+    },
+    {
+      "check": "MSP430 LED2 on status",
+      "passed": true,
+      "elapsed_ms": 157.0,
+      "response": "STATUS BOARD=MSP430F5529 LED2=ON S2_PRESSES=0 UART0=IDLE UART_ERRORS=0 RX_DROPS=0 BENCH_ONLY\r\n"
+    },
+    {
+      "check": "MSP430 LED2 off",
+      "passed": true,
+      "elapsed_ms": 78.0,
+      "response": "OK LED2 OFF\r\n"
+    },
+    {
+      "check": "Physical MSP430-to-Uno round trip",
+      "passed": false,
+      "response": "LINK SENT: PING\r\nLINK UNEXPECTED: ERR INVALID LINE\r\nLINK TIMEOUT: no confirmed Arduino reply\r\n"
+    }
+  ],
+  "initial_line_sync": {
+    "msp": "",
+    "uno": "ERR INVALID LINE\r\n"
+  },
+  "initial_status": {
+    "BOARD": "MSP430F5529",
+    "LED2": "OFF",
+    "S2_PRESSES": "0",
+    "UART0": "IDLE",
+    "UART_ERRORS": "0",
+    "RX_DROPS": "0"
+  },
+  "all_checks_passed": false,
+  "error": "Physical MSP430-to-Uno round trip: missing b'LINK PASS: PONG UNO\\r\\n'; got b'LINK SENT: PING\\r\\nLINK UNEXPECTED: ERR INVALID LINE\\r\\nLINK TIMEOUT: no confirmed Arduino reply\\r\\n'",
+  "checks_passed": 7
+}

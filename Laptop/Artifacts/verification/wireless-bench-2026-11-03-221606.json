@@ -1,0 +1,156 @@
+{
+  "tested_at": "2026-11-03T22:16:06.964524+08:00",
+  "scope": "USB/Wi-Fi/onboard LED only; no MSP, sensor or actuator integration",
+  "ports": {
+    "esp32": "COM15",
+    "pico": "COM11"
+  },
+  "checks": [
+    {
+      "check": "ESP32 USB firmware identity",
+      "passed": true,
+      "evidence": "PONG ESP32_GATEWAY"
+    },
+    {
+      "check": "Pico USB firmware identity",
+      "passed": true,
+      "evidence": "PONG PICO_W_USB"
+    },
+    {
+      "check": "Wireless handshake",
+      "passed": true,
+      "evidence": "STATUS BOARD=ESP32_FIREBEETLE ROLE=LAPTOP_GATEWAY AP=READY PICO_LINK=UP MSP_LINK=NOT_CONNECTED FW=BRIDGE2"
+    },
+    {
+      "check": "MSP link truthfully absent",
+      "passed": true,
+      "evidence": "STATUS BOARD=ESP32_FIREBEETLE ROLE=LAPTOP_GATEWAY AP=READY PICO_LINK=UP MSP_LINK=NOT_CONNECTED FW=BRIDGE2"
+    },
+    {
+      "check": "USB to Wi-Fi round trip",
+      "passed": true,
+      "evidence": "ROBOT PONG PICO_W"
+    },
+    {
+      "check": "Pico status returned over Wi-Fi",
+      "passed": true,
+      "evidence": "ROBOT STATUS BOARD=PICO_W LED=OFF MSP_LINK=NOT_CONNECTED FW=BRIDGE2"
+    },
+    {
+      "check": "Pico runs BRIDGE2",
+      "passed": true,
+      "evidence": "ROBOT STATUS BOARD=PICO_W LED=OFF MSP_LINK=NOT_CONNECTED FW=BRIDGE2"
+    },
+    {
+      "check": "Missing physical MSP link reported",
+      "passed": true,
+      "evidence": "ROBOT MSP ERROR NOT_CONNECTED"
+    },
+    {
+      "check": "Remote movement start is unavailable",
+      "passed": true,
+      "evidence": "ERROR unsupported robot command"
+    },
+    {
+      "check": "Radio remains responsive after absent I2C peer",
+      "passed": true,
+      "evidence": "ROBOT PONG PICO_W"
+    },
+    {
+      "check": "Wireless LED ON acknowledgement",
+      "passed": true,
+      "evidence": "ROBOT LED=ON"
+    },
+    {
+      "check": "Independent Pico USB confirms LED ON",
+      "passed": true,
+      "evidence": "STATUS BOARD=PICO_W GATEWAY_LINK=UP LED=ON WIFI=3 TCP=CONNECTED MSP_LINK=NOT_CONNECTED FW=BRIDGE2"
+    },
+    {
+      "check": "Wireless LED OFF acknowledgement",
+      "passed": true,
+      "evidence": "ROBOT LED=OFF"
+    },
+    {
+      "check": "Independent Pico USB confirms LED OFF",
+      "passed": true,
+      "evidence": "STATUS BOARD=PICO_W GATEWAY_LINK=UP LED=OFF WIFI=3 TCP=CONNECTED MSP_LINK=NOT_CONNECTED FW=BRIDGE2"
+    },
+    {
+      "check": "Actuator command rejected",
+      "passed": true,
+      "evidence": "ERROR unsupported robot command"
+    },
+    {
+      "check": "Oversized USB line rejected",
+      "passed": true,
+      "evidence": "ERROR invalid or oversized USB line"
+    },
+    {
+      "check": "Binary USB line rejected",
+      "passed": true,
+      "evidence": "ERROR invalid or oversized USB line"
+    },
+    {
+      "check": "CRLF and recovery after invalid input",
+      "passed": true,
+      "evidence": "PONG ESP32_GATEWAY"
+    },
+    {
+      "check": "30 repeated Wi-Fi round trips",
+      "passed": true,
+      "evidence": [
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W",
+        "ROBOT PONG PICO_W"
+      ]
+    },
+    {
+      "check": "Precondition for disconnect test",
+      "passed": true,
+      "evidence": "ROBOT LED=ON"
+    },
+    {
+      "check": "Reconnect after ESP32 reset",
+      "passed": true,
+      "evidence": "STATUS BOARD=ESP32_FIREBEETLE ROLE=LAPTOP_GATEWAY AP=READY PICO_LINK=UP MSP_LINK=NOT_CONNECTED FW=BRIDGE2"
+    },
+    {
+      "check": "LED cleared; old ON not replayed",
+      "passed": true,
+      "evidence": "STATUS BOARD=PICO_W GATEWAY_LINK=UP LED=OFF WIFI=3 TCP=CONNECTED MSP_LINK=NOT_CONNECTED FW=BRIDGE2"
+    },
+    {
+      "check": "Fresh command after reconnect",
+      "passed": true,
+      "evidence": "ROBOT PONG PICO_W"
+    }
+  ]
+}

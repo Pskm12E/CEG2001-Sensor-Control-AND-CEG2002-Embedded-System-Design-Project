@@ -1,0 +1,177 @@
+{
+  "time": "2026-11-03T21:02:52.641981+08:00",
+  "msp_port": "COM13",
+  "uno_port": "COM12",
+  "user_confirmed_motor_battery_disconnected": true,
+  "user_reported_wiring": "P3.3 -> D5; D6 -> 1k -> P3.4; junction -> two 2.2k in parallel -> GND",
+  "divider_voltage_measured": false,
+  "user_reported_wire_colours": "Uno D6 green -> divider -> yellow MSP P3.4",
+  "dedicated_common_ground_independently_verified": false,
+  "actuators_tested": false,
+  "internal_loopback_tested": false,
+  "results": [
+    {
+      "check": "MSP430 USB ping",
+      "passed": true,
+      "elapsed_ms": 94.0,
+      "response": "PONG MSP430\r\n"
+    },
+    {
+      "check": "MSP430 initial status",
+      "passed": true,
+      "elapsed_ms": 156.0,
+      "response": "STATUS BOARD=MSP430F5529 LED2=OFF S2_PRESSES=0 UART0=IDLE UART_ERRORS=0 RX_DROPS=0 BENCH_ONLY\r\n"
+    },
+    {
+      "check": "Uno communication sketch identity",
+      "passed": true,
+      "elapsed_ms": 16.0,
+      "response": "PONG UNO\r\n"
+    },
+    {
+      "check": "Uno motor outputs disabled",
+      "passed": true,
+      "elapsed_ms": 0.0,
+      "response": "STATUS LED=OFF MOTORS=DISABLED\r\n"
+    },
+    {
+      "check": "MSP430 LED2 on",
+      "passed": true,
+      "elapsed_ms": 93.0,
+      "response": "OK LED2 ON\r\n"
+    },
+    {
+      "check": "MSP430 LED2 on status",
+      "passed": true,
+      "elapsed_ms": 157.0,
+      "response": "STATUS BOARD=MSP430F5529 LED2=ON S2_PRESSES=0 UART0=IDLE UART_ERRORS=0 RX_DROPS=0 BENCH_ONLY\r\n"
+    },
+    {
+      "check": "MSP430 LED2 off",
+      "passed": true,
+      "elapsed_ms": 93.0,
+      "response": "OK LED2 OFF\r\n"
+    },
+    {
+      "check": "Physical MSP430-to-Uno round trip",
+      "passed": true,
+      "elapsed_ms": 94.0,
+      "response": "LINK SENT: PING\r\nLINK PASS: PONG UNO\r\n"
+    },
+    {
+      "check": "MSP430 commands Uno LED on",
+      "passed": true,
+      "elapsed_ms": 94.0,
+      "response": "LINK SENT: LED ON\r\nLINK PASS: ACK LED ON\r\n"
+    },
+    {
+      "check": "Independent Uno LED on readback",
+      "passed": true,
+      "elapsed_ms": 16.0,
+      "response": "STATUS LED=ON MOTORS=DISABLED\r\n"
+    },
+    {
+      "check": "MSP430 commands Uno LED off",
+      "passed": true,
+      "elapsed_ms": 93.0,
+      "response": "LINK SENT: LED OFF\r\nLINK PASS: ACK LED OFF\r\n"
+    },
+    {
+      "check": "Independent Uno LED off readback",
+      "passed": true,
+      "elapsed_ms": 0.0,
+      "response": "STATUS LED=OFF MOTORS=DISABLED\r\n"
+    },
+    {
+      "check": "Repeated wired round trip 1",
+      "passed": true,
+      "elapsed_ms": 110.0,
+      "response": "LINK SENT: PING\r\nLINK PASS: PONG UNO\r\n"
+    },
+    {
+      "check": "Repeated wired round trip 2",
+      "passed": true,
+      "elapsed_ms": 93.0,
+      "response": "LINK SENT: PING\r\nLINK PASS: PONG UNO\r\n"
+    },
+    {
+      "check": "Repeated wired round trip 3",
+      "passed": true,
+      "elapsed_ms": 110.0,
+      "response": "LINK SENT: PING\r\nLINK PASS: PONG UNO\r\n"
+    },
+    {
+      "check": "Repeated wired round trip 4",
+      "passed": true,
+      "elapsed_ms": 94.0,
+      "response": "LINK SENT: PING\r\nLINK PASS: PONG UNO\r\n"
+    },
+    {
+      "check": "Repeated wired round trip 5",
+      "passed": true,
+      "elapsed_ms": 109.0,
+      "response": "LINK SENT: PING\r\nLINK PASS: PONG UNO\r\n"
+    },
+    {
+      "check": "Repeated wired round trip 6",
+      "passed": true,
+      "elapsed_ms": 94.0,
+      "response": "LINK SENT: PING\r\nLINK PASS: PONG UNO\r\n"
+    },
+    {
+      "check": "Repeated wired round trip 7",
+      "passed": true,
+      "elapsed_ms": 109.0,
+      "response": "LINK SENT: PING\r\nLINK PASS: PONG UNO\r\n"
+    },
+    {
+      "check": "Repeated wired round trip 8",
+      "passed": true,
+      "elapsed_ms": 94.0,
+      "response": "LINK SENT: PING\r\nLINK PASS: PONG UNO\r\n"
+    },
+    {
+      "check": "Repeated wired round trip 9",
+      "passed": true,
+      "elapsed_ms": 109.0,
+      "response": "LINK SENT: PING\r\nLINK PASS: PONG UNO\r\n"
+    },
+    {
+      "check": "Repeated wired round trip 10",
+      "passed": true,
+      "elapsed_ms": 94.0,
+      "response": "LINK SENT: PING\r\nLINK PASS: PONG UNO\r\n"
+    },
+    {
+      "check": "Final MSP430 status",
+      "passed": true,
+      "elapsed_ms": 156.0,
+      "response": "STATUS BOARD=MSP430F5529 LED2=OFF S2_PRESSES=0 UART0=IDLE UART_ERRORS=0 RX_DROPS=0 BENCH_ONLY\r\n"
+    }
+  ],
+  "initial_line_sync": {
+    "msp": "",
+    "uno": "ERR INVALID LINE\r\n"
+  },
+  "initial_status": {
+    "BOARD": "MSP430F5529",
+    "LED2": "OFF",
+    "S2_PRESSES": "0",
+    "UART0": "IDLE",
+    "UART_ERRORS": "0",
+    "RX_DROPS": "0"
+  },
+  "physical_interboard_link_tested": true,
+  "final_status": {
+    "BOARD": "MSP430F5529",
+    "LED2": "OFF",
+    "S2_PRESSES": "0",
+    "UART0": "IDLE",
+    "UART_ERRORS": "0",
+    "RX_DROPS": "0"
+  },
+  "uart_error_delta": 0,
+  "receive_drop_delta": 0,
+  "all_checks_passed": true,
+  "checks_passed": 23
+}

@@ -1,0 +1,40 @@
+{
+  "tested_at": "2026-11-05T21:10:06.044683+08:00",
+  "passed": true,
+  "transport": "XIAO Wi-Fi -> ESP32 private AP -> desk Pico USB -> one local MJPEG response",
+  "images_saved": false,
+  "actuator_commands_sent": false,
+  "frames": 200,
+  "fps": 14.91,
+  "median_relay_age_ms": 0.0,
+  "max_relay_age_ms": 18.81,
+  "seconds": 13.34,
+  "scope": "Relay age is laptop USB receive to HTTP client, not lens-to-display latency.",
+  "camera_state": {
+    "connected": true,
+    "port": "PICO_WIFI",
+    "sensor": "XIAO ESP32-S3",
+    "error": null,
+    "sequence": 1763,
+    "source_sequence": 1764,
+    "captured_at": 1793884219.439574,
+    "transport": "WIFI_VIA_PICO",
+    "width": 320,
+    "height": 240,
+    "corrupt_frames": 0,
+    "bytes": 3864,
+    "crc32": "FD79BDAF",
+    "streaming": true,
+    "fps": 15.2,
+    "frame_age_ms": 15,
+    "generation": 1
+  },
+  "robot_connection": {
+    "connected": true,
+    "port": "COM11",
+    "baud": 115200,
+    "error": null,
+    "fresh": true,
+    "last_seen": "2026-11-05T13:10:19.198+00:00"
+  }
+}

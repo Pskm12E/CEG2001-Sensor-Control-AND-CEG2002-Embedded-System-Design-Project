@@ -1,0 +1,198 @@
+{
+  "time": "2026-11-03T19:26:26.708656+08:00",
+  "scope": "USB UART1 only after RXD/TXD cap restoration",
+  "physical_interboard_link_tested": false,
+  "actuators_tested": false,
+  "results": [
+    {
+      "check": "USB PING",
+      "command": "PING",
+      "response": "PONG MSP430\r\n",
+      "passed": true,
+      "elapsed_ms": 93
+    },
+    {
+      "check": "Initial status",
+      "command": "STATUS",
+      "response": "STATUS BOARD=MSP430F5529 LED2=OFF S2_PRESSES=0 UART0=IDLE UART_ERRORS=0 RX_DROPS=0 BENCH_ONLY\r\n",
+      "passed": true,
+      "elapsed_ms": 157
+    },
+    {
+      "check": "LED2 on",
+      "command": "ON",
+      "response": "OK LED2 ON\r\n",
+      "passed": true,
+      "elapsed_ms": 93
+    },
+    {
+      "check": "LED2 on readback",
+      "command": "STATUS",
+      "response": "STATUS BOARD=MSP430F5529 LED2=ON S2_PRESSES=0 UART0=IDLE UART_ER",
+      "passed": true,
+      "elapsed_ms": 79
+    },
+    {
+      "check": "LED2 off",
+      "command": "OFF",
+      "response": "RORS=0 RX_DROPS=0 BENCH_ONLY\r\nOK LED2 OFF\r\n",
+      "passed": true,
+      "elapsed_ms": 78
+    },
+    {
+      "check": "Repeated PING 1",
+      "command": "PING",
+      "response": "PONG MSP430\r\n",
+      "passed": true,
+      "elapsed_ms": 93
+    },
+    {
+      "check": "Repeated PING 2",
+      "command": "PING",
+      "response": "PONG MSP430\r\n",
+      "passed": true,
+      "elapsed_ms": 94
+    },
+    {
+      "check": "Repeated PING 3",
+      "command": "PING",
+      "response": "PONG MSP430\r\n",
+      "passed": true,
+      "elapsed_ms": 94
+    },
+    {
+      "check": "Repeated PING 4",
+      "command": "PING",
+      "response": "PONG MSP430\r\n",
+      "passed": true,
+      "elapsed_ms": 94
+    },
+    {
+      "check": "Repeated PING 5",
+      "command": "PING",
+      "response": "PONG MSP430\r\n",
+      "passed": true,
+      "elapsed_ms": 93
+    },
+    {
+      "check": "Repeated PING 6",
+      "command": "PING",
+      "response": "PONG MSP430\r\n",
+      "passed": true,
+      "elapsed_ms": 94
+    },
+    {
+      "check": "Repeated PING 7",
+      "command": "PING",
+      "response": "PONG MSP430\r\n",
+      "passed": true,
+      "elapsed_ms": 94
+    },
+    {
+      "check": "Repeated PING 8",
+      "command": "PING",
+      "response": "PONG MSP430\r\n",
+      "passed": true,
+      "elapsed_ms": 94
+    },
+    {
+      "check": "Repeated PING 9",
+      "command": "PING",
+      "response": "PONG MSP430\r\n",
+      "passed": true,
+      "elapsed_ms": 78
+    },
+    {
+      "check": "Repeated PING 10",
+      "command": "PING",
+      "response": "PONG MSP430\r\n",
+      "passed": true,
+      "elapsed_ms": 79
+    },
+    {
+      "check": "Repeated PING 11",
+      "command": "PING",
+      "response": "PONG MSP430\r\n",
+      "passed": true,
+      "elapsed_ms": 93
+    },
+    {
+      "check": "Repeated PING 12",
+      "command": "PING",
+      "response": "PONG MSP430\r\n",
+      "passed": true,
+      "elapsed_ms": 94
+    },
+    {
+      "check": "Repeated PING 13",
+      "command": "PING",
+      "response": "PONG MSP430\r\n",
+      "passed": true,
+      "elapsed_ms": 94
+    },
+    {
+      "check": "Repeated PING 14",
+      "command": "PING",
+      "response": "PONG MSP430\r\n",
+      "passed": true,
+      "elapsed_ms": 94
+    },
+    {
+      "check": "Repeated PING 15",
+      "command": "PING",
+      "response": "PONG MSP430\r\n",
+      "passed": true,
+      "elapsed_ms": 93
+    },
+    {
+      "check": "Repeated PING 16",
+      "command": "PING",
+      "response": "PONG MSP430\r\n",
+      "passed": true,
+      "elapsed_ms": 94
+    },
+    {
+      "check": "Repeated PING 17",
+      "command": "PING",
+      "response": "PONG MSP430\r\n",
+      "passed": true,
+      "elapsed_ms": 94
+    },
+    {
+      "check": "Repeated PING 18",
+      "command": "PING",
+      "response": "PONG MSP430\r\n",
+      "passed": true,
+      "elapsed_ms": 94
+    },
+    {
+      "check": "Repeated PING 19",
+      "command": "PING",
+      "response": "PONG MSP430\r\n",
+      "passed": true,
+      "elapsed_ms": 93
+    },
+    {
+      "check": "Repeated PING 20",
+      "command": "PING",
+      "response": "PONG MSP430\r\n",
+      "passed": true,
+      "elapsed_ms": 94
+    },
+    {
+      "check": "Final status",
+      "command": "STATUS",
+      "response": "STATUS BOARD=MSP430F5529 LED2=OFF S2_PRESSES=0 UART0=IDLE UART_ERRORS=0 RX_DROPS=0 BENCH_ONLY\r\n",
+      "passed": true,
+      "elapsed_ms": 156
+    }
+  ],
+  "passed": true,
+  "candidate_ports": [
+    "COM13"
+  ],
+  "port": "COM13",
+  "initial_sync": "",
+  "UART_ERRORS_delta": 0,
+  "RX_DROPS_delta": 0
+}

@@ -1,0 +1,7 @@
+Hi Prof, I would like to check whether it is acceptable to run the YOLO object-detection model locally on my laptop for our project.
+
+The camera will be mounted on the robot and send live video over our existing private Wi-Fi network through the ESP32 and desk Pico. The laptop will analyse the video and return a target-detection report to the robot MSP430. The MSP430 will remain the main controller: it will check the robot and sensor conditions, instruct the Arduino Uno to stop the line-following car, and authorise a timed spray only after the target and nozzle alignment have been checked. We plan to demonstrate spraying with water.
+
+We are starting with a blue-square detection test using OpenCV, then intend to train a detector for a toy insect. The wireless camera and robot-status links are working; detection-triggered stopping and spraying are still to be integrated.
+
+Would this division of work satisfy the embedded-system expectations, provided our MSP430 and Booster Board implementation also fulfils the required sensor, ADC, interrupt, timer, communication and power-saving functions?

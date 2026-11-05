@@ -1,0 +1,40 @@
+{
+  "time": "2026-11-03T18:23:52.905912+08:00",
+  "msp_port": "COM13",
+  "uno_port": "COM12",
+  "user_confirmed_motor_battery_disconnected": true,
+  "user_reported_wiring": "P3.3 -> D5; D6 -> 1k -> P3.4; junction -> two 2.2k in parallel -> GND",
+  "divider_voltage_measured": false,
+  "actuators_tested": false,
+  "internal_loopback_tested": false,
+  "results": [
+    {
+      "check": "MSP430 USB ping",
+      "passed": true,
+      "elapsed_ms": 94.0,
+      "response": "PONG MSP430\r\n"
+    },
+    {
+      "check": "MSP430 initial status",
+      "passed": true,
+      "elapsed_ms": 156.0,
+      "response": "STATUS BOARD=MSP430F5529 LED2=OFF S2_PRESSES=0 UART0=IDLE UART_ERRORS=4 RX_DROPS=0 BENCH_ONLY\r\n"
+    },
+    {
+      "check": "Uno communication sketch identity",
+      "passed": false,
+      "response": "ERR INVALID LINE\r\n"
+    }
+  ],
+  "initial_status": {
+    "BOARD": "MSP430F5529",
+    "LED2": "OFF",
+    "S2_PRESSES": "0",
+    "UART0": "IDLE",
+    "UART_ERRORS": "4",
+    "RX_DROPS": "0"
+  },
+  "all_checks_passed": false,
+  "error": "Uno communication sketch identity: missing b'PONG UNO\\r\\n'; got b'ERR INVALID LINE\\r\\n'",
+  "checks_passed": 2
+}

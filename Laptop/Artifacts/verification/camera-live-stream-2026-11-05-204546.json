@@ -1,0 +1,8 @@
+{
+  "tested_at": "2026-11-05T20:45:46.138420+08:00",
+  "passed": false,
+  "transport": "one persistent multipart MJPEG response over local HTTP",
+  "images_saved": false,
+  "actuator_commands_sent": false,
+  "error": "HTTP Error 409: Conflict"
+}

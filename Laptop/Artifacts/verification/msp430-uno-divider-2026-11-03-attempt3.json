@@ -1,0 +1,24 @@
+{
+  "time": "2026-11-03T18:31:01.892211+08:00",
+  "msp_port": "COM13",
+  "uno_port": "COM12",
+  "user_confirmed_motor_battery_disconnected": true,
+  "user_reported_wiring": "P3.3 -> D5; D6 -> 1k -> P3.4; junction -> two 2.2k in parallel -> GND",
+  "divider_voltage_measured": false,
+  "actuators_tested": false,
+  "internal_loopback_tested": false,
+  "results": [
+    {
+      "check": "MSP430 USB ping",
+      "passed": false,
+      "response": ""
+    }
+  ],
+  "initial_line_sync": {
+    "msp": "",
+    "uno": "ERR INVALID LINE\r\n"
+  },
+  "all_checks_passed": false,
+  "error": "MSP430 USB ping: missing b'PONG MSP430\\r\\n'; got b''",
+  "checks_passed": 0
+}

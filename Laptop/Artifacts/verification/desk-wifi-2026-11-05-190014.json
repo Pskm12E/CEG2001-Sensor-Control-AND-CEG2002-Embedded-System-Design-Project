@@ -1,0 +1,54 @@
+{
+  "tested_at": "2026-11-05T19:00:14.400273+08:00",
+  "scope": "Read-only hardware test: laptop USB -> desk Pico -> private Wi-Fi ESP -> MSP -> Uno.\nNo motor, STOP, calibration, spray, reset or flash commands are dispatched.\n",
+  "checks": [
+    {
+      "check": "Desk Pico USB firmware identity",
+      "passed": true,
+      "evidence": "PONG PICO_DESK_BRIDGE_V1"
+    },
+    {
+      "check": "Desk role and running indicator",
+      "passed": true,
+      "evidence": "STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V1 LED=ON WIFI=UP ESP_LINK=UP MSP_LINK=UP READ_ONLY=1"
+    },
+    {
+      "check": "Private Wi-Fi, ESP and MSP links UP",
+      "passed": true,
+      "evidence": "STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V1 LED=ON WIFI=UP ESP_LINK=UP MSP_LINK=UP READ_ONLY=1"
+    },
+    {
+      "check": "USB -> Pico Wi-Fi -> ESP HTTP round trip",
+      "passed": false,
+      "evidence": "ROBOT ERROR ESP_UNAVAILABLE_OR_INVALID_RESPONSE"
+    }
+  ],
+  "exchanges": [
+    {
+      "command": "PING",
+      "lines": [
+        "PONG PICO_DESK_BRIDGE_V1"
+      ]
+    },
+    {
+      "command": "STATUS",
+      "lines": [
+        "STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V1 LED=ON WIFI=UP ESP_LINK=UP MSP_LINK=UP READ_ONLY=1"
+      ]
+    },
+    {
+      "command": "STATUS",
+      "lines": [
+        "STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V1 LED=ON WIFI=UP ESP_LINK=UP MSP_LINK=UP READ_ONLY=1"
+      ]
+    },
+    {
+      "command": "ROBOT PING",
+      "lines": [
+        "ROBOT ERROR ESP_UNAVAILABLE_OR_INVALID_RESPONSE"
+      ]
+    }
+  ],
+  "passed": false,
+  "error": "USB -> Pico Wi-Fi -> ESP HTTP round trip: ROBOT ERROR ESP_UNAVAILABLE_OR_INVALID_RESPONSE"
+}

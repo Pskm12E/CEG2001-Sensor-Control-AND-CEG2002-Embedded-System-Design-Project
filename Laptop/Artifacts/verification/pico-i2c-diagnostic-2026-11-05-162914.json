@@ -1,0 +1,84 @@
+{
+  "tested_at": "2026-11-05T16:29:14.310510+08:00",
+  "scope": "Read Pico I2C diagnostics around status-only requests. Never starts motion.",
+  "exchanges": [
+    {
+      "port": "COM11",
+      "command": "PING",
+      "lines": [
+        "PONG PICO_W_USB"
+      ]
+    },
+    {
+      "port": "COM11",
+      "command": "I2CDIAG",
+      "lines": [
+        "I2CDIAG ADDR=0x32 SDA_GP=4 SCL_GP=5 SDA=1 SCL=1 SDA_FUNC=3 SCL_FUNC=3 PHASE=NEVER WRITE=-99 READ=-99 BAD_REPLY=0 BUSY=0"
+      ]
+    },
+    {
+      "port": "COM15",
+      "command": "STATUS",
+      "lines": [
+        "STATUS BOARD=ESP32_FIREBEETLE ROLE=LAPTOP_GATEWAY AP=READY PICO_LINK=UP MSP_LINK=NOT_CONNECTED FW=BRIDGE2"
+      ]
+    },
+    {
+      "port": "COM15",
+      "command": "ROBOT MSP STATUS",
+      "lines": [
+        "ROBOT MSP ERROR NOT_CONNECTED"
+      ]
+    },
+    {
+      "port": "COM11",
+      "command": "I2CDIAG",
+      "lines": [
+        "I2CDIAG ADDR=0x32 SDA_GP=4 SCL_GP=5 SDA=1 SCL=1 SDA_FUNC=3 SCL_FUNC=3 PHASE=WRITE WRITE=-2 READ=-99 BAD_REPLY=0 BUSY=0"
+      ]
+    },
+    {
+      "port": "COM15",
+      "command": "ROBOT MSP STATUS",
+      "lines": [
+        "ROBOT MSP ERROR NOT_CONNECTED"
+      ]
+    },
+    {
+      "port": "COM11",
+      "command": "I2CDIAG",
+      "lines": [
+        "I2CDIAG ADDR=0x32 SDA_GP=4 SCL_GP=5 SDA=1 SCL=1 SDA_FUNC=3 SCL_FUNC=3 PHASE=WRITE WRITE=-2 READ=-99 BAD_REPLY=0 BUSY=0"
+      ]
+    },
+    {
+      "port": "COM15",
+      "command": "ROBOT MSP STATUS",
+      "lines": [
+        "ROBOT MSP ERROR NOT_CONNECTED"
+      ]
+    },
+    {
+      "port": "COM11",
+      "command": "I2CDIAG",
+      "lines": [
+        "I2CDIAG ADDR=0x32 SDA_GP=4 SCL_GP=5 SDA=1 SCL=1 SDA_FUNC=3 SCL_FUNC=3 PHASE=WRITE WRITE=-2 READ=-99 BAD_REPLY=0 BUSY=0"
+      ]
+    },
+    {
+      "port": "COM15",
+      "command": "ROBOT LED ON",
+      "lines": [
+        "ROBOT LED=ON"
+      ]
+    },
+    {
+      "port": "COM11",
+      "command": "STATUS",
+      "lines": [
+        "STATUS BOARD=PICO_W GATEWAY_LINK=UP LED=ON WIFI=3 TCP=CONNECTED MSP_LINK=NOT_CONNECTED FW=BRIDGE2"
+      ]
+    }
+  ],
+  "completed": true
+}

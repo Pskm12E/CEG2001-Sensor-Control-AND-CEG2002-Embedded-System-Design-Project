@@ -1,0 +1,151 @@
+{
+  "time": "2026-11-03T21:19:39.058350+08:00",
+  "scope": "supervisor V2 integration, motors unpowered",
+  "physical_line_following_tested": false,
+  "physical_lease_stop_while_moving_tested": false,
+  "results": [
+    {
+      "check": "MSP V2 identity",
+      "passed": true,
+      "evidence": "PONG MSP430 SUPERVISOR_V2\r\n"
+    },
+    {
+      "check": "Linked and stopped",
+      "passed": true,
+      "evidence": "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=0 RX_DROPS=0 BAD_FRAMES=0"
+    },
+    {
+      "check": "Calibration required",
+      "passed": true,
+      "evidence": "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=0 RX_DROPS=0 BAD_FRAMES=0"
+    },
+    {
+      "check": "Uno V2 stopped",
+      "passed": true,
+      "evidence": "UNO V2 FLAGS=96 DRIVE=0 REASON=0 RAW=0/0\n"
+    },
+    {
+      "check": "Uncalibrated start refused",
+      "passed": true,
+      "evidence": "QUEUED 6\r\nSTART REFUSED; RESULT=NOT_CALIBRATED\r\n"
+    },
+    {
+      "check": "Refusal kept stopped",
+      "passed": true,
+      "evidence": "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=0 RX_DROPS=0 BAD_FRAMES=0"
+    },
+    {
+      "check": "MSP stop acknowledged",
+      "passed": true,
+      "evidence": "STOP REQUESTED\r\nSTOP CONFIRMED\r\nLINK READY; STOPPED\r\n"
+    },
+    {
+      "check": "Stop resynchronised without start",
+      "passed": true,
+      "evidence": "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=3 UART_ERRORS=0 RX_DROPS=0 BAD_FRAMES=0"
+    },
+    {
+      "check": "Manual resynchronisation",
+      "passed": true,
+      "evidence": "QUEUED 1\r\nLINK READY; STOPPED\r\n"
+    },
+    {
+      "check": "Old bench command rejected",
+      "passed": true,
+      "evidence": "ERR UNKNOWN COMMAND\r\n"
+    },
+    {
+      "check": "Uno USB cannot start",
+      "passed": true,
+      "evidence": "UNO V2 FLAGS=96 DRIVE=0 REASON=0 RAW=0/0\n"
+    },
+    {
+      "check": "Uno local stop recovered stopped",
+      "passed": true,
+      "evidence": "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=0 RX_DROPS=0 BAD_FRAMES=0"
+    },
+    {
+      "check": "Uno reset recovery 1",
+      "passed": true,
+      "evidence": "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0"
+    },
+    {
+      "check": "Uno reset recovery 2",
+      "passed": true,
+      "evidence": "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=2 RX_DROPS=0 BAD_FRAMES=0"
+    },
+    {
+      "check": "Uno reset recovery 3",
+      "passed": true,
+      "evidence": "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=3 RX_DROPS=0 BAD_FRAMES=0"
+    },
+    {
+      "check": "Continuing wired status 1",
+      "passed": true,
+      "evidence": "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=3 RX_DROPS=0 BAD_FRAMES=0"
+    },
+    {
+      "check": "Continuing wired status 2",
+      "passed": true,
+      "evidence": "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=3 RX_DROPS=0 BAD_FRAMES=0"
+    },
+    {
+      "check": "Continuing wired status 3",
+      "passed": true,
+      "evidence": "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=3 RX_DROPS=0 BAD_FRAMES=0"
+    },
+    {
+      "check": "Continuing wired status 4",
+      "passed": true,
+      "evidence": "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=3 RX_DROPS=0 BAD_FRAMES=0"
+    },
+    {
+      "check": "Continuing wired status 5",
+      "passed": true,
+      "evidence": "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=3 RX_DROPS=0 BAD_FRAMES=0"
+    },
+    {
+      "check": "No new framing errors",
+      "passed": true,
+      "evidence": "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=3 RX_DROPS=0 BAD_FRAMES=0"
+    },
+    {
+      "check": "Final Uno outputs stopped",
+      "passed": true,
+      "evidence": "UNO V2 FLAGS=96 DRIVE=0 REASON=0 RAW=0/0\n"
+    }
+  ],
+  "passed": true,
+  "initial_status": {
+    "BOARD": "MSP430F5529",
+    "FW": "SUPERVISOR_V2",
+    "LINK": "READY",
+    "RUN": "0",
+    "CAL": "NEEDED",
+    "L2": "NC",
+    "R4": "NC",
+    "LED2": "OFF",
+    "FLAGS": "96",
+    "RESULT": "0",
+    "PENDING": "0",
+    "UART_ERRORS": "0",
+    "RX_DROPS": "0",
+    "BAD_FRAMES": "0"
+  },
+  "final_status": {
+    "BOARD": "MSP430F5529",
+    "FW": "SUPERVISOR_V2",
+    "LINK": "READY",
+    "RUN": "0",
+    "CAL": "NEEDED",
+    "L2": "NC",
+    "R4": "NC",
+    "LED2": "OFF",
+    "FLAGS": "96",
+    "RESULT": "0",
+    "PENDING": "0",
+    "UART_ERRORS": "3",
+    "RX_DROPS": "0",
+    "BAD_FRAMES": "0"
+  }
+}

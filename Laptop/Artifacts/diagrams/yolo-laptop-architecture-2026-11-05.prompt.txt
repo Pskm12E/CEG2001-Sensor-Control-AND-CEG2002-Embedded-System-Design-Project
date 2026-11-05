@@ -1,0 +1,40 @@
+Create a NEW clear engineering infographic in the same polished white/navy/pale-blue/pale-green visual style as the earlier robot boards poster in this conversation, with recognizable board pictures and a wooden two-deck robot with two yellow wheels. Landscape 3:2 composition. This poster will be sent to a professor to ask about a PROPOSED architecture. Make text large and spare, with neat arrows and no crossings through text.
+
+TITLE: "PEST-DETECTION ROBOT — VISION ON THE LAPTOP"
+Subtitle: "Proposed YOLO integration • MSP430 remains the MAIN robot controller"
+Small date: "5 Nov 2026"
+
+LEFT blue zone headed "BESIDE THE LAPTOP":
+LAPTOP icon showing a camera feed with a bounding box around a toy insect.
+Labels: "Local dashboard", "YOLO inference — PLANNED", "Blue-square OpenCV test — IN DEVELOPMENT".
+Under laptop: green PICO W board. Connect laptop and Pico by blue double arrow "USB data + power". Pico label "Desk Wi-Fi / USB relay".
+Do NOT place FireBeetle on desk or Pico on car.
+
+RIGHT green zone headed "ON THE CAR":
+A plausible wooden two-deck car with yellow wheels, batteries secured low, downward IR sensors at front and a small forward/side-facing XIAO camera looking toward a potted plant beside the black tape route.
+Above the car, three aligned board cards: black FIREBEETLE ESP32, red ROBOT MSP430F5529, blue ARDUINO UNO.
+ESP32 label "Private Wi-Fi access point". MSP430 red badge "MAIN CONTROLLER"; labels "Checks requests", "Authorises stop / spray — planned". Uno labels "IR line sensing", "L298N wheel control".
+Solid bidirectional teal UART arrows: ESP32 ↔ MSP430 "3.3 V UART · 9600 baud"; MSP430 ↔ Uno "UART + Uno TX divider · 9600 baud".
+Pico and FireBeetle connected by purple double arrow "Existing private 2.4 GHz Wi-Fi".
+
+Small XIAO ESP32-S3 SENSE camera card above/near the ESP32, connected to ESP by purple Wi-Fi arrow, labelled "Camera joins same private Wi-Fi". Camera USB-C is "POWER BANK: POWER ONLY". Video does not pass through MSP430, and no camera USB cable goes to laptop. Draw camera lens on car. Camera video and robot telemetry are working.
+Below Uno/car include small callout "Left IR → D2 • Right IR → D4", red L298N "D7–D10 motor signals", wheels, separate 4×AA motor supply.
+Draw small pump/tank/nozzle on car but clearly tag "SPRAY HARDWARE / CONTROL: PLANNED", no claim already fitted/tested.
+
+MIDDLE/BOTTOM two clear horizontal flow ribbons:
+BLUE solid: "LIVE VIDEO: Camera → ESP32 Wi-Fi AP → Pico → USB → Laptop"
+ORANGE dashed: "PROPOSED DETECTION REPORT: Laptop → Pico → Wi-Fi → ESP32 → MSP430"
+Explain directly below: "Laptop reports the target. MSP430 decides and commands the Uno / spray driver."
+
+BOTTOM a six-stage strip headed "PROPOSED AUTOMATIC WORKFLOW — NOT IMPLEMENTED END TO END":
+"1 Follow black line" → "2 Detect target" → "3 MSP430 stops car" → "4 Recheck target + aim" → "5 Bounded WATER spray" → "6 Resume / avoid repeat spray".
+No automatic spray from one image. The nozzle must be aligned at a tested distance. Blue practice target is not insect recognition.
+
+Small grey planned card: "DOCK: MSP430 #2 + BOOSTER • Dock sensors and refill control • Not integrated".
+Small current status note: "WORKING: wireless video + robot status. Current dashboard sends no movement or spray commands."
+Final navy-bordered question banner:
+"QUESTION FOR PROF: May YOLO run on the laptop while the MSP430 remains responsible for sensor decisions and robot control?"
+
+Constraints: no obsolete Pico-to-MSP I2C or pull-up resistors; no wireless charging; no claims of autonomous insect detection already working; no internet/cloud requirement; preserve current car ESP/MSP/Uno and desk Pico roles. No passwords. Illustrative board placement, not a physical pinout. Do not copy old image's Pico-on-car label. Distinguish existing links (solid) from planned detection/control flow (dashed). Keep all content inside margins.
+
+Focused edit: replace car front ultrasonic-like dual eyes with a single-lens XIAO camera; replace dock router icon with MSP430 plus Booster. Preserve other labels/layout. Built-in image generation used.

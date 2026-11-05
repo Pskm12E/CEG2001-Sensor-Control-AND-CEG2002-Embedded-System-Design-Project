@@ -1,0 +1,2433 @@
+{
+  "tested_at": "2026-11-05T20:24:47.947603+08:00",
+  "checks": [
+    {
+      "check": "Only Pico candidates in robot USB selector",
+      "passed": true
+    },
+    {
+      "check": "Fresh real MSP430 status through desk Pico Wi-Fi",
+      "passed": true
+    },
+    {
+      "check": "Uno acknowledged and stopped",
+      "passed": true
+    },
+    {
+      "check": "Four distinct fresh dashboard updates within 25 seconds",
+      "passed": true
+    },
+    {
+      "check": "Robot error counters unchanged",
+      "passed": true
+    },
+    {
+      "check": "API rejects START",
+      "passed": true
+    },
+    {
+      "check": "API rejects STOP",
+      "passed": true
+    },
+    {
+      "check": "API rejects SPRAY",
+      "passed": true
+    },
+    {
+      "check": "API rejects ON",
+      "passed": true
+    },
+    {
+      "check": "API rejects W",
+      "passed": true
+    },
+    {
+      "check": "API rejects B",
+      "passed": true
+    },
+    {
+      "check": "Expected camera USB port",
+      "passed": true
+    },
+    {
+      "check": "JPEG served as image/jpeg",
+      "passed": true
+    },
+    {
+      "check": "Camera frame length and CRC agree",
+      "passed": true
+    },
+    {
+      "check": "Real JPEG markers and dimensions",
+      "passed": true
+    },
+    {
+      "check": "JPEG served as image/jpeg",
+      "passed": true
+    },
+    {
+      "check": "Camera frame length and CRC agree",
+      "passed": true
+    },
+    {
+      "check": "Real JPEG markers and dimensions",
+      "passed": true
+    },
+    {
+      "check": "JPEG served as image/jpeg",
+      "passed": true
+    },
+    {
+      "check": "Camera frame length and CRC agree",
+      "passed": true
+    },
+    {
+      "check": "Real JPEG markers and dimensions",
+      "passed": true
+    },
+    {
+      "check": "Camera sequence advances",
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "actuators_tested": false,
+  "robot_state": {
+    "mode": "local",
+    "read_only": true,
+    "connection": {
+      "connected": true,
+      "port": "COM11",
+      "baud": 115200,
+      "error": null,
+      "fresh": true,
+      "last_seen": "2026-11-05T12:24:47.141+00:00"
+    },
+    "links": {
+      "pico": "UP",
+      "wifi": "UP",
+      "esp": "UP",
+      "msp": "UP",
+      "uno": "READY"
+    },
+    "telemetry": {
+      "uno_link": "READY",
+      "run": 0,
+      "calibration": "NEEDED",
+      "left": "NC",
+      "right": "NC",
+      "led2": "OFF",
+      "flags": 96,
+      "result": 0,
+      "pending": 0,
+      "uart_errors": 0,
+      "rx_drops": 0,
+      "bad_frames": 0,
+      "board": "MSP430F5529",
+      "firmware": "SUPERVISOR_V2"
+    },
+    "events": [
+      {
+        "id": 1,
+        "time": "2026-11-05T12:21:57.975+00:00",
+        "kind": "info",
+        "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+      },
+      {
+        "id": 2,
+        "time": "2026-11-05T12:23:14.263+00:00",
+        "kind": "connection",
+        "message": "Opened desk Pico on COM11; verifying firmware."
+      },
+      {
+        "id": 3,
+        "time": "2026-11-05T12:23:14.265+00:00",
+        "kind": "board",
+        "message": "PONG PICO_DESK_BRIDGE_V1"
+      },
+      {
+        "id": 4,
+        "time": "2026-11-05T12:23:17.116+00:00",
+        "kind": "connection",
+        "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+      }
+    ],
+    "camera": {
+      "connected": true,
+      "port": "COM17",
+      "sensor": "OV3660",
+      "error": null,
+      "sequence": 59,
+      "captured_at": 1793881487.1206925,
+      "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+      "width": 320,
+      "height": 240,
+      "bytes": 2991,
+      "crc32": "D394E23E"
+    }
+  },
+  "poll_observations": [
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:48.180+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 59,
+        "captured_at": 1793881487.1206925,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2991,
+        "crc32": "D394E23E"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:48.180+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 60,
+        "captured_at": 1793881488.7393315,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2993,
+        "crc32": "79CEA338"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:48.180+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 60,
+        "captured_at": 1793881488.7393315,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2993,
+        "crc32": "79CEA338"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:48.180+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 60,
+        "captured_at": 1793881488.7393315,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2993,
+        "crc32": "79CEA338"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:48.180+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 60,
+        "captured_at": 1793881488.7393315,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2993,
+        "crc32": "79CEA338"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:48.180+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 60,
+        "captured_at": 1793881488.7393315,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2993,
+        "crc32": "79CEA338"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:48.180+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 60,
+        "captured_at": 1793881488.7393315,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2993,
+        "crc32": "79CEA338"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:48.180+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 61,
+        "captured_at": 1793881490.345544,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2994,
+        "crc32": "0746E2FB"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:48.180+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 61,
+        "captured_at": 1793881490.345544,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2994,
+        "crc32": "0746E2FB"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:48.180+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 61,
+        "captured_at": 1793881490.345544,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2994,
+        "crc32": "0746E2FB"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": "Waiting for fresh robot status through the Pico. Check power to the ESP32, MSP430 and Uno.",
+        "fresh": false,
+        "last_seen": "2026-11-05T12:24:48.180+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "STALE",
+        "uno": "UNKNOWN"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 61,
+        "captured_at": 1793881490.345544,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2994,
+        "crc32": "0746E2FB"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": "Waiting for fresh robot status through the Pico. Check power to the ESP32, MSP430 and Uno.",
+        "fresh": false,
+        "last_seen": "2026-11-05T12:24:48.180+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "STALE",
+        "uno": "UNKNOWN"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 61,
+        "captured_at": 1793881490.345544,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2994,
+        "crc32": "0746E2FB"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:52.139+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 62,
+        "captured_at": 1793881491.9550135,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2992,
+        "crc32": "4DD09072"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:52.139+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 62,
+        "captured_at": 1793881491.9550135,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2992,
+        "crc32": "4DD09072"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:52.139+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 62,
+        "captured_at": 1793881491.9550135,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2992,
+        "crc32": "4DD09072"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:52.139+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 62,
+        "captured_at": 1793881491.9550135,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2992,
+        "crc32": "4DD09072"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:52.139+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 62,
+        "captured_at": 1793881491.9550135,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2992,
+        "crc32": "4DD09072"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:52.139+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 63,
+        "captured_at": 1793881493.5706573,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2990,
+        "crc32": "ED8C6977"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:52.139+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 63,
+        "captured_at": 1793881493.5706573,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2990,
+        "crc32": "ED8C6977"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:52.139+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 63,
+        "captured_at": 1793881493.5706573,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2990,
+        "crc32": "ED8C6977"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:52.139+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 63,
+        "captured_at": 1793881493.5706573,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2990,
+        "crc32": "ED8C6977"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:52.139+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 63,
+        "captured_at": 1793881493.5706573,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2990,
+        "crc32": "ED8C6977"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:52.139+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 64,
+        "captured_at": 1793881495.190092,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2989,
+        "crc32": "892459AA"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": "Waiting for fresh robot status through the Pico. Check power to the ESP32, MSP430 and Uno.",
+        "fresh": false,
+        "last_seen": "2026-11-05T12:24:52.139+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "STALE",
+        "uno": "UNKNOWN"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 64,
+        "captured_at": 1793881495.190092,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2989,
+        "crc32": "892459AA"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": "Waiting for fresh robot status through the Pico. Check power to the ESP32, MSP430 and Uno.",
+        "fresh": false,
+        "last_seen": "2026-11-05T12:24:52.139+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "STALE",
+        "uno": "UNKNOWN"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 64,
+        "captured_at": 1793881495.190092,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2989,
+        "crc32": "892459AA"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:56.142+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 64,
+        "captured_at": 1793881495.190092,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2989,
+        "crc32": "892459AA"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:56.142+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 64,
+        "captured_at": 1793881495.190092,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2989,
+        "crc32": "892459AA"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:56.142+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 65,
+        "captured_at": 1793881496.8039947,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2989,
+        "crc32": "869AF283"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:56.142+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 65,
+        "captured_at": 1793881496.8039947,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2989,
+        "crc32": "869AF283"
+      }
+    },
+    {
+      "mode": "local",
+      "read_only": true,
+      "connection": {
+        "connected": true,
+        "port": "COM11",
+        "baud": 115200,
+        "error": null,
+        "fresh": true,
+        "last_seen": "2026-11-05T12:24:57.181+00:00"
+      },
+      "links": {
+        "pico": "UP",
+        "wifi": "UP",
+        "esp": "UP",
+        "msp": "UP",
+        "uno": "READY"
+      },
+      "telemetry": {
+        "uno_link": "READY",
+        "run": 0,
+        "calibration": "NEEDED",
+        "left": "NC",
+        "right": "NC",
+        "led2": "OFF",
+        "flags": 96,
+        "result": 0,
+        "pending": 0,
+        "uart_errors": 0,
+        "rx_drops": 0,
+        "bad_frames": 0,
+        "board": "MSP430F5529",
+        "firmware": "SUPERVISOR_V2"
+      },
+      "events": [
+        {
+          "id": 1,
+          "time": "2026-11-05T12:21:57.975+00:00",
+          "kind": "info",
+          "message": "Connect the desk Pico to read robot status. Camera uses its own USB cable."
+        },
+        {
+          "id": 2,
+          "time": "2026-11-05T12:23:14.263+00:00",
+          "kind": "connection",
+          "message": "Opened desk Pico on COM11; verifying firmware."
+        },
+        {
+          "id": 3,
+          "time": "2026-11-05T12:23:14.265+00:00",
+          "kind": "board",
+          "message": "PONG PICO_DESK_BRIDGE_V1"
+        },
+        {
+          "id": 4,
+          "time": "2026-11-05T12:23:17.116+00:00",
+          "kind": "connection",
+          "message": "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART."
+        }
+      ],
+      "camera": {
+        "connected": true,
+        "port": "COM17",
+        "sensor": "OV3660",
+        "error": null,
+        "sequence": 65,
+        "captured_at": 1793881496.8039947,
+        "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+        "width": 320,
+        "height": 240,
+        "bytes": 2989,
+        "crc32": "869AF283"
+      }
+    }
+  ],
+  "stale_poll_count": 4,
+  "camera_frames": [
+    {
+      "connected": true,
+      "port": "COM17",
+      "sensor": "OV3660",
+      "error": null,
+      "sequence": 65,
+      "captured_at": 1793881496.8039947,
+      "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+      "width": 320,
+      "height": 240,
+      "bytes": 2989,
+      "crc32": "869AF283"
+    },
+    {
+      "connected": true,
+      "port": "COM17",
+      "sensor": "OV3660",
+      "error": null,
+      "sequence": 66,
+      "captured_at": 1793881498.4173458,
+      "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+      "width": 320,
+      "height": 240,
+      "bytes": 2996,
+      "crc32": "EBD25216"
+    },
+    {
+      "connected": true,
+      "port": "COM17",
+      "sensor": "OV3660",
+      "error": null,
+      "sequence": 67,
+      "captured_at": 1793881500.0342588,
+      "info": "INFO BOARD=XIAO_ESP32S3 FW=CAMERA_USB_V1 CAMERA_READY=1 SENSOR=OV3660 PID=0x3660 PSRAM_BYTES=8388608 FRAME=QVGA WIFI=OFF ERROR=0x0",
+      "width": 320,
+      "height": 240,
+      "bytes": 2989,
+      "crc32": "AABB0284"
+    }
+  ]
+}

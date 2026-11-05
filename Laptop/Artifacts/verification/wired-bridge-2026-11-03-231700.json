@@ -1,0 +1,27 @@
+{
+  "tested_at": "2026-11-03T23:17:00.211878+08:00",
+  "scope": "Check ESP -> Pico -> MSP I2C and MSP -> Uno stop/status, with motors unpowered.\n\nNo start, calibration, reset, flash or supply-switching commands are sent.\n",
+  "ports": {
+    "esp": "COM15",
+    "msp": "COM13"
+  },
+  "checks": [
+    {
+      "check": "MSP USB identity",
+      "passed": false,
+      "evidence": "P | ONG MSP430 SUPERVISOR_V2"
+    }
+  ],
+  "transcript": [
+    {
+      "port": "COM13",
+      "command": "PING",
+      "lines": [
+        "P",
+        "ONG MSP430 SUPERVISOR_V2"
+      ]
+    }
+  ],
+  "passed": false,
+  "error": "MSP USB identity: P | ONG MSP430 SUPERVISOR_V2"
+}

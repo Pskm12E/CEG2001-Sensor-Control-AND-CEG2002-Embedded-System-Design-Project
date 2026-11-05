@@ -1,0 +1,587 @@
+{
+  "tested_at": "2026-11-05T19:02:31.250883+08:00",
+  "scope": "Read-only hardware test: laptop USB -> desk Pico -> private Wi-Fi ESP -> MSP -> Uno.\nNo motor, STOP, calibration, spray, reset or flash commands are dispatched.\n",
+  "checks": [
+    {
+      "check": "Desk Pico USB firmware identity",
+      "passed": true,
+      "evidence": "PONG PICO_DESK_BRIDGE_V1"
+    },
+    {
+      "check": "Desk role and running indicator",
+      "passed": true,
+      "evidence": "STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V1 LED=ON WIFI=DOWN ESP_LINK=DOWN MSP_LINK=NOT_CONNECTED READ_ONLY=1"
+    },
+    {
+      "check": "Private Wi-Fi, ESP and MSP links UP",
+      "passed": true,
+      "evidence": "STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V1 LED=ON WIFI=UP ESP_LINK=UP MSP_LINK=UP READ_ONLY=1"
+    },
+    {
+      "check": "USB -> Pico Wi-Fi -> ESP HTTP round trip",
+      "passed": true,
+      "evidence": "ROBOT PONG ESP32_DIRECT_WIFI_V1"
+    },
+    {
+      "check": "ESP confirms fresh MSP UART telemetry",
+      "passed": true,
+      "evidence": {
+        "board": "ESP32_FIREBEETLE",
+        "firmware": "DIRECT_WIFI_V1",
+        "main_controller": "MSP430F5529",
+        "ap_ready": true,
+        "msp_link": "UP",
+        "fresh": true,
+        "age_ms": 380,
+        "telemetry": "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1",
+        "error": null,
+        "pending_id": 0,
+        "stop_id": 0,
+        "stop_state": "NONE"
+      }
+    },
+    {
+      "check": "MSP supervisor identity through complete bridge",
+      "passed": true,
+      "evidence": "ROBOT MSP STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1"
+    },
+    {
+      "check": "Uno linked and stopped",
+      "passed": true,
+      "evidence": "ROBOT MSP STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1"
+    },
+    {
+      "check": "20 full-path status round trips",
+      "passed": false,
+      "evidence": [
+        {
+          "BOARD": "MSP430F5529",
+          "FW": "SUPERVISOR_V2",
+          "LINK": "READY",
+          "RUN": "0",
+          "CAL": "NEEDED",
+          "L2": "NC",
+          "R4": "NC",
+          "LED2": "OFF",
+          "FLAGS": "96",
+          "RESULT": "0",
+          "PENDING": "0",
+          "UART_ERRORS": "1",
+          "RX_DROPS": "0",
+          "BAD_FRAMES": "0",
+          "BRIDGE": "ESP_UART_V1"
+        },
+        {
+          "BOARD": "MSP430F5529",
+          "FW": "SUPERVISOR_V2",
+          "LINK": "READY",
+          "RUN": "0",
+          "CAL": "NEEDED",
+          "L2": "NC",
+          "R4": "NC",
+          "LED2": "OFF",
+          "FLAGS": "96",
+          "RESULT": "0",
+          "PENDING": "0",
+          "UART_ERRORS": "1",
+          "RX_DROPS": "0",
+          "BAD_FRAMES": "0",
+          "BRIDGE": "ESP_UART_V1"
+        },
+        {
+          "BOARD": "MSP430F5529",
+          "FW": "SUPERVISOR_V2",
+          "LINK": "READY",
+          "RUN": "0",
+          "CAL": "NEEDED",
+          "L2": "NC",
+          "R4": "NC",
+          "LED2": "OFF",
+          "FLAGS": "96",
+          "RESULT": "0",
+          "PENDING": "0",
+          "UART_ERRORS": "1",
+          "RX_DROPS": "0",
+          "BAD_FRAMES": "0",
+          "BRIDGE": "ESP_UART_V1"
+        },
+        {
+          "BOARD": "MSP430F5529",
+          "FW": "SUPERVISOR_V2",
+          "LINK": "READY",
+          "RUN": "0",
+          "CAL": "NEEDED",
+          "L2": "NC",
+          "R4": "NC",
+          "LED2": "OFF",
+          "FLAGS": "96",
+          "RESULT": "0",
+          "PENDING": "0",
+          "UART_ERRORS": "1",
+          "RX_DROPS": "0",
+          "BAD_FRAMES": "0",
+          "BRIDGE": "ESP_UART_V1"
+        },
+        {
+          "BOARD": "MSP430F5529",
+          "FW": "SUPERVISOR_V2",
+          "LINK": "READY",
+          "RUN": "0",
+          "CAL": "NEEDED",
+          "L2": "NC",
+          "R4": "NC",
+          "LED2": "OFF",
+          "FLAGS": "96",
+          "RESULT": "0",
+          "PENDING": "0",
+          "UART_ERRORS": "1",
+          "RX_DROPS": "0",
+          "BAD_FRAMES": "0",
+          "BRIDGE": "ESP_UART_V1"
+        },
+        {
+          "BOARD": "MSP430F5529",
+          "FW": "SUPERVISOR_V2",
+          "LINK": "READY",
+          "RUN": "0",
+          "CAL": "NEEDED",
+          "L2": "NC",
+          "R4": "NC",
+          "LED2": "OFF",
+          "FLAGS": "96",
+          "RESULT": "0",
+          "PENDING": "0",
+          "UART_ERRORS": "1",
+          "RX_DROPS": "0",
+          "BAD_FRAMES": "0",
+          "BRIDGE": "ESP_UART_V1"
+        },
+        {
+          "BOARD": "MSP430F5529",
+          "FW": "SUPERVISOR_V2",
+          "LINK": "READY",
+          "RUN": "0",
+          "CAL": "NEEDED",
+          "L2": "NC",
+          "R4": "NC",
+          "LED2": "OFF",
+          "FLAGS": "96",
+          "RESULT": "0",
+          "PENDING": "0",
+          "UART_ERRORS": "1",
+          "RX_DROPS": "0",
+          "BAD_FRAMES": "0",
+          "BRIDGE": "ESP_UART_V1"
+        },
+        {
+          "BOARD": "MSP430F5529",
+          "FW": "SUPERVISOR_V2",
+          "LINK": "READY",
+          "RUN": "0",
+          "CAL": "NEEDED",
+          "L2": "NC",
+          "R4": "NC",
+          "LED2": "OFF",
+          "FLAGS": "96",
+          "RESULT": "0",
+          "PENDING": "0",
+          "UART_ERRORS": "1",
+          "RX_DROPS": "0",
+          "BAD_FRAMES": "0",
+          "BRIDGE": "ESP_UART_V1"
+        },
+        {
+          "BOARD": "MSP430F5529",
+          "FW": "SUPERVISOR_V2",
+          "LINK": "READY",
+          "RUN": "0",
+          "CAL": "NEEDED",
+          "L2": "NC",
+          "R4": "NC",
+          "LED2": "OFF",
+          "FLAGS": "96",
+          "RESULT": "0",
+          "PENDING": "0",
+          "UART_ERRORS": "1",
+          "RX_DROPS": "0",
+          "BAD_FRAMES": "0",
+          "BRIDGE": "ESP_UART_V1"
+        },
+        {
+          "BOARD": "MSP430F5529",
+          "FW": "SUPERVISOR_V2",
+          "LINK": "READY",
+          "RUN": "0",
+          "CAL": "NEEDED",
+          "L2": "NC",
+          "R4": "NC",
+          "LED2": "OFF",
+          "FLAGS": "96",
+          "RESULT": "0",
+          "PENDING": "0",
+          "UART_ERRORS": "1",
+          "RX_DROPS": "0",
+          "BAD_FRAMES": "0",
+          "BRIDGE": "ESP_UART_V1"
+        },
+        {
+          "BOARD": "MSP430F5529",
+          "FW": "SUPERVISOR_V2",
+          "LINK": "READY",
+          "RUN": "0",
+          "CAL": "NEEDED",
+          "L2": "NC",
+          "R4": "NC",
+          "LED2": "OFF",
+          "FLAGS": "96",
+          "RESULT": "0",
+          "PENDING": "0",
+          "UART_ERRORS": "1",
+          "RX_DROPS": "0",
+          "BAD_FRAMES": "0",
+          "BRIDGE": "ESP_UART_V1"
+        },
+        {
+          "BOARD": "MSP430F5529",
+          "FW": "SUPERVISOR_V2",
+          "LINK": "READY",
+          "RUN": "0",
+          "CAL": "NEEDED",
+          "L2": "NC",
+          "R4": "NC",
+          "LED2": "OFF",
+          "FLAGS": "96",
+          "RESULT": "0",
+          "PENDING": "0",
+          "UART_ERRORS": "1",
+          "RX_DROPS": "0",
+          "BAD_FRAMES": "0",
+          "BRIDGE": "ESP_UART_V1"
+        },
+        {
+          "BOARD": "MSP430F5529",
+          "FW": "SUPERVISOR_V2",
+          "LINK": "READY",
+          "RUN": "0",
+          "CAL": "NEEDED",
+          "L2": "NC",
+          "R4": "NC",
+          "LED2": "OFF",
+          "FLAGS": "96",
+          "RESULT": "0",
+          "PENDING": "0",
+          "UART_ERRORS": "1",
+          "RX_DROPS": "0",
+          "BAD_FRAMES": "0",
+          "BRIDGE": "ESP_UART_V1"
+        },
+        {
+          "BOARD": "MSP430F5529",
+          "FW": "SUPERVISOR_V2",
+          "LINK": "READY",
+          "RUN": "0",
+          "CAL": "NEEDED",
+          "L2": "NC",
+          "R4": "NC",
+          "LED2": "OFF",
+          "FLAGS": "96",
+          "RESULT": "0",
+          "PENDING": "3",
+          "UART_ERRORS": "1",
+          "RX_DROPS": "0",
+          "BAD_FRAMES": "0",
+          "BRIDGE": "ESP_UART_V1"
+        },
+        {
+          "BOARD": "MSP430F5529",
+          "FW": "SUPERVISOR_V2",
+          "LINK": "READY",
+          "RUN": "0",
+          "CAL": "NEEDED",
+          "L2": "NC",
+          "R4": "NC",
+          "LED2": "OFF",
+          "FLAGS": "96",
+          "RESULT": "0",
+          "PENDING": "3",
+          "UART_ERRORS": "1",
+          "RX_DROPS": "0",
+          "BAD_FRAMES": "0",
+          "BRIDGE": "ESP_UART_V1"
+        },
+        {
+          "BOARD": "MSP430F5529",
+          "FW": "SUPERVISOR_V2",
+          "LINK": "READY",
+          "RUN": "0",
+          "CAL": "NEEDED",
+          "L2": "NC",
+          "R4": "NC",
+          "LED2": "OFF",
+          "FLAGS": "96",
+          "RESULT": "0",
+          "PENDING": "3",
+          "UART_ERRORS": "1",
+          "RX_DROPS": "0",
+          "BAD_FRAMES": "0",
+          "BRIDGE": "ESP_UART_V1"
+        },
+        {
+          "BOARD": "MSP430F5529",
+          "FW": "SUPERVISOR_V2",
+          "LINK": "READY",
+          "RUN": "0",
+          "CAL": "NEEDED",
+          "L2": "NC",
+          "R4": "NC",
+          "LED2": "OFF",
+          "FLAGS": "96",
+          "RESULT": "0",
+          "PENDING": "3",
+          "UART_ERRORS": "1",
+          "RX_DROPS": "0",
+          "BAD_FRAMES": "0",
+          "BRIDGE": "ESP_UART_V1"
+        },
+        {
+          "BOARD": "MSP430F5529",
+          "FW": "SUPERVISOR_V2",
+          "LINK": "READY",
+          "RUN": "0",
+          "CAL": "NEEDED",
+          "L2": "NC",
+          "R4": "NC",
+          "LED2": "OFF",
+          "FLAGS": "96",
+          "RESULT": "0",
+          "PENDING": "3",
+          "UART_ERRORS": "1",
+          "RX_DROPS": "0",
+          "BAD_FRAMES": "0",
+          "BRIDGE": "ESP_UART_V1"
+        },
+        {}
+      ]
+    }
+  ],
+  "exchanges": [
+    {
+      "command": "PING",
+      "lines": [
+        "PONG PICO_DESK_BRIDGE_V1"
+      ]
+    },
+    {
+      "command": "STATUS",
+      "lines": [
+        "STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V1 LED=ON WIFI=DOWN ESP_LINK=DOWN MSP_LINK=NOT_CONNECTED READ_ONLY=1"
+      ]
+    },
+    {
+      "command": "STATUS",
+      "lines": [
+        "STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V1 LED=ON WIFI=DOWN ESP_LINK=DOWN MSP_LINK=NOT_CONNECTED READ_ONLY=1"
+      ]
+    },
+    {
+      "command": "STATUS",
+      "lines": [
+        "STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V1 LED=ON WIFI=DOWN ESP_LINK=DOWN MSP_LINK=NOT_CONNECTED READ_ONLY=1"
+      ]
+    },
+    {
+      "command": "STATUS",
+      "lines": [
+        "STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V1 LED=ON WIFI=DOWN ESP_LINK=DOWN MSP_LINK=NOT_CONNECTED READ_ONLY=1"
+      ]
+    },
+    {
+      "command": "STATUS",
+      "lines": [
+        "STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V1 LED=ON WIFI=DOWN ESP_LINK=DOWN MSP_LINK=NOT_CONNECTED READ_ONLY=1"
+      ]
+    },
+    {
+      "command": "STATUS",
+      "lines": [
+        "STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V1 LED=ON WIFI=DOWN ESP_LINK=DOWN MSP_LINK=NOT_CONNECTED READ_ONLY=1"
+      ]
+    },
+    {
+      "command": "STATUS",
+      "lines": [
+        "STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V1 LED=ON WIFI=DOWN ESP_LINK=DOWN MSP_LINK=NOT_CONNECTED READ_ONLY=1"
+      ]
+    },
+    {
+      "command": "STATUS",
+      "lines": [
+        "STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V1 LED=ON WIFI=DOWN ESP_LINK=DOWN MSP_LINK=NOT_CONNECTED READ_ONLY=1"
+      ]
+    },
+    {
+      "command": "STATUS",
+      "lines": [
+        "STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V1 LED=ON WIFI=DOWN ESP_LINK=DOWN MSP_LINK=NOT_CONNECTED READ_ONLY=1"
+      ]
+    },
+    {
+      "command": "STATUS",
+      "lines": [
+        "STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V1 LED=ON WIFI=DOWN ESP_LINK=DOWN MSP_LINK=NOT_CONNECTED READ_ONLY=1"
+      ]
+    },
+    {
+      "command": "STATUS",
+      "lines": [
+        "STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V1 LED=ON WIFI=DOWN ESP_LINK=DOWN MSP_LINK=NOT_CONNECTED READ_ONLY=1"
+      ]
+    },
+    {
+      "command": "STATUS",
+      "lines": [
+        "STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V1 LED=ON WIFI=DOWN ESP_LINK=DOWN MSP_LINK=NOT_CONNECTED READ_ONLY=1"
+      ]
+    },
+    {
+      "command": "STATUS",
+      "lines": [
+        "STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V1 LED=ON WIFI=UP ESP_LINK=UP MSP_LINK=UP READ_ONLY=1"
+      ]
+    },
+    {
+      "command": "ROBOT PING",
+      "lines": [
+        "ROBOT PONG ESP32_DIRECT_WIFI_V1"
+      ]
+    },
+    {
+      "command": "ROBOT STATE",
+      "lines": [
+        "ROBOT STATE {\"board\":\"ESP32_FIREBEETLE\",\"firmware\":\"DIRECT_WIFI_V1\",\"main_controller\":\"MSP430F5529\",\"ap_ready\":true,\"msp_link\":\"UP\",\"fresh\":true,\"age_ms\":380,\"telemetry\":\"STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1\",\"error\":null,\"pending_id\":0,\"stop_id\":0,\"stop_state\":\"NONE\"}"
+      ]
+    },
+    {
+      "command": "ROBOT MSP STATUS",
+      "lines": [
+        "ROBOT MSP STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1"
+      ]
+    },
+    {
+      "command": "ROBOT MSP STATUS",
+      "lines": [
+        "ROBOT MSP STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1"
+      ]
+    },
+    {
+      "command": "ROBOT MSP STATUS",
+      "lines": [
+        "ROBOT MSP STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1"
+      ]
+    },
+    {
+      "command": "ROBOT MSP STATUS",
+      "lines": [
+        "ROBOT MSP STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1"
+      ]
+    },
+    {
+      "command": "ROBOT MSP STATUS",
+      "lines": [
+        "ROBOT MSP STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1"
+      ]
+    },
+    {
+      "command": "ROBOT MSP STATUS",
+      "lines": [
+        "ROBOT MSP STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1"
+      ]
+    },
+    {
+      "command": "ROBOT MSP STATUS",
+      "lines": [
+        "ROBOT MSP STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1"
+      ]
+    },
+    {
+      "command": "ROBOT MSP STATUS",
+      "lines": [
+        "ROBOT MSP STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1"
+      ]
+    },
+    {
+      "command": "ROBOT MSP STATUS",
+      "lines": [
+        "ROBOT MSP STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1"
+      ]
+    },
+    {
+      "command": "ROBOT MSP STATUS",
+      "lines": [
+        "ROBOT MSP STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1"
+      ]
+    },
+    {
+      "command": "ROBOT MSP STATUS",
+      "lines": [
+        "ROBOT MSP STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1"
+      ]
+    },
+    {
+      "command": "ROBOT MSP STATUS",
+      "lines": [
+        "ROBOT MSP STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1"
+      ]
+    },
+    {
+      "command": "ROBOT MSP STATUS",
+      "lines": [
+        "ROBOT MSP STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1"
+      ]
+    },
+    {
+      "command": "ROBOT MSP STATUS",
+      "lines": [
+        "ROBOT MSP STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1"
+      ]
+    },
+    {
+      "command": "ROBOT MSP STATUS",
+      "lines": [
+        "ROBOT MSP STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=3 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1"
+      ]
+    },
+    {
+      "command": "ROBOT MSP STATUS",
+      "lines": [
+        "ROBOT MSP STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=3 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1"
+      ]
+    },
+    {
+      "command": "ROBOT MSP STATUS",
+      "lines": [
+        "ROBOT MSP STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=3 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1"
+      ]
+    },
+    {
+      "command": "ROBOT MSP STATUS",
+      "lines": [
+        "ROBOT MSP STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=3 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1"
+      ]
+    },
+    {
+      "command": "ROBOT MSP STATUS",
+      "lines": [
+        "ROBOT MSP STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=3 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1"
+      ]
+    },
+    {
+      "command": "ROBOT MSP STATUS",
+      "lines": [
+        "ROBOT ERROR ESP_UNAVAILABLE_OR_INVALID_RESPONSE"
+      ]
+    }
+  ],
+  "passed": false,
+  "error": "20 full-path status round trips: [{'BOARD': 'MSP430F5529', 'FW': 'SUPERVISOR_V2', 'LINK': 'READY', 'RUN': '0', 'CAL': 'NEEDED', 'L2': 'NC', 'R4': 'NC', 'LED2': 'OFF', 'FLAGS': '96', 'RESULT': '0', 'PENDING': '0', 'UART_ERRORS': '1', 'RX_DROPS': '0', 'BAD_FRAMES': '0', 'BRIDGE': 'ESP_UART_V1'}, {'BOARD': 'MSP430F5529', 'FW': 'SUPERVISOR_V2', 'LINK': 'READY', 'RUN': '0', 'CAL': 'NEEDED', 'L2': 'NC', 'R4': 'NC', 'LED2': 'OFF', 'FLAGS': '96', 'RESULT': '0', 'PENDING': '0', 'UART_ERRORS': '1', 'RX_DROPS': '0', 'BAD_FRAMES': '0', 'BRIDGE': 'ESP_UART_V1'}, {'BOARD': 'MSP430F5529', 'FW': 'SUPERVISOR_V2', 'LINK': 'READY', 'RUN': '0', 'CAL': 'NEEDED', 'L2': 'NC', 'R4': 'NC', 'LED2': 'OFF', 'FLAGS': '96', 'RESULT': '0', 'PENDING': '0', 'UART_ERRORS': '1', 'RX_DROPS': '0', 'BAD_FRAMES': '0', 'BRIDGE': 'ESP_UART_V1'}, {'BOARD': 'MSP430F5529', 'FW': 'SUPERVISOR_V2', 'LINK': 'READY', 'RUN': '0', 'CAL': 'NEEDED', 'L2': 'NC', 'R4': 'NC', 'LED2': 'OFF', 'FLAGS': '96', 'RESULT': '0', 'PENDING': '0', 'UART_ERRORS': '1', 'RX_DROPS': '0', 'BAD_FRAMES': '0', 'BRIDGE': 'ESP_UART_V1'}, {'BOARD': 'MSP430F5529', 'FW': 'SUPERVISOR_V2', 'LINK': 'READY', 'RUN': '0', 'CAL': 'NEEDED', 'L2': 'NC', 'R4': 'NC', 'LED2': 'OFF', 'FLAGS': '96', 'RESULT': '0', 'PENDING': '0', 'UART_ERRORS': '1', 'RX_DROPS': '0', 'BAD_FRAMES': '0', 'BRIDGE': 'ESP_UART_V1'}, {'BOARD': 'MSP430F5529', 'FW': 'SUPERVISOR_V2', 'LINK': 'READY', 'RUN': '0', 'CAL': 'NEEDED', 'L2': 'NC', 'R4': 'NC', 'LED2': 'OFF', 'FLAGS': '96', 'RESULT': '0', 'PENDING': '0', 'UART_ERRORS': '1', 'RX_DROPS': '0', 'BAD_FRAMES': '0', 'BRIDGE': 'ESP_UART_V1'}, {'BOARD': 'MSP430F5529', 'FW': 'SUPERVISOR_V2', 'LINK': 'READY', 'RUN': '0', 'CAL': 'NEEDED', 'L2': 'NC', 'R4': 'NC', 'LED2': 'OFF', 'FLAGS': '96', 'RESULT': '0', 'PENDING': '0', 'UART_ERRORS': '1', 'RX_DROPS': '0', 'BAD_FRAMES': '0', 'BRIDGE': 'ESP_UART_V1'}, {'BOARD': 'MSP430F5529', 'FW': 'SUPERVISOR_V2', 'LINK': 'READY', 'RUN': '0', 'CAL': 'NEEDED', 'L2': 'NC', 'R4': 'NC', 'LED2': 'OFF', 'FLAGS': '96', 'RESULT': '0', 'PENDING': '0', 'UART_ERRORS': '1', 'RX_DROPS': '0', 'BAD_FRAMES': '0', 'BRIDGE': 'ESP_UART_V1'}, {'BOARD': 'MSP430F5529', 'FW': 'SUPERVISOR_V2', 'LINK': 'READY', 'RUN': '0', 'CAL': 'NEEDED', 'L2': 'NC', 'R4': 'NC', 'LED2': 'OFF', 'FLAGS': '96', 'RESULT': '0', 'PENDING': '0', 'UART_ERRORS': '1', 'RX_DROPS': '0', 'BAD_FRAMES': '0', 'BRIDGE': 'ESP_UART_V1'}, {'BOARD': 'MSP430F5529', 'FW': 'SUPERVISOR_V2', 'LINK': 'READY', 'RUN': '0', 'CAL': 'NEEDED', 'L2': 'NC', 'R4': 'NC', 'LED2': 'OFF', 'FLAGS': '96', 'RESULT': '0', 'PENDING': '0', 'UART_ERRORS': '1', 'RX_DROPS': '0', 'BAD_FRAMES': '0', 'BRIDGE': 'ESP_UART_V1'}, {'BOARD': 'MSP430F5529', 'FW': 'SUPERVISOR_V2', 'LINK': 'READY', 'RUN': '0', 'CAL': 'NEEDED', 'L2': 'NC', 'R4': 'NC', 'LED2': 'OFF', 'FLAGS': '96', 'RESULT': '0', 'PENDING': '0', 'UART_ERRORS': '1', 'RX_DROPS': '0', 'BAD_FRAMES': '0', 'BRIDGE': 'ESP_UART_V1'}, {'BOARD': 'MSP430F5529', 'FW': 'SUPERVISOR_V2', 'LINK': 'READY', 'RUN': '0', 'CAL': 'NEEDED', 'L2': 'NC', 'R4': 'NC', 'LED2': 'OFF', 'FLAGS': '96', 'RESULT': '0', 'PENDING': '0', 'UART_ERRORS': '1', 'RX_DROPS': '0', 'BAD_FRAMES': '0', 'BRIDGE': 'ESP_UART_V1'}, {'BOARD': 'MSP430F5529', 'FW': 'SUPERVISOR_V2', 'LINK': 'READY', 'RUN': '0', 'CAL': 'NEEDED', 'L2': 'NC', 'R4': 'NC', 'LED2': 'OFF', 'FLAGS': '96', 'RESULT': '0', 'PENDING': '0', 'UART_ERRORS': '1', 'RX_DROPS': '0', 'BAD_FRAMES': '0', 'BRIDGE': 'ESP_UART_V1'}, {'BOARD': 'MSP430F5529', 'FW': 'SUPERVISOR_V2', 'LINK': 'READY', 'RUN': '0', 'CAL': 'NEEDED', 'L2': 'NC', 'R4': 'NC', 'LED2': 'OFF', 'FLAGS': '96', 'RESULT': '0', 'PENDING': '3', 'UART_ERRORS': '1', 'RX_DROPS': '0', 'BAD_FRAMES': '0', 'BRIDGE': 'ESP_UART_V1'}, {'BOARD': 'MSP430F5529', 'FW': 'SUPERVISOR_V2', 'LINK': 'READY', 'RUN': '0', 'CAL': 'NEEDED', 'L2': 'NC', 'R4': 'NC', 'LED2': 'OFF', 'FLAGS': '96', 'RESULT': '0', 'PENDING': '3', 'UART_ERRORS': '1', 'RX_DROPS': '0', 'BAD_FRAMES': '0', 'BRIDGE': 'ESP_UART_V1'}, {'BOARD': 'MSP430F5529', 'FW': 'SUPERVISOR_V2', 'LINK': 'READY', 'RUN': '0', 'CAL': 'NEEDED', 'L2': 'NC', 'R4': 'NC', 'LED2': 'OFF', 'FLAGS': '96', 'RESULT': '0', 'PENDING': '3', 'UART_ERRORS': '1', 'RX_DROPS': '0', 'BAD_FRAMES': '0', 'BRIDGE': 'ESP_UART_V1'}, {'BOARD': 'MSP430F5529', 'FW': 'SUPERVISOR_V2', 'LINK': 'READY', 'RUN': '0', 'CAL': 'NEEDED', 'L2': 'NC', 'R4': 'NC', 'LED2': 'OFF', 'FLAGS': '96', 'RESULT': '0', 'PENDING': '3', 'UART_ERRORS': '1', 'RX_DROPS': '0', 'BAD_FRAMES': '0', 'BRIDGE': 'ESP_UART_V1'}, {'BOARD': 'MSP430F5529', 'FW': 'SUPERVISOR_V2', 'LINK': 'READY', 'RUN': '0', 'CAL': 'NEEDED', 'L2': 'NC', 'R4': 'NC', 'LED2': 'OFF', 'FLAGS': '96', 'RESULT': '0', 'PENDING': '3', 'UART_ERRORS': '1', 'RX_DROPS': '0', 'BAD_FRAMES': '0', 'BRIDGE': 'ESP_UART_V1'}, {}]"
+}
