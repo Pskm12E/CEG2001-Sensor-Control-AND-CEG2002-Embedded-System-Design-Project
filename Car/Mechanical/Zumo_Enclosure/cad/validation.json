@@ -1,0 +1,920 @@
+{
+  "status": "DIGITAL PROTOTYPE; no physical fit, load, print or electrical validation",
+  "units": "mm",
+  "default_uno_stays_installed": true,
+  "reference_mounts_mm": [
+    [
+      -27.5,
+      31.5
+    ],
+    [
+      27.5,
+      31.5
+    ],
+    [
+      -25.0,
+      -31.5
+    ],
+    [
+      25.0,
+      -31.5
+    ]
+  ],
+  "post_centres_mm": [
+    [
+      -27.5,
+      43.5
+    ],
+    [
+      27.5,
+      43.5
+    ],
+    [
+      -42.0,
+      -52.0
+    ],
+    [
+      33.0,
+      -52.0
+    ]
+  ],
+  "deck_underside_from_mount_plane_mm": 32.0,
+  "parts": [
+    {
+      "name": "00_fit_front_55mm",
+      "quantity": 1,
+      "size_mm": [
+        67.0,
+        9.0,
+        1.6
+      ],
+      "assembly_bounds_mm": [
+        [
+          -33.5,
+          -4.5,
+          0.0
+        ],
+        [
+          33.5,
+          4.5,
+          1.6
+        ]
+      ],
+      "triangles": 420,
+      "closed_manifold": true,
+      "connected_shells": 1,
+      "volume_mm3": 923.731,
+      "full_solid_mass_g": 1.17,
+      "print_rotation": [
+        0,
+        0,
+        0
+      ],
+      "print_translation": [
+        33.5,
+        4.5,
+        -0.0
+      ],
+      "role": "FIT TEMPLATE ONLY - do not use as a load-bearing adapter",
+      "sha256": "0aa6b96efc7cbd9339c36ce7ddc09f1482a35567310c83ff66558eb6b9a408d5"
+    },
+    {
+      "name": "00_fit_rear_50mm",
+      "quantity": 1,
+      "size_mm": [
+        62.0,
+        9.0,
+        1.6
+      ],
+      "assembly_bounds_mm": [
+        [
+          -31.0,
+          -4.5,
+          0.0
+        ],
+        [
+          31.0,
+          4.5,
+          1.6
+        ]
+      ],
+      "triangles": 420,
+      "closed_manifold": true,
+      "connected_shells": 1,
+      "volume_mm3": 851.731,
+      "full_solid_mass_g": 1.08,
+      "print_rotation": [
+        0,
+        0,
+        0
+      ],
+      "print_translation": [
+        31.0,
+        4.5,
+        -0.0
+      ],
+      "role": "FIT TEMPLATE ONLY - do not use as a load-bearing adapter",
+      "sha256": "df136ea6a407d9deb977da4856f13dded156de7c8fe832473ed869645d643335"
+    },
+    {
+      "name": "00_fit_right_row_63mm",
+      "quantity": 1,
+      "size_mm": [
+        11.5,
+        72.0,
+        1.6
+      ],
+      "assembly_bounds_mm": [
+        [
+          -5.75,
+          -36.0,
+          0.0
+        ],
+        [
+          5.75,
+          36.0,
+          1.6
+        ]
+      ],
+      "triangles": 666,
+      "closed_manifold": true,
+      "connected_shells": 1,
+      "volume_mm3": 968.342,
+      "full_solid_mass_g": 1.23,
+      "print_rotation": [
+        0,
+        0,
+        0
+      ],
+      "print_translation": [
+        5.75,
+        36.0,
+        -0.0
+      ],
+      "role": "FIT TEMPLATE ONLY - 63 mm row pitch and 2.5 mm lateral offset",
+      "sha256": "131d782cf72277c44b744a47bfcea9ffdfa36db4f87c3d7a884994a587c7d13e"
+    },
+    {
+      "name": "01_mount_front_left",
+      "quantity": 1,
+      "size_mm": [
+        10.0,
+        22.5,
+        30.4
+      ],
+      "assembly_bounds_mm": [
+        [
+          -32.5,
+          27.0,
+          1.6
+        ],
+        [
+          -22.5,
+          49.5,
+          32.0
+        ]
+      ],
+      "triangles": 938,
+      "closed_manifold": true,
+      "connected_shells": 1,
+      "volume_mm3": 3589.303,
+      "full_solid_mass_g": 4.56,
+      "print_rotation": [
+        0,
+        0,
+        0
+      ],
+      "print_translation": [
+        32.5,
+        -27.0,
+        -1.6
+      ],
+      "role": "production prototype",
+      "sha256": "1fb007f1b49cb4f980d00d4f0887175047ba193662e78185586c9b0037ad69f0"
+    },
+    {
+      "name": "01_mount_front_right",
+      "quantity": 1,
+      "size_mm": [
+        10.0,
+        22.5,
+        30.4
+      ],
+      "assembly_bounds_mm": [
+        [
+          22.5,
+          27.0,
+          1.6
+        ],
+        [
+          32.5,
+          49.5,
+          32.0
+        ]
+      ],
+      "triangles": 938,
+      "closed_manifold": true,
+      "connected_shells": 1,
+      "volume_mm3": 3589.303,
+      "full_solid_mass_g": 4.56,
+      "print_rotation": [
+        0,
+        0,
+        0
+      ],
+      "print_translation": [
+        -22.5,
+        -27.0,
+        -1.6
+      ],
+      "role": "production prototype",
+      "sha256": "1fb007f1b49cb4f980d00d4f0887175047ba193662e78185586c9b0037ad69f0"
+    },
+    {
+      "name": "01_mount_rear_left",
+      "quantity": 1,
+      "size_mm": [
+        24.7,
+        31.0,
+        30.4
+      ],
+      "assembly_bounds_mm": [
+        [
+          -47.0,
+          -58.0,
+          1.6
+        ],
+        [
+          -22.3,
+          -27.0,
+          32.0
+        ]
+      ],
+      "triangles": 1500,
+      "closed_manifold": true,
+      "connected_shells": 1,
+      "volume_mm3": 4237.677,
+      "full_solid_mass_g": 5.38,
+      "print_rotation": [
+        0,
+        0,
+        0
+      ],
+      "print_translation": [
+        47.0,
+        58.0,
+        -1.6
+      ],
+      "role": "production prototype",
+      "sha256": "baa97e89d543979322c0921b35ab105c364fe3dba548c7b235fc6ccca36dfae8"
+    },
+    {
+      "name": "01_mount_rear_right",
+      "quantity": 1,
+      "size_mm": [
+        15.7,
+        31.0,
+        30.4
+      ],
+      "assembly_bounds_mm": [
+        [
+          22.3,
+          -58.0,
+          1.6
+        ],
+        [
+          38.0,
+          -27.0,
+          32.0
+        ]
+      ],
+      "triangles": 970,
+      "closed_manifold": true,
+      "connected_shells": 1,
+      "volume_mm3": 3831.315,
+      "full_solid_mass_g": 4.87,
+      "print_rotation": [
+        0,
+        0,
+        0
+      ],
+      "print_translation": [
+        -22.3,
+        58.0,
+        -1.6
+      ],
+      "role": "production prototype",
+      "sha256": "a30e900ce19793e9953816142b9e64958db97a26e5c6fb402021b71a651e75f2"
+    },
+    {
+      "name": "02_chassis_isolating_washer",
+      "quantity": 4,
+      "size_mm": [
+        6.0,
+        6.0,
+        1.6
+      ],
+      "assembly_bounds_mm": [
+        [
+          -3.0,
+          -3.0,
+          0.0
+        ],
+        [
+          3.0,
+          3.0,
+          1.6
+        ]
+      ],
+      "triangles": 384,
+      "closed_manifold": true,
+      "connected_shells": 1,
+      "volume_mm3": 36.639,
+      "full_solid_mass_g": 0.05,
+      "print_rotation": [
+        0,
+        0,
+        0
+      ],
+      "print_translation": [
+        3.0,
+        3.0,
+        -0.0
+      ],
+      "role": "Prototype insulating spacer; compare with original hardware stack",
+      "sha256": "dac40ff46b507c6041272c1e13dfdc381b0c7e3a8f09ae6ec3c7b84a3b8d9818"
+    },
+    {
+      "name": "03_carrier_and_uno_wire_guard",
+      "quantity": 1,
+      "size_mm": [
+        154.0,
+        146.5,
+        29.0
+      ],
+      "assembly_bounds_mm": [
+        [
+          -76.5,
+          -72.5,
+          6.0
+        ],
+        [
+          77.5,
+          74.0,
+          35.0
+        ]
+      ],
+      "triangles": 6330,
+      "closed_manifold": true,
+      "connected_shells": 1,
+      "volume_mm3": 30916.675,
+      "full_solid_mass_g": 39.26,
+      "print_rotation": [
+        180,
+        0,
+        0
+      ],
+      "print_translation": [
+        76.5,
+        74.0,
+        35.0
+      ],
+      "role": "production prototype",
+      "sha256": "01bc34627e644bdf12d8d7766c31af6f366241370f51ce2a1bd2095dd53a24f2"
+    },
+    {
+      "name": "04_lower_power_case",
+      "quantity": 1,
+      "size_mm": [
+        103.0,
+        135.0,
+        39.0
+      ],
+      "assembly_bounds_mm": [
+        [
+          -15.0,
+          -72.5,
+          35.0
+        ],
+        [
+          88.0,
+          62.5,
+          74.0
+        ]
+      ],
+      "triangles": 5650,
+      "closed_manifold": true,
+      "connected_shells": 1,
+      "volume_mm3": 41583.354,
+      "full_solid_mass_g": 52.81,
+      "print_rotation": [
+        0,
+        0,
+        0
+      ],
+      "print_translation": [
+        15.0,
+        72.5,
+        -35.0
+      ],
+      "role": "production prototype",
+      "sha256": "dfbf88f74be6f502debdf965e53ff5ec42f0137580c87f8a2b920437cdbcf5ec"
+    },
+    {
+      "name": "05_controller_tray",
+      "quantity": 1,
+      "size_mm": [
+        79.0,
+        132.0,
+        1.6
+      ],
+      "assembly_bounds_mm": [
+        [
+          -3.0,
+          -71.0,
+          71.0
+        ],
+        [
+          76.0,
+          61.0,
+          72.6
+        ]
+      ],
+      "triangles": 8634,
+      "closed_manifold": true,
+      "connected_shells": 1,
+      "volume_mm3": 9224.918,
+      "full_solid_mass_g": 11.72,
+      "print_rotation": [
+        0,
+        0,
+        0
+      ],
+      "print_translation": [
+        3.0,
+        71.0,
+        -71.0
+      ],
+      "role": "production prototype",
+      "sha256": "18307e778fff2ced3bfb1bafa6158e6be9f226ab661d6e7627cbebc557a9b177"
+    },
+    {
+      "name": "06_upper_wall_sleeve",
+      "quantity": 1,
+      "size_mm": [
+        102.4,
+        135.0,
+        45.0
+      ],
+      "assembly_bounds_mm": [
+        [
+          -14.7,
+          -72.5,
+          74.0
+        ],
+        [
+          87.7,
+          62.5,
+          119.0
+        ]
+      ],
+      "triangles": 1792,
+      "closed_manifold": true,
+      "connected_shells": 1,
+      "volume_mm3": 32583.976,
+      "full_solid_mass_g": 41.38,
+      "print_rotation": [
+        0,
+        0,
+        0
+      ],
+      "print_translation": [
+        14.7,
+        72.5,
+        -74.0
+      ],
+      "role": "production prototype",
+      "sha256": "4be7f6187665bee205554dd5d4c95058cf2d0e1bc8e60d6ce0ecbaa7f8abc96e"
+    },
+    {
+      "name": "07_removable_lid",
+      "quantity": 1,
+      "size_mm": [
+        103.0,
+        135.0,
+        3.2
+      ],
+      "assembly_bounds_mm": [
+        [
+          -15.0,
+          -72.5,
+          117.0
+        ],
+        [
+          88.0,
+          62.5,
+          120.2
+        ]
+      ],
+      "triangles": 5078,
+      "closed_manifold": true,
+      "connected_shells": 1,
+      "volume_mm3": 13979.869,
+      "full_solid_mass_g": 17.75,
+      "print_rotation": [
+        180,
+        0,
+        0
+      ],
+      "print_translation": [
+        15.0,
+        62.5,
+        120.2
+      ],
+      "role": "production prototype",
+      "sha256": "73d69bd9716aa1eaeb8530c1ab2acf75d2b35891eaed8bfe712049dd5f9f42cd"
+    },
+    {
+      "name": "08_bottle_cradle",
+      "quantity": 1,
+      "size_mm": [
+        65.4,
+        84.0,
+        84.0
+      ],
+      "assembly_bounds_mm": [
+        [
+          -75.2,
+          -42.0,
+          35.0
+        ],
+        [
+          -9.8,
+          42.0,
+          119.0
+        ]
+      ],
+      "triangles": 1842,
+      "closed_manifold": true,
+      "connected_shells": 1,
+      "volume_mm3": 12303.336,
+      "full_solid_mass_g": 15.63,
+      "print_rotation": [
+        0,
+        0,
+        0
+      ],
+      "print_translation": [
+        75.2,
+        42.0,
+        -35.0
+      ],
+      "role": "production prototype",
+      "sha256": "83c648d09cb0ee4da3de683cbde82e959ab43afa175f7e2e624cb4b487b27c98"
+    },
+    {
+      "name": "09_bottle_splash_cap",
+      "quantity": 1,
+      "size_mm": [
+        65.2,
+        65.2,
+        8.0
+      ],
+      "assembly_bounds_mm": [
+        [
+          -75.1,
+          -32.6,
+          130.2
+        ],
+        [
+          -9.9,
+          32.6,
+          138.2
+        ]
+      ],
+      "triangles": 968,
+      "closed_manifold": true,
+      "connected_shells": 1,
+      "volume_mm3": 7351.875,
+      "full_solid_mass_g": 9.34,
+      "print_rotation": [
+        180,
+        0,
+        0
+      ],
+      "print_translation": [
+        75.1,
+        32.6,
+        138.2
+      ],
+      "role": "Prototype splash cap; actual bottle rim/vent/hose fit unverified",
+      "sha256": "a8a51c6d4ba50ae2f3195ab8e23cebc5b13eea6ad5eaf7c11f4e7dddc2fc462e"
+    },
+    {
+      "name": "10_rear_cable_duct",
+      "quantity": 1,
+      "size_mm": [
+        114.2,
+        64.1,
+        39.0
+      ],
+      "assembly_bounds_mm": [
+        [
+          -38.7,
+          -106.5,
+          -4.0
+        ],
+        [
+          75.5,
+          -42.4,
+          35.0
+        ]
+      ],
+      "triangles": 2372,
+      "closed_manifold": true,
+      "connected_shells": 1,
+      "volume_mm3": 21498.788,
+      "full_solid_mass_g": 27.3,
+      "print_rotation": [
+        0,
+        0,
+        0
+      ],
+      "print_translation": [
+        38.7,
+        106.5,
+        4.0
+      ],
+      "role": "production prototype",
+      "sha256": "961f85d6bc93d9301b49b6da3ee1467d6624a60da4f34972909d62fbc0221abb"
+    },
+    {
+      "name": "11_rear_duct_cover",
+      "quantity": 1,
+      "size_mm": [
+        114.2,
+        64.1,
+        4.8
+      ],
+      "assembly_bounds_mm": [
+        [
+          -38.7,
+          -106.5,
+          27.2
+        ],
+        [
+          75.5,
+          -42.4,
+          32.0
+        ]
+      ],
+      "triangles": 2404,
+      "closed_manifold": true,
+      "connected_shells": 1,
+      "volume_mm3": 5594.317,
+      "full_solid_mass_g": 7.1,
+      "print_rotation": [
+        0,
+        0,
+        0
+      ],
+      "print_translation": [
+        38.7,
+        106.5,
+        -27.2
+      ],
+      "role": "production prototype",
+      "sha256": "75080032c3cecd9412ab936e83660af9c063c0c323bda1106478af426e687055"
+    },
+    {
+      "name": "12_fixed_camera_nozzle_plate",
+      "quantity": 1,
+      "size_mm": [
+        78.0,
+        42.0,
+        3.5
+      ],
+      "assembly_bounds_mm": [
+        [
+          82.5,
+          -9.0,
+          36.0
+        ],
+        [
+          86.0,
+          33.0,
+          114.0
+        ]
+      ],
+      "triangles": 2808,
+      "closed_manifold": true,
+      "connected_shells": 1,
+      "volume_mm3": 5672.796,
+      "full_solid_mass_g": 7.2,
+      "print_rotation": [
+        0,
+        90,
+        0
+      ],
+      "print_translation": [
+        -36.0,
+        9.0,
+        86.0
+      ],
+      "role": "Universal fixed bracket; actual camera/nozzle mounts unmeasured",
+      "sha256": "e8f25d580b980f0810b6b6ec5df4d0c380a5caaf8ceafa7376b3e388f0244255"
+    },
+    {
+      "name": "13_front_sensor_bracket",
+      "quantity": 1,
+      "size_mm": [
+        52.0,
+        30.0,
+        13.0
+      ],
+      "assembly_bounds_mm": [
+        [
+          -26.0,
+          65.0,
+          8.0
+        ],
+        [
+          26.0,
+          78.0,
+          38.0
+        ]
+      ],
+      "triangles": 500,
+      "closed_manifold": true,
+      "connected_shells": 1,
+      "volume_mm3": 2033.68,
+      "full_solid_mass_g": 2.58,
+      "print_rotation": [
+        90,
+        0,
+        0
+      ],
+      "print_translation": [
+        26.0,
+        38.0,
+        -65.0
+      ],
+      "role": "Universal strap bracket; actual sensor fit unverified",
+      "sha256": "44f5de2d2445e877837b2332b9eba517e8cd631efbb7cfbfa5ec1ec32f229a77"
+    },
+    {
+      "name": "14_pcb_edge_clip",
+      "quantity": 8,
+      "size_mm": [
+        8.0,
+        13.0,
+        8.2
+      ],
+      "assembly_bounds_mm": [
+        [
+          -4.0,
+          -11.0,
+          0.0
+        ],
+        [
+          4.0,
+          2.0,
+          8.2
+        ]
+      ],
+      "triangles": 278,
+      "closed_manifold": true,
+      "connected_shells": 1,
+      "volume_mm3": 384.811,
+      "full_solid_mass_g": 0.49,
+      "print_rotation": [
+        0,
+        0,
+        0
+      ],
+      "print_translation": [
+        4.0,
+        11.0,
+        -0.0
+      ],
+      "role": "Movable edge clip, assumed 1.6 mm PCB; confirm component-free edge contact",
+      "sha256": "b49ca97ff7a4a854020b135f19ab1c8e613e0b7d3d6875bbbb58baf9384b263d"
+    },
+    {
+      "name": "15_accessory_breadboard_tray",
+      "quantity": 1,
+      "size_mm": [
+        76.0,
+        44.0,
+        12.0
+      ],
+      "assembly_bounds_mm": [
+        [
+          -1.5,
+          -67.0,
+          105.0
+        ],
+        [
+          74.5,
+          -23.0,
+          117.0
+        ]
+      ],
+      "triangles": 2830,
+      "closed_manifold": true,
+      "connected_shells": 1,
+      "volume_mm3": 9566.288,
+      "full_solid_mass_g": 12.15,
+      "print_rotation": [
+        0,
+        0,
+        0
+      ],
+      "print_translation": [
+        1.5,
+        67.0,
+        -105.0
+      ],
+      "role": "Accessory allowance only; actual breadboard unknown",
+      "sha256": "5892b1c42acea0d443ed6ad5b4247c360f90342681f45304bb369c0f2217f705"
+    },
+    {
+      "name": "16_power_bank_support_pad",
+      "quantity": 4,
+      "size_mm": [
+        10.0,
+        8.0,
+        4.0
+      ],
+      "assembly_bounds_mm": [
+        [
+          -5.0,
+          -4.0,
+          0.0
+        ],
+        [
+          5.0,
+          4.0,
+          4.0
+        ]
+      ],
+      "triangles": 12,
+      "closed_manifold": true,
+      "connected_shells": 1,
+      "volume_mm3": 320.0,
+      "full_solid_mass_g": 0.41,
+      "print_rotation": [
+        0,
+        0,
+        0
+      ],
+      "print_translation": [
+        5.0,
+        4.0,
+        -0.0
+      ],
+      "role": "Use with 1 mm soft pad to achieve 5 mm lift",
+      "sha256": "f776ac8e39dae6f8b869518f8fea1a5f5f665b3b01b34fe6175750a0fa89e3ff"
+    }
+  ],
+  "full_solid_plastic_mass_g": 269.35,
+  "default_assembly_intersections": [],
+  "mounted_uno_pcb_keepout_hits": [],
+  "reference_component_intersections": [],
+  "reserved_envelope_intersections": [],
+  "printed_assembly_bounds_mm": [
+    [
+      -76.5,
+      -106.5,
+      -4.0
+    ],
+    [
+      88.0,
+      78.0,
+      138.2
+    ]
+  ],
+  "printed_assembly_size_mm": [
+    164.5,
+    184.5,
+    142.2
+  ],
+  "assumptions": {
+    "pcb_width": 53.4,
+    "pcb_length": 68.6,
+    "solder_top_from_mount_plane": 12.0,
+    "rear_wire_loop_allowance": 18.0,
+    "wire_margin": 2.0,
+    "usb_b_center_x": -16.0,
+    "usb_b_mouth_y": -44.0,
+    "usb_b_center_z": 8.0,
+    "note": "Uno STAYS on Zumo. Heights/USB pose are adjustable reference assumptions, NOT measurements. User reports wires soldered at back for D16 and D6; no pin changes."
+  },
+  "physical_validation": false,
+  "package_versions": {
+    "numpy": "2.5.5",
+    "trimesh": "5.2.1",
+    "manifold3d": "3.5.5",
+    "pillow": "13.0.0"
+  }
+}

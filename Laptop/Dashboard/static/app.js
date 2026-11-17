@@ -71,7 +71,8 @@ function render() {
   for (const key of ["pico", "wifi", "esp", "msp", "uno"]) text(`${key}-link`, links[key] || "—");
   text("pico-summary", links.pico === "UP" ? "Connected" : "Not linked");
   const sensorName = (value) => value === "NC" ? "Not calibrated" : value;
-  text("line-sensors", data ? `L: ${sensorName(data.left)} / R: ${sensorName(data.right)}` : "Not linked");
+  text("line-sensor-pins", data && data.base !== "ZUMO" ? "D4 left / D2 right" : "Zumo array");
+  text("line-sensors", data ? (data.base === "ZUMO" ? "Black line on white" : `L: ${sensorName(data.left)} / R: ${sensorName(data.right)}`) : "Not linked");
   renderEvents(); renderCameraState(); renderDetection(); controls();
 }
 async function refreshState() {
@@ -232,8 +233,18 @@ function attachLiveRelay() {
   image.hidden=false; $("camera-empty").hidden=true;
 }
 function renderCameraState() {
-  if (!cameraActive || $("camera-source").value!=="xiao") return;
+  if ($("camera-source").value!=="xiao") return;
   const camera=state?.camera;
+  // The CMD launcher may start the stream before this browser opens.
+  if (!cameraActive && !cameraBusy && serverAvailable && camera?.connected && !camera.error) {
+    clearCameraView(); cameraActive=true; message("camera-error", "");
+    if (![...$("camera-select").options].some(option => option.value === "PICO_WIFI")) {
+      $("camera-select").replaceChildren(new Option("XIAO over private Wi-Fi via desk Pico", "PICO_WIFI"));
+    }
+    $("camera-select").value="PICO_WIFI";
+    attachLiveRelay(); cameraControls();
+  }
+  if (!cameraActive) return;
   if (!camera?.connected || camera.error) {
     cameraActive=false;$("camera-image").removeAttribute("src");$("camera-image").hidden=true;
     $("camera-empty").hidden=false;text("camera-badge","Stream stopped");

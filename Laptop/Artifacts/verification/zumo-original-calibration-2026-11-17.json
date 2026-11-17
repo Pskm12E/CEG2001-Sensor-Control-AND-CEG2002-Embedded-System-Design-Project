@@ -1,0 +1,30 @@
+{
+  "date": "2026-11-17",
+  "timezone": "Asia/Singapore",
+  "user_request": "Follow supplied original calibration and driving code",
+  "changes": [
+    "Completed uninterrupted 80-step sweep sets CAL=1 without added contrast threshold",
+    "Original proportional/derivative formula and upper-only speed clamps restored",
+    "MSP ultrasonic STOP, motion grant, communication timeout and local STOP retained"
+  ],
+  "hardware_accessed": false,
+  "uno_uploaded": false,
+  "msp430_changed_or_reflashed": false,
+  "build": {
+    "status": "passed",
+    "board": "arduino:avr:uno",
+    "avr_core": "1.8.8",
+    "ZumoShield": "2.1.0",
+    "flash_bytes": 13898,
+    "global_ram_bytes": 665
+  },
+  "checks": {
+    "actual_sketch_msp_sonar_simulation_assertions_passed": 957,
+    "zero_span_sweep_accepted_and_second_press_follows_without_another_sweep": "passed",
+    "obstacle_stale_range_stop_and_lease_checks": "passed",
+    "actual_msp_status_through_esp_and_dashboard_parser": "passed",
+    "local_documentation_links": 176
+  },
+  "hardware_evidence_limit": "User screenshot shows SWEEP=1 then CAL=0; this does not identify physical contrast, interruption, or reset as the measured cause",
+  "next_step": "User uploads corrected zumo_line_follow folder with both headers; existing MSP430 image is compatible"
+}

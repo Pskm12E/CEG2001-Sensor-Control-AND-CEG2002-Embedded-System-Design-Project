@@ -1,0 +1,26 @@
+{
+  "date": "2026-11-12",
+  "board": "Arduino Uno",
+  "port": "COM12",
+  "sketch": "Car/Arduino_Uno/msp_line_follow/msp_line_follow.ino",
+  "upload_verified_bytes": 9120,
+  "hex_sha256": "AA431EC2C4D5C82981CB82539FBB000002BEA7E073B1B6F6005715C1201BB34C",
+  "firmware_banner_observed": true,
+  "stopped_status_observed": true,
+  "commands_sent": [
+    "S",
+    "STATUS"
+  ],
+  "movement_or_calibration_commands_sent": false,
+  "physical_obstacle_stop_tested": false,
+  "serial_lines": [
+    "UNO WHITE+MSP: w/b/c/f request MSP approval; s stops.",
+    "UNO V2 CAL=0 FLAGS=112 DRIVE=0 REASON=11 RAW=0/0 REQ=0",
+    "UNO V2 CAL=0 FLAGS=112 DRIVE=0 REASON=11 RAW=0/0 REQ=0",
+    "UNO V2 CAL=0 FLAGS=112 DRIVE=0 REASON=11 RAW=0/0 REQ=0",
+    "UNO V2 CAL=0 FLAGS=112 DRIVE=0 REASON=11 RAW=0/0 REQ=0",
+    "UNO V2 CAL=0 FLAGS=112 DRIVE=0 REASON=11 RAW=0/0 REQ=0",
+    "UNO V2 CAL=0 FLAGS=112 DRIVE=0 REASON=11 RAW=0/0 REQ=0"
+  ],
+  "port_closed_after_check": true
+}

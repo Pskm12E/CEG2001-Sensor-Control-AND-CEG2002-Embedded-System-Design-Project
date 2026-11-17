@@ -1,31 +1,29 @@
 # Car electronics
 
-The **MSP430 is the main robot controller**. The other boards provide camera,
-wireless communication, line sensing and wheel control.
+Current base, **17 November 2026**: **Arduino Uno + Zumo Shield** follows a black
+line on white. The **MSP430 is the main controller**, measuring the HC-SR04 and
+granting movement. The user confirmed the driving setup is working.
 
-| Device folder | Current program | Responsibility |
-| --- | --- | --- |
-| [MSP430](MSP430/README.md) | `robot_supervisor/main.c`, ESP-UART build | Main supervisor; checks Uno state and controls movement authorisation/timeouts |
-| [Arduino_Uno](Arduino_Uno/README.md) | `msp_line_follow/msp_line_follow.ino` | D2/D4 IR sensors and L298N wheel outputs under MSP430 supervision |
-| [ESP32_Gateway](ESP32_Gateway/README.md) | `robot_wifi_gateway/robot_wifi_gateway.ino` | FireBeetle private Wi-Fi access point and UART bridge to MSP430 |
-| [XIAO_ESP32S3_Camera](XIAO_ESP32S3_Camera/README.md) | `xiao_camera_wifi/xiao_camera_wifi.ino` | Wireless OV3660 live video; USB-C is power only during use |
-| [Archive](Archive/README.md) | Earlier experiments | Historical Pico motor/I2C programs and local backup locations |
+**Current obstacle STOP trigger is 2 cm**, with two readings at least 4 cm
+clearing a recent near inhibit. Missing echoes do not stop/block motion; stale
+near data expires after about 300 ms. Clearing never restarts it automatically.
+These settings are not measured physical braking distances.
 
-```text
-Camera ---- private Wi-Fi ---- FireBeetle ESP32
-                                      |
-                              UART 9600, 3.3 V
-                                      |
-                               MAIN MSP430
-                                      |
-                           UART + Uno TX divider
-                                      |
-                              Arduino Uno
-                              /         \
-                        IR D2/D4      L298N → wheels
-```
+| Device | Program / responsibility |
+| --- | --- |
+| [MSP430](MSP430/README.md) | `robot_supervisor`, `-EspUart -Zumo`; range, grants and STOP |
+| [Arduino_Uno](Arduino_Uno/README.md) | `zumo_line_follow`, OG3; array and built-in motor driver |
+| [ESP32_Gateway](ESP32_Gateway/README.md) | FireBeetle private Wi-Fi access point and MSP UART bridge |
+| [XIAO_ESP32S3_Camera](XIAO_ESP32S3_Camera/README.md) | Wireless camera; USB-C supplies power during use |
+| [Archive](Archive/README.md) | Earlier experiments |
 
-Camera video and robot status return through the **desk Pico** to the laptop.
-See [exact connections](../Laptop/Tools/Communication/board-placement.md).
-Automatic pest jobs, spraying and full track calibration remain unfinished.
-Build commands run on the laptop; the firmware produced belongs to each board.
+Use [the Zumo wiring/button guide](Arduino_Uno/zumo_line_follow/README.md),
+[agreed two-plant track](Track/README.md) and
+[removable enclosure CAD](Mechanical/Zumo_Enclosure/README.md).
+The installed MSP no-echo update was verified, and the user installed Uno OG3.
+Cleanup compiles only; neither board is reflashed.
+
+Camera video/status travel through the desk Pico to the laptop; the most recent
+separate Pico Wi-Fi issue remains unverified. Driving uses the MSP/Uno UART.
+Water S is wired to P6.0 but ADC logic is pending. Pump/driver are not connected;
+automatic pest jobs, spraying, dock control and full-track validation remain pending.

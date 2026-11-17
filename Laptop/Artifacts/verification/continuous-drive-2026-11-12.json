@@ -1,0 +1,19 @@
+{
+  "date": "2026-11-12",
+  "user_report": "One f moves the car for less than one second then stops",
+  "live_observation": "Repeated queued requests followed by MSP STOP; calibration retained, CAL=1, both D4/D2 W=0 B=1, current RAW=0/0 and DRIVE=0",
+  "root_cause": "Unresolved; latest status clears the original stop reason",
+  "software_test": "Car/MSP430/tests/check_ir_driving_test.py",
+  "sustained_run_seconds": 12,
+  "successful_keep_exchanges": 60,
+  "keep_interval_ms": 200,
+  "stop_after_heartbeat_silence_ms": 1000,
+  "assertions_passed": {
+    "default": 3584,
+    "explicit_test_mode_off": 3584,
+    "test_mode_on": 3616
+  },
+  "production_code_changed": false,
+  "hardware_commands_sent": false,
+  "pending": "User not ready to confirm motor power off for MSP diagnostic inspection"
+}

@@ -1,0 +1,30 @@
+{
+  "date": "2026-11-17",
+  "timezone": "Asia/Singapore",
+  "purpose": "Identify installed Uno revision and preserve the cause of an interrupted calibration",
+  "firmware_tag": "OG3",
+  "original_calibration_and_pd_preserved": true,
+  "contrast_gate_present": false,
+  "stop_and_lease_rules_changed": false,
+  "uno_flashed": false,
+  "msp_firmware_changed_or_flashed": false,
+  "hardware_ports_opened": false,
+  "build": {
+    "status": "passed",
+    "board": "arduino:avr:uno",
+    "avr_core": "1.8.8",
+    "ZumoShield": "2.1.0",
+    "flash_bytes": 14238,
+    "global_ram_bytes": 825
+  },
+  "checks": {
+    "production_sketch_msp_sonar_simulation_assertions": 976,
+    "stop_reconnect_reproduces_CAL0_REASON0": "passed",
+    "persistent_stop_cause_after_MSP_STOP_and_HELLO": "passed",
+    "original_sweep_acceptance_and_second_press_following": "passed",
+    "serial_lines_fit_63_byte_tx_space": "passed",
+    "actual_MSP_status_ESP_and_dashboard_compatibility": "passed"
+  },
+  "physical_cause": "Not established from screenshots; startup version line unreadable",
+  "next_step": "User uploads complete OG3 sketch folder and reports STEP/LAST/UP after interrupted sweep"
+}

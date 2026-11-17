@@ -1,16 +1,28 @@
 /* Robot MSP430F5529 supervisor. MSP is the authority for Uno line following.
  * UART0 P3.3/P3.4: Uno link; default UART1 P4.4/P4.5: USB console.
  * SUPERVISOR_ESP_UART: UART1 remapped P4.1 TX/P4.2 RX, status/STOP bridge.
- * No automatic start, pump, camera or docking behaviour in this stage.
+ * HC-SR04 TRIG P3.2; divided ECHO P2.7. No automatic start or restart.
+ * IR_DRIVING_TEST=1 explicitly disables only the ultrasonic motion veto.
+ * ZUMO_BASE=1: powered calibration/black-line Zumo follower, valid-near STOP.
+ * Missing/stale sonar echoes are diagnostic only; see obstacle_guard.h.
  */
 #include <msp430.h>
 #include <stdint.h>
 #include <string.h>
 #include "../../Arduino_Uno/msp_line_follow/robot_link.h"
+#include "console_tx.h"
+#if defined(ZUMO_BASE) && defined(IR_DRIVING_TEST) && IR_DRIVING_TEST
+#error Zumo_requires_the_ultrasonic_interlock
+#endif
 
 typedef struct { volatile uint8_t data[128],head,tail,lost; } Ring;
 static Ring usbRx,linkRx;
+static ConsoleTx consoleTx;
 static volatile uint16_t ticks,uartErrors,rxDrops;
+/* Keep receive failures separate: motor interference on an unused console
+ * input must not be confused with corruption of the Uno heartbeat link. */
+static volatile uint16_t linkUartErrors,consoleUartErrors;
+static volatile uint8_t lastLinkUartError,lastConsoleUartError;
 static volatile uint8_t stopButton,buttonDown;
 static RlParser parser;
 static RlPacket pendingPacket;
@@ -26,7 +38,11 @@ static void bridgeService(void);
 
 static void receive(Ring *r,uint8_t b,uint8_t error) {
     uint8_t next=(r->head+1u)&127u;
-    if(error) { ++uartErrors; r->lost=1; }
+    if(error) {
+        ++uartErrors; r->lost=1;
+        if(r==&linkRx) { ++linkUartErrors; lastLinkUartError=error; }
+        else { ++consoleUartErrors; lastConsoleUartError=error; }
+    }
     else if(next==r->tail) { ++rxDrops; r->lost=1; }
     else { r->data[r->head]=b; r->head=next; }
 }
@@ -42,9 +58,15 @@ static uint8_t takeLost(Ring *r) {
 }
 static uint8_t put(uint8_t link,uint8_t b) {
     uint16_t start=ticks;
-    while(!((link?UCA0IFG:UCA1IFG)&UCTXIFG))
+    /* Status replies are long at 9600 baud. Queue them so obstacle service
+     * continues instead of waiting hundreds of milliseconds for console TX. */
+    if(!link) {
+        if(!consoleTxPush(&consoleTx,b)) return 0;
+        UCA1IE|=UCTXIE; return 1;
+    }
+    while(!(UCA0IFG&UCTXIFG))
         if((uint16_t)(ticks-start)>=3u) return 0;
-    if(link) UCA0TXBUF=b; else UCA1TXBUF=b;
+    UCA0TXBUF=b;
     return 1;
 }
 static void print(const char *s) { while(*s) if(!put(0,(uint8_t)*s++)) return; }
@@ -53,6 +75,7 @@ static void number(uint16_t n) {
     do { digits[used++]=(char)('0'+n%10u); n/=10u; } while(n);
     while(used) put(0,(uint8_t)digits[--used]);
 }
+#include "ultrasonic_hcsr04.h"
 static void init(void) {
     WDTCTL=WDTPW|WDTHOLD;
     UCSCTL3=SELREF__REFOCLK;
@@ -88,6 +111,7 @@ static void init(void) {
     /* UART0 remains configured between requests; framed parser resynchronises. */
     TA0CCR0=3277u-1u; TA0CCTL0=CCIE; TA0CTL=TASSEL__ACLK|MC__UP|TACLR;
     TA1CCR0=655u-1u; TA1CCTL0=0; TA1CTL=TASSEL__ACLK|MC__STOP|TACLR;
+    sonarInit();
     queued=RL_HELLO;
 #ifndef SUPERVISOR_ESP_UART
     bridgeInit();
@@ -97,11 +121,34 @@ static void init(void) {
 static void stopRequested(void) {
     running=0; P4OUT&=~BIT7; queued=RL_STOP;
 }
+static void serviceObstacle(void) {
+    sonarService();
+    if(motionBlocked() && (running || queued==RL_START || queued==RL_ZUMO_CALIBRATE ||
+       (pending && (pendingPacket.type==RL_START || pendingPacket.type==RL_ZUMO_CALIBRATE)) || (peerFlags&RL_MOVING)) &&
+       queued!=RL_STOP && !(pending && pendingPacket.type==RL_STOP)) {
+        stopRequested(); print("ULTRASONIC NEAR-OBSTACLE STOP REQUESTED\r\n");
+    }
+}
+static void userRequest(uint8_t request) {
+    uint8_t op=0;
+    if(!linked || running || queued || pending) return;
+    if(request==RL_USER_WHITE) op=RL_WHITE;
+    else if(request==RL_USER_BLACK) op=RL_BLACK;
+    else if(request==RL_USER_CLEAR) op=RL_CLEAR;
+    else if(request==RL_USER_START) op=RL_START;
+#ifdef ZUMO_BASE
+    else if(request==RL_USER_ZUMO_CALIBRATE) op=RL_ZUMO_CALIBRATE;
+#endif
+    if(!op) return;
+    if((op==RL_START || op==RL_ZUMO_CALIBRATE) && motionBlocked()) {
+        stopRequested(); print("START REFUSED: ULTRASONIC OBSTACLE NEAR\r\n");
+    } else queued=op;
+}
 static const char *reasonName(uint8_t reason) {
     switch(reason) {
     case RL_OK: return "OK";
     case RL_NOT_CAL: return "NOT_CALIBRATED";
-    case RL_NOT_CENTER: return "CENTRE_BOTH_ON_BLACK";
+    case RL_NOT_CENTER: return "CENTRE_BOTH_ON_WHITE";
     case RL_CAL_BUSY: return "CALIBRATING";
     case RL_BAD_SESSION: return "SESSION_LOST";
     case RL_BAD_SEQUENCE: return "SEQUENCE_ERROR";
@@ -113,21 +160,28 @@ static const char *reasonName(uint8_t reason) {
     case RL_LOCAL_STOP: return "LOCAL_STOP";
     case RL_BAD_FRAME: return "FRAME_ERROR";
     case RL_CAL_UNSTABLE: return "CALIBRATION_UNSTABLE";
+    case RL_BOTH_BLACK: return "BOTH_BLACK";
     default: return "UNKNOWN";
     }
 }
+#ifndef ZUMO_BASE
 static const char *sensorName(uint8_t stable,uint8_t black) {
     if(!linked) return "UNKNOWN";
     if(!(peerFlags&RL_CAL)) return "NC";
     if(!(peerFlags&stable)) return "UNSTABLE";
     return (peerFlags&black)?"BLACK":"WHITE";
 }
+#endif
 static void status(void) {
     print("STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=");
     print(linked?"READY":"SYNCING"); print(" RUN="); number(running);
     print(" CAL="); print((peerFlags&RL_CALIBRATING)?"SAMPLING":((peerFlags&RL_CAL)?"READY":"NEEDED"));
+#ifdef ZUMO_BASE
+    print(" BASE=ZUMO LINE=BLACK");
+#else
     print(" L2="); print(sensorName(RL_LEFT_STABLE,RL_LEFT_BLACK));
     print(" R4="); print(sensorName(RL_RIGHT_STABLE,RL_RIGHT_BLACK));
+#endif
     print(" LED2="); print(running?"ON":"OFF");
     print(" FLAGS="); number(peerFlags); print(" RESULT="); number(peerResult);
     print(" PENDING="); number(pending?pendingPacket.type:0);
@@ -158,6 +212,7 @@ static uint8_t netCommand(const char *line) {
     print("NET "); while(digits--) put(0,(uint8_t)*idStart++); print(" ");
     if(!strcmp(p,"PING")) print("PONG MSP430 SUPERVISOR_V2 ESP_UART_V1\r\n");
     else if(!strcmp(p,"STATUS")) status();
+    else if(!strcmp(p,"SONAR")) sonarReport();
     else if(!strcmp(p,"STOP")) { stopRequested(); print("STOP REQUESTED\r\n"); }
     else print("ERROR UNSUPPORTED\r\n");
     return 1;
@@ -166,8 +221,13 @@ static uint8_t netCommand(const char *line) {
 #ifndef SUPERVISOR_ESP_UART
 static void help(void) {
     print("ROBOT SUPERVISOR V2 | 9600 baud\r\n");
+#ifdef ZUMO_BASE
+    print("C: request Zumo powered calibration; F: follow BLACK line; S: stop.\r\n");
+    print("Zumo button: calibrate, then start. STATUS/SONAR: readings.\r\n");
+#else
     print("W: both IR over WHITE; B: both over BLACK; wait for calibration.\r\n");
-    print("F: follow (both black); S: stop; C: clear; STATUS: readings.\r\n");
+    print("F: follow WHITE road inside BLACK borders; S: stop; C: clear; STATUS/SONAR: readings.\r\n");
+#endif
     print("H/LINK: resynchronise stopped; S2: stop. No automatic restart.\r\n");
     print("FLAGS: CAL=1 LBLACK=2 RBLACK=4 FOLLOW=8 FAULT=16 LSTABLE=32 RSTABLE=64 CALIBRATING=128\r\n");
 }
@@ -186,15 +246,23 @@ static void command(void) {
     if(!strcmp(usbLine,"S") || !strcmp(usbLine,"STOP")) { stopRequested(); print("STOP REQUESTED\r\n"); return; }
     if(!strcmp(usbLine,"PING")) { print("PONG MSP430 SUPERVISOR_V2\r\n"); return; }
     if(!strcmp(usbLine,"STATUS")) { status(); return; }
+    if(!strcmp(usbLine,"SONAR")) { sonarReport(); return; }
     if(!strcmp(usbLine,"?") || !strcmp(usbLine,"HELP")) { help(); return; }
     if(!strcmp(usbLine,"H") || !strcmp(usbLine,"LINK")) op=RL_HELLO;
+#ifdef ZUMO_BASE
+    else if(!strcmp(usbLine,"C")) op=RL_ZUMO_CALIBRATE;
+#else
     else if(!strcmp(usbLine,"W")) op=RL_WHITE;
     else if(!strcmp(usbLine,"B")) op=RL_BLACK;
     else if(!strcmp(usbLine,"C")) op=RL_CLEAR;
+#endif
     else if(!strcmp(usbLine,"F") || !strcmp(usbLine,"START")) op=RL_START;
     if(!op) { print("ERR UNKNOWN COMMAND\r\n"); return; }
     if(queued==RL_STOP) { print("WAIT: stopping\r\n"); return; }
     if(op==RL_START && running) { print("ALREADY FOLLOWING\r\n"); return; }
+    if((op==RL_START || op==RL_ZUMO_CALIBRATE) && motionBlocked()) {
+        stopRequested(); print("START REFUSED: ULTRASONIC OBSTACLE NEAR\r\n"); return;
+    }
     if(op!=RL_HELLO && !linked) { print("WAIT: link not ready\r\n"); return; }
     if(queued) { print("BUSY: command already queued\r\n"); return; }
     if(op!=RL_START) { running=0; P4OUT&=~BIT7; }
@@ -203,7 +271,10 @@ static void command(void) {
 }
 static void readUsb(void) {
     int c; uint8_t budget=64;
-    if(takeLost(&usbRx)) { usbUsed=0; usbDiscard=1; stopRequested(); }
+    if(takeLost(&usbRx)) {
+        usbUsed=0; usbDiscard=1; stopRequested();
+        print("UART1 CONSOLE RX ERROR/OVERFLOW; STOP REQUESTED\r\n");
+    }
     while(budget-- && (c=pop(&usbRx))>=0) {
         if(c=='\r' || c=='\n') {
             if(usbDiscard) print("ERR INVALID LINE; STOP REQUESTED\r\n");
@@ -218,6 +289,7 @@ static void readUsb(void) {
 }
 static void sendRequest(uint8_t op) {
     uint8_t b[RL_SIZE],i;
+    if((op==RL_START || op==RL_ZUMO_CALIBRATE) && motionBlocked()) { stopRequested(); return; }
     if(op==RL_HELLO) {
         session=(uint16_t)(session+0x101u+ticks); if(!session) session=1;
         sequence=0; running=linked=0; P4OUT&=~BIT7;
@@ -235,16 +307,26 @@ static void sendRequest(uint8_t op) {
 }
 static void response(const RlPacket *p) {
     uint8_t op=pendingPacket.type;
+#ifdef ZUMO_BASE
+    uint8_t wasCalibrating=running && (peerFlags&RL_CALIBRATING);
+#endif
     if(!pending || p->type!=(uint8_t)(op|RL_REPLY) ||
        p->session!=pendingPacket.session || p->seq!=pendingPacket.seq) return;
     pending=0; peerFlags=p->arg; peerResult=p->detail;
     if(op==RL_HELLO) linked=(p->detail==RL_OK);
     else if(op==RL_STOP) { linked=running=0; if(!queued) queued=RL_HELLO; }
-    else if(op==RL_START) {
-        running=p->detail==RL_OK && (p->arg&RL_MOVING) && queued!=RL_STOP;
-        print(running?"FOLLOWING; S TO STOP\r\n":"START REFUSED; RESULT=");
+    else if(op==RL_START || op==RL_ZUMO_CALIBRATE) {
+        running=p->detail==RL_OK && (p->arg&RL_MOVING) && queued!=RL_STOP && !motionBlocked();
+        if(running) print(op==RL_START?"FOLLOWING; S TO STOP\r\n":"ZUMO CALIBRATING; S TO STOP\r\n");
+        else print("START REFUSED; RESULT=");
         if(!running) { print(reasonName(p->detail)); print("\r\n"); }
     }
+#ifdef ZUMO_BASE
+    if(wasCalibrating && p->detail==RL_OK && (p->arg&RL_CAL) &&
+       !(p->arg&(RL_MOVING|RL_CALIBRATING))) {
+        running=0; print("ZUMO CALIBRATION READY; PRESS ZUMO BUTTON TO FOLLOW\r\n");
+    }
+#endif
     if(p->detail==RL_BAD_SESSION || p->detail==RL_BAD_SEQUENCE ||
        (running && !(p->arg&RL_MOVING))) {
         stopRequested(); linked=0; print("PEER STOPPED/SESSION LOST; NO AUTO RESTART\r\n");
@@ -255,10 +337,14 @@ static void response(const RlPacket *p) {
     else if(op==RL_WHITE || op==RL_BLACK || op==RL_CLEAR) {
         print("CALIBRATION COMMAND ACK; FLAGS="); number(peerFlags); print("\r\n");
     }
+    if(op==RL_STATUS) userRequest(p->detail);
 }
 static void serviceLink(void) {
     int c,result; uint8_t budget=64,op; RlPacket p;
-    if(takeLost(&linkRx)) { parser.used=0; stopRequested(); linked=0; }
+    if(takeLost(&linkRx)) {
+        parser.used=0; stopRequested(); linked=0;
+        print("UART0 UNO RX ERROR/OVERFLOW; STOP REQUESTED\r\n");
+    }
     if(parser.used && (uint16_t)(ticks-lastLinkByte)>=2u) { parser.used=0; ++badFrames; stopRequested(); }
     while(budget-- && (c=pop(&linkRx))>=0) {
         lastLinkByte=ticks; result=rlFeed(&parser,(uint8_t)c,&p);
@@ -270,6 +356,10 @@ static void serviceLink(void) {
         queued=(op==RL_STOP)?RL_HELLO:RL_STOP;
         print("LINK TIMEOUT; STOPPING; F REQUIRED AFTER RECOVERY\r\n");
     }
+    /* Stop gets the next free slot, or preempts a silent request after 100ms.
+     * A STOP is valid without a negotiated session; replies remain correlated. */
+    if(pending && queued==RL_STOP && pendingPacket.type!=RL_STOP &&
+       (uint16_t)(ticks-requestAt)>=1u) pending=0;
     if(pending) return;
     if(queued) { op=queued; queued=0; sendRequest(op); }
     else if(!linked && (uint16_t)(ticks-lastPoll)>=10u) sendRequest(RL_HELLO);
@@ -281,7 +371,11 @@ static void serviceLink(void) {
 #endif
 int main(void) {
     init(); print("ROBOT SUPERVISOR V2; STOPPED; TYPE HELP\r\n");
+#if defined(IR_DRIVING_TEST) && IR_DRIVING_TEST
+    print("IR DRIVING TEST: ULTRASONIC STOP DISABLED; MANUAL STOP ACTIVE.\r\n");
+#endif
     for(;;) {
+        serviceObstacle();
 #ifndef SUPERVISOR_ESP_UART
         bridgeService();
 #endif
@@ -289,7 +383,7 @@ int main(void) {
         if(stopButton) { stopButton=0; stopRequested(); print("S2 STOP REQUESTED\r\n"); }
         serviceLink();
         __disable_interrupt();
-        if(usbRx.head!=usbRx.tail || linkRx.head!=linkRx.tail || stopButton
+        if(usbRx.head!=usbRx.tail || linkRx.head!=linkRx.tail || stopButton || sonarPhase==SONAR_DONE
 #ifndef SUPERVISOR_ESP_UART
            || bridgePending
 #endif
@@ -299,11 +393,22 @@ int main(void) {
 }
 #pragma vector=USCI_A1_VECTOR
 __interrupt void usb_uart_isr(void) {
-    if(UCA1IV==2) { uint8_t err=UCA1STAT&UCRXERR,b=UCA1RXBUF; receive(&usbRx,b,err); __bic_SR_register_on_exit(LPM0_bits); }
+    int byte;
+    switch(UCA1IV) {
+    case 2: {
+        uint8_t err=UCA1STAT&(UCRXERR|UCFE|UCOE|UCPE|UCBRK),b=UCA1RXBUF;
+        receive(&usbRx,b,err); __bic_SR_register_on_exit(LPM0_bits); break;
+    }
+    case 4:
+        byte=consoleTxPop(&consoleTx);
+        if(byte<0) UCA1IE&=~UCTXIE; else UCA1TXBUF=(uint8_t)byte;
+        break;
+    default: break;
+    }
 }
 #pragma vector=USCI_A0_VECTOR
 __interrupt void link_uart_isr(void) {
-    if(UCA0IV==2) { uint8_t err=UCA0STAT&UCRXERR,b=UCA0RXBUF; receive(&linkRx,b,err); __bic_SR_register_on_exit(LPM0_bits); }
+    if(UCA0IV==2) { uint8_t err=UCA0STAT&(UCRXERR|UCFE|UCOE|UCPE|UCBRK),b=UCA0RXBUF; receive(&linkRx,b,err); __bic_SR_register_on_exit(LPM0_bits); }
 }
 #pragma vector=TIMER0_A0_VECTOR
 __interrupt void heartbeat_isr(void) {

@@ -50,15 +50,15 @@ See [the detailed ESP/MSP guide](direct-wifi-wiring.md) for header locations.
 | --- | --- | --- |
 | Desk Pico W | `Laptop/Pico_W/laptop_wifi_bridge/main.cpp` | `DESK_BRIDGE_V2` |
 | Robot FireBeetle ESP32 | `Car/ESP32_Gateway/robot_wifi_gateway/robot_wifi_gateway.ino` | `DIRECT_WIFI_V1` |
-| Robot MSP430 | `Car/MSP430/robot_supervisor/main.c`, `-EspUart` build | `SUPERVISOR_V2`, `BRIDGE=ESP_UART_V1` |
-| Uno | Existing `Car/Arduino_Uno/msp_line_follow` | Existing supervised controller |
+| Robot MSP430 | `Car/MSP430/robot_supervisor/main.c`, `-EspUart -Zumo` build | `SUPERVISOR_V2`, `BRIDGE=ESP_UART_V1` |
+| Uno | `Car/Arduino_Uno/zumo_line_follow` | OG3 Zumo controller |
 
 Build the Pico with `Laptop/Tools/Communication/build_desk_pico.ps1`; upload using
 `Laptop/Tools/Communication/upload_pico.ps1 -Port COM11 -Role Desk`. The uploader checks the
 Pico USB identity, resets only that board and verifies the newly appearing
 RP2040 BOOTSEL drive before copying the UF2. USB port numbers can change.
 
-Build the robot ESP/MSP pair with `Laptop/Tools/Communication/build_direct.ps1`. Do not
+Build the robot ESP/MSP pair with `Laptop/Tools/Communication/build_direct.ps1 -Zumo`. Do not
 upload the archived `Laptop/Archive/ESP32_Laptop_Gateway/laptop_gateway` or Pico `wireless_robot_link`
 programs for this layout: their roles and network protocol differ.
 

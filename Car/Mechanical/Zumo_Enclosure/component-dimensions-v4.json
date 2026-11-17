@@ -1,0 +1,132 @@
+{
+  "units": "mm",
+  "source": "User-supplied dimensions, 17 November 2026",
+  "components": {
+    "msp430": {
+      "model": "MSP-EXP430F5529LP Rev 1.8 to check",
+      "pcb": [
+        73.66,
+        58.42
+      ],
+      "assembled_height": null,
+      "status": "User reports TI reference CAD; not independently verified against actual Rev 1.8"
+    },
+    "esp32": {
+      "model": "DFRobot FireBeetle DFR0478",
+      "pcb": [
+        58,
+        29
+      ],
+      "assembled_height": null
+    },
+    "power_bank": {
+      "model": "AUKEY PB-Y91",
+      "body": [
+        75.3,
+        66.5,
+        24.8
+      ],
+      "mass_g": null
+    },
+    "uno": {
+      "model": "Uno R3 compatible",
+      "pcb_reference": [
+        68.6,
+        53.4
+      ],
+      "actual_outline": "May differ"
+    },
+    "zumo": {
+      "overall_user_reference": [
+        98,
+        98,
+        39
+      ],
+      "includes": "Arduino per user reference; actual heights and track contact polygon unmeasured",
+      "rear_power_switch": true,
+      "mass_with_batteries_g": null,
+      "motor_gear_ratio": null
+    },
+    "bottle": {
+      "external_diameter": 60,
+      "external_height": 100,
+      "water_ml": 100,
+      "water_mass_approx_g": 100,
+      "bottle_mass_g": null,
+      "status": "User approximate measurements"
+    },
+    "mini_breadboard": {
+      "actual_dimensions": null,
+      "previous_allowance": [
+        47,
+        35
+      ],
+      "allowance_is_measurement": false
+    }
+  },
+  "proposal": {
+    "status": "Preliminary body-outline packing study, not production CAD or proof of fit",
+    "axes": "x right, y forward, origin at reference chassis centre; z datum not finalized",
+    "carrier_outline": [
+      155,
+      125
+    ],
+    "chassis_outline_reference": [
+      98,
+      98
+    ],
+    "shell_wall_proposal": 2.4,
+    "dry_bay_bounds": {
+      "x_min": -4.5,
+      "x_max": 77.5,
+      "y_min": -62.5,
+      "y_max": 62.5
+    },
+    "bank_body": {
+      "x_min": 3.25,
+      "x_max": 69.75,
+      "y_min": -27.65,
+      "y_max": 47.65,
+      "body_height": 24.8,
+      "layer": "lower, above existing Uno and soldered-wire clearance"
+    },
+    "msp_pcb": {
+      "x_min": -0.33,
+      "x_max": 73.33,
+      "y_min": 1.5,
+      "y_max": 59.92,
+      "layer": "upper dry cassette"
+    },
+    "esp_pcb": {
+      "x_min": 7.5,
+      "x_max": 65.5,
+      "y_min": -31.5,
+      "y_max": -2.5,
+      "layer": "upper dry cassette"
+    },
+    "tank": {
+      "x": -42.5,
+      "y": 0,
+      "diameter": 60,
+      "layer": "low left cradle"
+    },
+    "tank_cradle_outer_diameter_proposal": 70,
+    "mini_breadboard": "Unmeasured removable lid cartridge above MSP footprint; height and actual fit pending",
+    "port_and_bend_clearance": "Unverified; reserve covered corner/side plug bays and rear chase, revise shell if real connector bodies require it",
+    "mounting_holes": "Unassigned; measure actual chassis fixing points, no coordinates copied from image"
+  },
+  "proposal_checks": {
+    "bank_body_inside_dry_bay": true,
+    "msp_pcb_inside_upper_tray": true,
+    "esp_pcb_inside_upper_tray": true,
+    "upper_pcb_rectangles_overlap": false,
+    "upper_pcb_gap_y": 4,
+    "idealized_water_depth_mm": 35.3677651315323,
+    "idealized_water_centroid_above_inner_bottom_mm": 17.68388256576615,
+    "static_water_force_N": 0.980665,
+    "illustrative_only_mass_g": 575,
+    "illustrative_full_x_cg_mm": 5.304347826086956,
+    "illustrative_empty_x_cg_mm": 15.368421052631579,
+    "note": "PCB/body-outline checks exclude headers, plugs, cables, mass, frame strength, dynamic stability and actual mounting. Idealized water assumes a straight cylinder with 60 mm INTERNAL diameter, though supplied 60 mm is external/approximate, so no physical fill line is established. Illustrative masses 275 g base and 200 g bank are not measurements."
+  }
+}

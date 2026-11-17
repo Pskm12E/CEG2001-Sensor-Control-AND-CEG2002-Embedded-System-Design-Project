@@ -1,0 +1,51 @@
+{
+  "date": "2026-11-12",
+  "motor_power": "User confirmed only motor battery disconnected; controller USB retained",
+  "user_confirmations": {
+    "ground": "Driver, Uno and MSP share secure GND",
+    "esp": "Powered, TX connected to MSP P4.2; ESP end pin not visually verified"
+  },
+  "original_image_snapshot": {
+    "uart_errors": 15,
+    "rx_drops": 0,
+    "bad_frames": 0,
+    "log": "tmp/msp-powered-wheel-stop-diagnostic-2026-11-12.log"
+  },
+  "installed_diagnostic_image": {
+    "path": "Car/MSP430/robot_supervisor/Debug_wifi_ir_test/robot_supervisor.out",
+    "sha256": "C15424C5C83DE74B0325A24A6F27262C6156A774AEA0FAE7C003CEC30B22CA8A",
+    "flash_bytes": 6312,
+    "ram_bytes": 1398,
+    "flash_verify_run_exit": 0,
+    "log": "tmp/msp-uart-diagnostic-flash-2026-11-12.log",
+    "ultrasonic_stop_enabled": false,
+    "change": "Separate UART receive error counters, retained error flags, per-port lost-input messages. Existing control gates and STATUS wire format retained."
+  },
+  "unpowered_motor_baseline": {
+    "uptime_ticks_100ms": 552,
+    "uart_errors": 3040,
+    "uno_uart_errors": 1,
+    "uno_last_error_flags": 36,
+    "uno_last_error_type": "UCRXERR + overrun",
+    "esp_console_uart_errors": 3039,
+    "esp_console_last_error_flags": 68,
+    "esp_console_last_error_type": "UCRXERR + framing",
+    "rx_drops": 0,
+    "bad_frames": 0,
+    "retained_console": "Repeated UART1 CONSOLE RX ERROR/OVERFLOW; STOP REQUESTED",
+    "log": "tmp/msp-uart-diagnostic-baseline-2026-11-12.log",
+    "debugger_resumed_and_disconnected": true,
+    "observer_effect": "Capture precedes resume; resume previously restarted execution. A single Uno overrun is not attributed to motor operation."
+  },
+  "validation": {
+    "supervisor_fault_injection_and_control": 84,
+    "sonar_policy": 3128,
+    "normal_driving_policy": 3584,
+    "explicit_normal_driving_policy": 3584,
+    "ir_test_driving_policy": 3616,
+    "direct_bridge": 60
+  },
+  "final_uno_monitor": "CAL=1; W=0 B=1 both; latest RAW=0/0; DRIVE=0",
+  "assistant_start_commands_after_reflash": 0,
+  "conclusion": "ESP/MSP UART1 receive fault exists with motor battery disconnected. Physical wiring, baud and firmware identity need checking; powered driving remains unresolved."
+}

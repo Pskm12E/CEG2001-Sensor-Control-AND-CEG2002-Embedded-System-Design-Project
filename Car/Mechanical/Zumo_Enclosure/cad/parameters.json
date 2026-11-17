@@ -1,0 +1,148 @@
+{
+  "units": "mm",
+  "status": "PRINTABLE PROTOTYPE - actual mounting/height/cable fit and load unverified",
+  "reference_mounts": {
+    "front_spacing": 55.0,
+    "rear_spacing": 50.0,
+    "front_rear_pitch": 63.0,
+    "source": "Pololu Zumo Shield v1.2 drawing/DXF; actual shield revision unconfirmed"
+  },
+  "mounted_uno": {
+    "pcb_width": 53.4,
+    "pcb_length": 68.6,
+    "solder_top_from_mount_plane": 12.0,
+    "rear_wire_loop_allowance": 18.0,
+    "wire_margin": 2.0,
+    "usb_b_center_x": -16.0,
+    "usb_b_mouth_y": -44.0,
+    "usb_b_center_z": 8.0,
+    "note": "Uno STAYS on Zumo. Heights/USB pose are adjustable reference assumptions, NOT measurements. User reports wires soldered at back for D16 and D6; no pin changes."
+  },
+  "carrier": {
+    "width": 155.0,
+    "front_y": 62.5,
+    "rear_y": -72.5,
+    "deck": 3.0,
+    "beam": 5.0,
+    "guard_wall": 1.2,
+    "guard_drop": 26.0
+  },
+  "dry_case": {
+    "x_min": -4.5,
+    "x_max": 77.5,
+    "rear_y": -72.5,
+    "front_y": 62.5,
+    "wall": 1.2,
+    "floor": 1.2,
+    "lower_height": 39.0,
+    "tray_bottom": 36.0,
+    "tray_thickness": 1.6,
+    "upper_height": 45.0,
+    "lid_thickness": 1.2,
+    "fit_clearance": 0.3
+  },
+  "bank": {
+    "width": 66.5,
+    "length": 75.3,
+    "height": 24.8,
+    "center_x": 36.5,
+    "center_y": 20.0,
+    "lift": 5.0,
+    "printed_pad_height": 4.0,
+    "soft_pad_allowance": 1.0,
+    "strap_width": 15.0
+  },
+  "bottle": {
+    "diameter": 60.0,
+    "height": 100.0,
+    "water_ml": 100.0,
+    "center_x": -42.5,
+    "center_y": 0.0,
+    "cup_inside_diameter": 62.0,
+    "cup_outside_diameter": 65.2,
+    "cup_height": 10.0,
+    "floor": 1.6,
+    "spine_height": 84.0,
+    "strap_width": 15.0,
+    "band_heights": [
+      27.0,
+      69.0
+    ]
+  },
+  "boards": {
+    "msp_pcb": [
+      73.66,
+      58.42
+    ],
+    "msp_bounds": [
+      -0.33,
+      73.33,
+      1.5,
+      59.92
+    ],
+    "esp_pcb": [
+      58.0,
+      29.0
+    ],
+    "esp_bounds": [
+      7.5,
+      65.5,
+      -31.5,
+      -2.5
+    ],
+    "pcb_thickness_assumption": 1.6,
+    "header_headroom_assumption": 25.0,
+    "clip_ledge": 5.0,
+    "mini_actual_size": null,
+    "accessory_inside": [
+      56.8,
+      40.8,
+      10.4
+    ]
+  },
+  "usb_bank_bay": {
+    "clear_width": 70.0,
+    "clear_depth": 50.0,
+    "clear_height": 30.0,
+    "floor_from_case_bottom": 3.6
+  },
+  "uno_cable_duct": {
+    "center_x": -16.0,
+    "pod_clear_width": 30.0,
+    "pod_clear_height": 30.0,
+    "pod_front_y": -42.4,
+    "pod_back_y": -102.0,
+    "bottom_z": -4.0,
+    "wall": 1.2,
+    "raceway_rear_y": -100.0,
+    "raceway_front_y": -74.0,
+    "raceway_end_x": 69.0,
+    "chute_bounds": [
+      42.0,
+      66.0,
+      -90.0,
+      -48.0
+    ]
+  },
+  "hardware": {
+    "m3_clearance": 3.4,
+    "m3_nut_circumradius": 3.3,
+    "m3_nut_depth": 2.7,
+    "chassis_clearance": 2.6,
+    "m2_cover_pilot": 1.7,
+    "m2_cover_clearance": 2.2,
+    "isolation_washer": 1.6
+  },
+  "material": {
+    "name": "PETG prototype suggestion",
+    "solid_density_g_cm3": 1.27,
+    "layer_height_suggestion": 0.2,
+    "note": "Mass estimates use full solid mesh volume; actual slicer mass, strength, leakage and loaded driving require checks."
+  },
+  "rear_switch_access": {
+    "center_x": 16.0,
+    "width": 26.0,
+    "height": 18.0,
+    "note": "Assumed rear tool-access tunnel; check original switch pose. Raised cable crossing above tunnel has 8 mm nominal cable height."
+  }
+}

@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import server
 
 VALID = "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1"
+ZUMO = VALID.replace("L2=NC R4=NC", "BASE=ZUMO LINE=BLACK")
 
 def remote_line(**changes):
     value = {"board": "ESP32_FIREBEETLE", "firmware": "DIRECT_WIFI_V1", "main_controller": "MSP430F5529", "ap_ready": True, "fresh": True, "msp_link": "UP", "age_ms": 100, "telemetry": VALID}
@@ -28,6 +29,24 @@ def fresh_bridge():
     return bridge
 
 class BridgeTests(unittest.TestCase):
+    def test_zumo_status_and_fresh_bridge(self):
+        value = server.parse_status(ZUMO)
+        self.assertEqual(value["base"], "ZUMO")
+        self.assertEqual(value["line"], "BLACK")
+        self.assertIsNone(value["left"])
+        self.assertIsNone(value["right"])
+        bridge = fresh_bridge()
+        bridge._receive(remote_line(telemetry=ZUMO))
+        self.assertTrue(bridge.state()["connection"]["fresh"])
+        self.assertEqual(bridge.state()["telemetry"]["base"], "ZUMO")
+
+    def test_zumo_rejects_malformed_status(self):
+        for value in (ZUMO + " extra", ZUMO.replace("FLAGS=96", "FLAGS=999"),
+                      ZUMO.replace("ZUMO", "OTHER"), ZUMO.replace("LINE=BLACK", "LINE=WHITE"),
+                      ZUMO.replace("LED2=OFF", "L2=NC R4=NC LED2=OFF")):
+            with self.subTest(value=value):
+                self.assertIsNone(server.parse_status(value))
+
     def test_parse_supervisor_status(self):
         value = server.parse_status(VALID)
         self.assertEqual(value["uno_link"], "READY")

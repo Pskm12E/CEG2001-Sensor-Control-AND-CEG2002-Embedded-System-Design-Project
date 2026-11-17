@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-12",
+  "source": "Car/Arduino_Uno/ir_analog_calibration/ir_analog_calibration.ino",
+  "fix": "Whole-word black previously triggered embedded c clear; now line-based parsing",
+  "regression_failed_before_fix": true,
+  "tests_actual_sketch": 25,
+  "build": {
+    "flash_bytes": 5060,
+    "ram_bytes": 264
+  },
+  "diagnostics": [
+    "capture mean/min/max/spread",
+    "SAVED/REJECTED_NOISE",
+    "NEED_w/NEED_b vs WHITE_NOISY/BLACK_NOISY",
+    "LOW_CONTRAST GAP"
+  ],
+  "acceptance_limits_unchanged": {
+    "min_contrast": 40,
+    "max_spread": 30
+  },
+  "uploaded_by_assistant": false,
+  "actual_user_commands_known": false,
+  "physical_calibration_fixed": false,
+  "next": "User uploads; fixed-height white/black capture and share measured results"
+}

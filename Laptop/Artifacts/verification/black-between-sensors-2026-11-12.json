@@ -1,0 +1,67 @@
+{
+  "date": "2026-11-12",
+  "change": "Black tape between replacement heads; physical LEFT S D4, RIGHT S D2",
+  "user_confirmed_geometry": "black tape BETWEEN heads; both heads see white when centred",
+  "supersedes": "Earlier white-lane/boundary mode and tentative both-heads-on-black mode",
+  "steering": {
+    "white_white": "FORWARD",
+    "black_white": "LEFT",
+    "white_black": "RIGHT",
+    "black_black": "STOP"
+  },
+  "motor_wiring_assumption": "OUT1/2 physical left wheel; OUT3/4 right wheel; user-reported",
+  "reverse_turn_outputs": false,
+  "corner_limit_ms": 3000,
+  "lease_ms": 1000,
+  "regression_failed_before_fix": true,
+  "tests": {
+    "actual_pin_to_gpio": 80,
+    "standalone_whole_sketch": 42,
+    "helper_compile_time": 29,
+    "supervised_control": 163,
+    "supervisor_obstacle_path": 68
+  },
+  "builds": {
+    "integrated_flash_bytes": 9532,
+    "integrated_ram_bytes": 607,
+    "standalone_flash_bytes": 6740,
+    "standalone_ram_bytes": 371
+  },
+  "uploaded_source": "Car/Arduino_Uno/msp_line_follow/msp_line_follow.ino",
+  "flash_verified": true,
+  "hex_sha256": "a41489bd0dc8059de40d40330271e774e662f2cee6caaf2a1dfd18644c294a9f",
+  "standalone_uploaded": false,
+  "msp_firmware_changed": false,
+  "runtime": {
+    "port": "COM12",
+    "baud": 115200,
+    "motor_power_off_confirmed": true,
+    "commands_sent": [
+      "S",
+      "STATUS"
+    ],
+    "lines": [
+      "UNO BLACK-BETWEEN+MSP: w/b/c/f request MSP approval; s stops.",
+      "IR pins: LEFT=D4; RIGHT=D2.",
+      "Centred: BOTH WHITE. D4 BLACK -> LEFT; D2 BLACK -> RIGHT.",
+      "BOTH BLACK -> STOP. Calibrate w=WHITE, b=BLACK.",
+      "Corner turn limit (ms): 3000",
+      "UNO V2 CAL=0 FLAGS=112 DRIVE=0 REASON=11 RAW=1/1 REQ=0",
+      "MSP STOP received. No automatic restart.",
+      "UNO V2 CAL=0 FLAGS=96 DRIVE=0 REASON=0 RAW=1/1 REQ=0",
+      "UNO V2 CAL=0 FLAGS=96 DRIVE=0 REASON=0 RAW=1/1 REQ=0",
+      "UNO V2 CAL=0 FLAGS=96 DRIVE=0 REASON=0 RAW=1/1 REQ=0",
+      "UNO V2 CAL=0 FLAGS=96 DRIVE=0 REASON=0 RAW=1/1 REQ=0",
+      "UNO V2 CAL=0 FLAGS=96 DRIVE=0 REASON=0 RAW=1/1 REQ=0",
+      "UNO V2 CAL=0 FLAGS=96 DRIVE=0 REASON=0 RAW=1/1 REQ=0"
+    ]
+  },
+  "limitations": [
+    "New module model/supply/output type not independently identified",
+    "New physical sensor contrast not calibrated",
+    "Physical wheel-side mapping and track steering unverified",
+    "Both white cannot distinguish centred travel from completely lost tape",
+    "Known-distance ultrasonic measurement and physical braking remain unverified"
+  ],
+  "no_start_or_calibration_sent": true
+}

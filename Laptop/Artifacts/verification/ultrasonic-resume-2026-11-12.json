@@ -1,0 +1,54 @@
+{
+  "date": "2026-11-12",
+  "motor_power": "One AA cell removed; user explicitly confirmed",
+  "uno": {
+    "restored_matching_firmware": true,
+    "flash_verified_bytes": 9434,
+    "hex_sha256": "B92465E18E9DD2599A4E13C2F327B61590E78EEF2BB6482A19DDA550A793E158",
+    "runtime": {
+      "port": "COM12",
+      "baud": 115200,
+      "motor_power_off_confirmed": true,
+      "commands_sent": [
+        "S",
+        "STATUS"
+      ],
+      "lines": [
+        "UNO WHITE+MSP: w/b/c/f request MSP approval; s stops.",
+        "Steering: D2 BLACK -> RIGHT; D4 BLACK -> LEFT.",
+        "Corner turn limit (ms): 3000",
+        "MSP STOP received. No automatic restart.",
+        "UNO V2 CAL=0 FLAGS=112 DRIVE=0 REASON=11 RAW=0/0 REQ=0",
+        "UNO V2 CAL=0 FLAGS=96 DRIVE=0 REASON=0 RAW=0/0 REQ=0",
+        "UNO V2 CAL=0 FLAGS=96 DRIVE=0 REASON=0 RAW=0/0 REQ=0",
+        "UNO V2 CAL=0 FLAGS=96 DRIVE=0 REASON=0 RAW=0/0 REQ=0",
+        "UNO V2 CAL=0 FLAGS=96 DRIVE=0 REASON=0 RAW=0/0 REQ=0",
+        "UNO V2 CAL=0 FLAGS=96 DRIVE=0 REASON=0 RAW=0/0 REQ=0",
+        "UNO V2 CAL=0 FLAGS=96 DRIVE=0 REASON=0 RAW=0/0 REQ=0"
+      ]
+    },
+    "correct_sketch_open_in_ide": true,
+    "old_standalone_window_closed": true
+  },
+  "msp": {
+    "debug_port_detected": false,
+    "application_uart_detected": false,
+    "usb_bench_built": true,
+    "usb_bench_uploaded": false,
+    "firmware_changed": false,
+    "stop_frame_received_by_uno": true
+  },
+  "sensor_wiring": {
+    "user_confirmed": true,
+    "vcc": "MSP 5V",
+    "gnd": "Common",
+    "trig": "P3.2",
+    "echo": "ECHO -> 2.2k -> node/P2.7 -> 3.3k -> GND",
+    "electrically_measured": false
+  },
+  "fresh_distance_tested": false,
+  "physical_braking_tested": false,
+  "calibration_start_or_spray_commands_sent": false,
+  "pending": "MSP USB interface detection and known-distance range test",
+  "committed_or_pushed": false
+}

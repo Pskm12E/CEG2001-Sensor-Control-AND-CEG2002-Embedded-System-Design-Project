@@ -3,16 +3,54 @@
 Open **http://127.0.0.1:8765** on the laptop. The robot MSP430 is the main
 embedded controller. The app runs locally; the laptop keeps its normal Wi-Fi.
 
+17 November Zumo update: telemetry accepts the six-sensor black-line base and
+shows its calibration state. See the
+[matching firmware/wiring guide](../../Car/Arduino_Uno/zumo_line_follow/README.md).
+This change does not add movement controls to the dashboard.
+
 ## Start the system
 
 1. Power the car's FireBeetle ESP32, robot MSP430, Uno and XIAO camera.
    The camera can use **USB-C power from the power bank**.
 2. Connect only the **desk Pico W** to laptop USB for dashboard data
    (currently COM11). Keep the existing ESP32/MSP430/Uno UART wiring.
-3. Double-click **Start Dashboard.cmd** and keep its terminal open.
-4. Choose the desk Pico USB port and **Connect**.
-5. Choose **XIAO camera (Wi-Fi via Pico)** and **Start camera**.
-6. For the blue-square practice target, select **Start detection**.
+3. Double-click **[Start Robot.cmd](../../Start%20Robot.cmd)** at the project root
+   (or the existing **Start Dashboard.cmd** in this folder).
+4. The launcher starts/reuses the local server, opens the browser, finds the desk
+   Pico, verifies its firmware and starts the wireless camera. The page picks up
+   this stream automatically. Keep the terminal open if it started the server;
+   **Ctrl+C** closes that server. A reused server keeps running independently.
+5. For the blue-square practice target, select **Start detection**.
+
+The launcher waits up to 30 seconds for hardware. Missing/busy USB ports or an
+offline camera produce **SETUP INCOMPLETE** rather than a false ready message.
+The dashboard stays available: fix power/cabling and rerun the launcher, or use
+**Connect** and **Start camera** manually. It never uploads firmware, calibrates
+sensors, moves the car or operates a pump. Closing monitoring does not command
+the car to stop; use the robot's stop control if a separate test is driving it.
+
+### Launcher options
+
+From CMD in the project root:
+
+```bat
+"Start Robot.cmd"
+"Start Robot.cmd" --detect
+"Start Robot.cmd" --pico-port COM11
+"Start Robot.cmd" --dashboard-only
+"Start Robot.cmd" --no-camera --no-browser
+```
+
+`--detect` enables only the OpenCV blue-square test after live frames arrive.
+`--pico-port` is needed when more than one supported Pico is attached; Uno and
+MSP430 ports are excluded. `--dashboard-only` leaves hardware disconnected.
+`--no-camera` connects only Pico telemetry; `--no-browser` skips opening a tab.
+Use `--wait 60` for slower board startup, or `--http-port 8766` if another app
+occupies port 8765. Closing another app's serial console can free a busy Pico.
+
+The launcher uses the dashboard's virtual environment first, then this laptop's
+bundled Python, then `py -3` or `python`. On a different laptop, install the
+dependencies described below first. It does not download/install anything.
 
 ```text
 CAR                                    DESK

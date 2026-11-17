@@ -11,7 +11,7 @@ Build both the current gateway and matching MSP430 firmware from the repo root:
 
 ```powershell
 python Laptop/Tools/Communication/configure.py
-./Laptop/Tools/Communication/build_direct.ps1
+./Laptop/Tools/Communication/build_direct.ps1 -Zumo
 ```
 
 Private settings stay in ignored

@@ -33,6 +33,7 @@ static uint8_t put(uint8_t,uint8_t c) { output+=static_cast<char>(c); return 1; 
 static void status() {
     print("STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=0 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1\r\n");
 }
+static void sonarReport() { print("SONAR VALID=1 CM=50 INHIBIT=0 FAULT=0\r\n"); }
 static unsigned checks;
 #define CHECK(x) do { assert(x); ++checks; } while(0)
 '''
@@ -54,6 +55,7 @@ int main() {
     CHECK(running && queued==0);
     user("NET 99 STOP"); CHECK(direct::matches(direct::Op::Stop,payload(99)));
     CHECK(!running && queued==RL_STOP && P4OUT==0);
+    user("NET 100 SONAR"); CHECK(std::string(payload(100))=="SONAR VALID=1 CM=50 INHIBIT=0 FAULT=0");
     for(const char *bad : {"NET 0 STOP","NET 01 STOP","NET -1 STOP","NET 4294967296 STOP",
             "NET 99999999999 STOP","NET 2X STOP","NET 2","NET 2  STOP",
             "NET 2 START","NET 2 F","NET 2 W","NET 2 B","NET 2 C","NET 2 SPRAY",

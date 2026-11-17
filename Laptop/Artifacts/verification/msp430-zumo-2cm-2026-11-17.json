@@ -1,0 +1,50 @@
+{
+  "date": "2026-11-17",
+  "timezone": "Asia/Singapore",
+  "request": "Change MSP obstacle stop threshold to 2cm",
+  "motor_power_off_confirmed_by_user": true,
+  "policy": {
+    "stop_cm": 2,
+    "release_cm": 4,
+    "clear_samples": 2,
+    "stale_ticks_100ms": 3,
+    "no_echo_and_communication_stops_retained": true,
+    "automatic_restart": false
+  },
+  "firmware": {
+    "board": "MSP430F5529",
+    "defines": ["SUPERVISOR_ESP_UART", "ZUMO_BASE=1"],
+    "image": "Car/MSP430/robot_supervisor/Debug_wifi_zumo/robot_supervisor.out",
+    "sha256": "e6e99fc13502657c530082d80639bbdf62b90f1dfebcd6667c767ed13f77a779",
+    "flash_bytes": 6294,
+    "ram_bytes": 1398,
+    "flash_successful": true,
+    "program_verification_successful": true,
+    "left_executing": true
+  },
+  "runtime_readback": {
+    "ticks": [10, 23],
+    "running": [0, 0],
+    "uno_link_ready": [true, true],
+    "peer_flags": [0, 0],
+    "link_uart_errors": [0, 0],
+    "console_uart_errors": [0, 0],
+    "rx_drops": [0, 0],
+    "bad_frames": [0, 0],
+    "sonar_valid": [true, true],
+    "sonar_cm": [58, 55],
+    "sonar_inhibit": [0, 0],
+    "sonar_fault": [0, 0]
+  },
+  "software_assertions_passed": {
+    "sonar": 3137,
+    "supervisor": 84,
+    "zumo": 978,
+    "legacy_sonar_paths": [3584, 3584, 3616]
+  },
+  "boundary_checks": "Valid3cm/10cm/20cm remain clear;2cm stops;3cm cannot clear latched inhibit;two4cm readings clear",
+  "uno_changed_or_flashed": false,
+  "movement_or_calibration_requested": false,
+  "physical_distance_accuracy_or_stopping_distance_tested": false,
+  "logs": ["tmp/msp-zumo-2cm-flash-2026-11-17.log", "tmp/msp-zumo-2cm-post-flash-2026-11-17.log"]
+}

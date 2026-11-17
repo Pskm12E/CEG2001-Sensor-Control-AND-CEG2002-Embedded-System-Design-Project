@@ -7,10 +7,16 @@
 #include <stdint.h>
 #define RL_SIZE 11u
 #define RL_REPLY 0x80u
-enum { RL_HELLO=1, RL_STOP, RL_STATUS, RL_WHITE, RL_BLACK, RL_START, RL_KEEP, RL_CLEAR };
+/* Zumo's powered six-sensor sweep is distinct from the old stationary W/B captures. */
+enum { RL_HELLO=1, RL_STOP, RL_STATUS, RL_WHITE, RL_BLACK, RL_START, RL_KEEP, RL_CLEAR,
+       RL_ZUMO_CALIBRATE };
 enum { RL_OK=0, RL_NOT_CAL, RL_NOT_CENTER, RL_CAL_BUSY, RL_BAD_SESSION,
        RL_BAD_SEQUENCE, RL_BAD_COMMAND, RL_LEASE_LOST, RL_LINE_LOST,
-       RL_UNSTABLE, RL_TURN_TIMEOUT, RL_LOCAL_STOP, RL_BAD_FRAME, RL_CAL_UNSTABLE };
+       RL_UNSTABLE, RL_TURN_TIMEOUT, RL_LOCAL_STOP, RL_BAD_FRAME, RL_CAL_UNSTABLE,
+       RL_BOTH_BLACK };
+/* A stopped Uno reports a user request in STATUS; only MSP can grant the action. */
+enum { RL_USER_WHITE=225,RL_USER_BLACK,RL_USER_CLEAR,RL_USER_START };
+enum { RL_USER_ZUMO_CALIBRATE=229 };
 enum { RL_CAL=1, RL_LEFT_BLACK=2, RL_RIGHT_BLACK=4, RL_MOVING=8,
        RL_FAULT=16, RL_LEFT_STABLE=32, RL_RIGHT_STABLE=64, RL_CALIBRATING=128 };
 typedef struct { uint8_t type; uint16_t session, seq; uint8_t arg, detail; } RlPacket;

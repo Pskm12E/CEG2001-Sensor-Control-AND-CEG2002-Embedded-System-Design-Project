@@ -86,5 +86,76 @@ int main() {
     same.handle(req(RL_BLACK,2),210);
     for(unsigned t=215;t<=410;t+=5) same.tick(t,1,1);
     CHECK(!same.calibrated() && same.handle(req(RL_START,3),430).detail==RL_NOT_CAL);
-    printf("PASS %u assertions: framing, corrupt packets, calibration, steering, stale sequences, stop and lease expiry.\n",checks);
+    RobotControl white(true);
+    CHECK(!white.requestLocal(RL_START)); // No local bypass before MSP session.
+    white.handle(req(RL_HELLO,0),0);
+    CHECK(white.requestLocal(RL_WHITE) && !white.following);
+    CHECK(white.handle(req(RL_STATUS,1),1).detail==RL_USER_WHITE);
+    CHECK(!white.requestLocal(RL_START)); // One request, no silent replacement.
+    white.handle(req(RL_WHITE,2),2);
+    for(unsigned t=7;t<=202;t+=5) white.tick(t,0,1);
+    CHECK(!white.userRequest && !white.calibration && white.sensors[1].white==1);
+    CHECK(white.requestLocal(RL_BLACK));
+    CHECK(white.handle(req(RL_STATUS,3),210).detail==RL_USER_BLACK);
+    white.handle(req(RL_BLACK,4),211);
+    for(unsigned t=216;t<=411;t+=5) white.tick(t,1,0);
+    CHECK(white.calibrated() && !white.following);
+    white.tick(420,1,0); white.tick(430,1,0);
+    CHECK(white.handle(req(RL_START,5),431).detail==RL_NOT_CENTER && !white.following);
+    white.tick(440,0,1); white.tick(450,0,1);
+    CHECK(white.requestLocal(RL_START));
+    CHECK(white.handle(req(RL_STATUS,6),451).detail==RL_USER_START && !white.following);
+    CHECK(white.handle(req(RL_START,7),452).detail==RL_OK && white.following);
+    CHECK(!white.requestLocal(RL_WHITE));
+    white.tick(460,0,1); CHECK(white.action==DRIVE_FORWARD);
+    white.tick(470,1,1); white.tick(480,1,1); CHECK(white.action==DRIVE_RIGHT);
+    white.tick(490,0,0); white.tick(500,0,0); CHECK(white.action==DRIVE_LEFT);
+    white.tick(510,1,0); white.tick(520,1,0);
+    CHECK(!white.following && white.reason==RL_BOTH_BLACK && white.action==DRIVE_STOP);
+    white.tick(530,0,1); white.tick(540,0,1);
+    CHECK(!white.following && !white.requestLocal(RL_START)); // Need MSP resync after stop.
+    white.handle(req(RL_HELLO,0,51),550);
+    CHECK(white.requestLocal(RL_START));
+    white.handle(req(RL_STOP,77,99),551); // Obstacle STOP overrides pending local f.
+    CHECK(!white.following && !white.userRequest && !white.session);
+    white.handle(req(RL_HELLO,0,52),560);
+    CHECK(!white.following && !white.userRequest); // Clear/recovered link never auto-restarts.
+    RobotControl slow(BLACK_BETWEEN_SENSORS,3000);
+    slow.handle(req(RL_HELLO,0),0);
+    for(unsigned i=0;i<2;++i) { slow.sensors[i].white=0; slow.sensors[i].black=1; }
+    slow.tick(0,0,0); slow.tick(10,0,0); slow.handle(req(RL_START,1),20);
+    slow.tick(30,1,0); slow.tick(40,1,0);
+    CHECK(slow.following && slow.action==DRIVE_LEFT);
+    slow.handle(req(RL_KEEP,2),700); slow.tick(790,1,0);
+    CHECK(slow.following && slow.action==DRIVE_LEFT); // Old 750ms cutoff passed.
+    slow.handle(req(RL_KEEP,3),1400); slow.tick(1500,1,0);
+    CHECK(slow.following && slow.action==DRIVE_LEFT);
+    slow.handle(req(RL_KEEP,4),2100); slow.handle(req(RL_KEEP,5),2800);
+    slow.tick(3039,1,0); CHECK(slow.following);
+    slow.tick(3040,1,0); CHECK(!slow.following && slow.reason==RL_TURN_TIMEOUT);
+    slow.tick(3050,0,0); slow.tick(3060,0,0);
+    CHECK(!slow.following && slow.action==DRIVE_STOP); // Deadline stays latched.
+
+    RobotControl lostLease(BLACK_BETWEEN_SENSORS,3000);
+    lostLease.handle(req(RL_HELLO,0),0);
+    for(unsigned i=0;i<2;++i) { lostLease.sensors[i].white=0; lostLease.sensors[i].black=1; }
+    lostLease.tick(0,0,0); lostLease.tick(10,0,0); lostLease.handle(req(RL_START,1),20);
+    lostLease.tick(30,1,0); lostLease.tick(40,1,0); lostLease.tick(1020,1,0);
+    CHECK(!lostLease.following && lostLease.reason==RL_LEASE_LOST); // Still 1000ms.
+
+    RobotControl interrupted(BLACK_BETWEEN_SENSORS,3000);
+    interrupted.handle(req(RL_HELLO,0),0);
+    for(unsigned i=0;i<2;++i) { interrupted.sensors[i].white=0; interrupted.sensors[i].black=1; }
+    interrupted.tick(0,0,0); interrupted.tick(10,0,0); interrupted.handle(req(RL_START,1),20);
+    interrupted.tick(30,1,0); interrupted.tick(40,1,0);
+    interrupted.handle(req(RL_STOP,2),100); CHECK(!interrupted.following && interrupted.action==DRIVE_STOP);
+
+    RobotControl recentred(BLACK_BETWEEN_SENSORS,3000);
+    recentred.handle(req(RL_HELLO,0),0);
+    for(unsigned i=0;i<2;++i) { recentred.sensors[i].white=0; recentred.sensors[i].black=1; }
+    recentred.tick(0,0,0); recentred.tick(10,0,0); recentred.handle(req(RL_START,1),20);
+    recentred.tick(30,1,0); recentred.tick(40,1,0);
+    recentred.tick(500,0,0); recentred.tick(510,0,0);
+    CHECK(recentred.following && recentred.action==DRIVE_FORWARD);
+    printf("PASS %u assertions: framing, calibration, legacy layouts, active black-between layout, MSP-authorised requests, STOP and lease expiry.\n",checks);
 }

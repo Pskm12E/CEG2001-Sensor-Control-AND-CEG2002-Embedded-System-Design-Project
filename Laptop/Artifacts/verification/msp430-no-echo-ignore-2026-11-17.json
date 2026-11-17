@@ -1,0 +1,57 @@
+{
+  "date": "2026-11-17",
+  "timezone": "Asia/Singapore",
+  "request": "No echo alone should not stop the car",
+  "policy": {
+    "no_echo_stops_motion": false,
+    "unknown_sonar_prevents_start_or_calibration": false,
+    "valid_near_stop_cm": 2,
+    "clear_cm": 4,
+    "clear_samples": 2,
+    "last_near_reading_expires_ticks_100ms": 3,
+    "automatic_restart": false,
+    "manual_and_communication_stops_retained": true
+  },
+  "firmware": {
+    "board": "MSP430F5529",
+    "defines": ["SUPERVISOR_ESP_UART", "ZUMO_BASE=1"],
+    "sha256": "15d74b01b2bec01e1a33d4c4e0bf9eb945bb98708555bbfe8693d5eae5002dcc",
+    "flash_bytes": 6324,
+    "ram_bytes": 1398,
+    "flash_successful": true,
+    "program_verification_successful": true,
+    "left_executing": true
+  },
+  "clean_raw_capture_before_resume": {
+    "ticks": 838,
+    "last_valid_sonar_tick": 607,
+    "last_distance_cm_stale": 285,
+    "sonar_valid": false,
+    "sonar_fault": true,
+    "sonar_inhibit": false,
+    "uno_link_ready": true,
+    "running": false,
+    "peer_flags": 1,
+    "link_uart_errors": 0,
+    "console_uart_errors": 0,
+    "rx_drops": 0,
+    "bad_frames": 0
+  },
+  "debugger_limitation": "Paused symbolic samples registered console UART errors92/148; these were not reproduced in the clean raw capture and are not diagnosed as the physical cause",
+  "software_assertions_passed": {
+    "sonar": 3140,
+    "supervisor": 84,
+    "zumo": 1100,
+    "legacy_sonar_variants": [3607, 3607, 3616],
+    "direct_bridge": 60
+  },
+  "full_calibration_and_following_with_no_echoes_tested_in_simulation": true,
+  "valid_near_STOP_and_no_automatic_restart_tested_in_simulation": true,
+  "uno_changed_or_uploaded": false,
+  "physical_movement_or_calibration_requested": false,
+  "logs": [
+    "tmp/msp-zumo-no-echo-ignore-flash-2026-11-17.log",
+    "tmp/msp-zumo-no-echo-ignore-runtime-2026-11-17.log",
+    "tmp/msp-no-echo-policy-stable-2026-11-17.log"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "date": "2026-11-10",
+  "feature": "Local one-file monitoring startup",
+  "entrypoints": [
+    "Start Robot.cmd",
+    "Laptop/Dashboard/Start Dashboard.cmd"
+  ],
+  "software": {
+    "dashboard_tests_passed": 58,
+    "launcher_cases": 16,
+    "javascript_syntax": "pass",
+    "local_markdown_links": 130,
+    "cmd_entrypoints": "pass",
+    "fresh_server_reuse_cleanup_smoke": "pass (temporary 8766 closed)"
+  },
+  "browser": "Existing camera subscription adopted on page reload; Connecting badge and stream element visible without Start camera click",
+  "hardware": {
+    "pico_port": "COM11",
+    "identity": "PONG PICO_DESK_BRIDGE_V2",
+    "video_request": "VIDEO OK ON",
+    "wifi": "DOWN",
+    "esp": "DOWN",
+    "live_frames_received": false,
+    "setup_result": "incomplete after 25 seconds"
+  },
+  "actuator_commands_sent": false,
+  "firmware_uploaded": false,
+  "pushed": false
+}

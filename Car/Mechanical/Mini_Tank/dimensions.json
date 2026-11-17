@@ -1,0 +1,22 @@
+{
+  "units": "mm",
+  "status": "Provisional; exact sensor variant dimensions and interpretation of 20 mm mount width unconfirmed",
+  "sensor_user_description": "UNO mega2560 rainwater lvl sensor for Arduino",
+  "tank_width": 25,
+  "tank_depth": 15,
+  "tank_height": 55,
+  "tank_wall": 2,
+  "tank_floor": 3,
+  "holder_wall": 2,
+  "holder_floor": 3,
+  "holder_height": 75,
+  "holder_lip_height": 28,
+  "clearance_per_side": 0.5,
+  "drain_size": 4,
+  "water_depth": 35,
+  "example_sensor_height": 62,
+  "example_sensor_width": 20,
+  "example_pcb_thickness": 1.6,
+  "example_sensor_envelope_depth": 8,
+  "sensor_floor_clearance": 2
+}

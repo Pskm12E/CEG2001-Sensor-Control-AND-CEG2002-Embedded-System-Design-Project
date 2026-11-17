@@ -1,0 +1,52 @@
+{
+  "date": "2026-11-12",
+  "change": "Slow-corner allowance",
+  "user_observation": "Wheels move very slowly through sticky turn, then stop on timeout",
+  "previous_corner_ms": 750,
+  "new_active_corner_ms": 3000,
+  "sources": [
+    "Car/Arduino_Uno/msp_line_follow/msp_line_follow.ino",
+    "Car/Arduino_Uno/msp_line_follow/control.h",
+    "Car/Arduino_Uno/line_follow_car/line_follow_car.ino"
+  ],
+  "retained": [
+    "1000ms MSP heartbeat lease",
+    "MSP obstacle STOP",
+    "local STOP",
+    "unstable sensor stop",
+    "both-black stop",
+    "no automatic restart after fault"
+  ],
+  "tests": {
+    "supervised_controller_assertions": 163,
+    "whole_standalone_assertions": 42,
+    "steering_compile_time_assertions": 29,
+    "supervisor_path_assertions": 68,
+    "local_links": 141
+  },
+  "builds": {
+    "matching_uno": {
+      "passed": true,
+      "flash_bytes": 9398,
+      "global_ram_bytes": 606,
+      "hex_sha256": "0FD3990FFBB03726295B718868B23ADDF14726780E7237E2D42DB531BE31EC9D"
+    },
+    "standalone_uno": {
+      "passed": true,
+      "flash_bytes": 6734,
+      "global_ram_bytes": 371
+    }
+  },
+  "uploaded": true,
+  "physical_turn_tested": false,
+  "mechanical_friction_fixed": false,
+  "movement_or_calibration_commands_sent": false,
+  "msp_reflash_required": false,
+  "upload": {
+    "port": "COM12",
+    "flash_bytes_verified": 9398,
+    "motor_power_off_confirmed": true,
+    "runtime_3000ms_banner_observed": true,
+    "evidence": "Laptop/Artifacts/verification/ultrasonic-diagnosis-2026-11-12.json"
+  }
+}

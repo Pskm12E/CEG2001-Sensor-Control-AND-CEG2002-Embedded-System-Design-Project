@@ -1,6 +1,9 @@
 # Board roles, connections and PC data path
 
-Updated 5 November 2026. This replaces the earlier Pico-on-car / MSP I2C layout.
+Updated 17 November 2026. Current driving uses Zumo Shield + Uno. The
+[Zumo guide](../../../Car/Arduino_Uno/zumo_line_follow/README.md) is the source
+of truth for firmware, sensor wiring and operation. The 5 November image below
+shows the previous L298N base; use the current connection tables instead.
 
 ![Updated boards, pins and communication paths](../../Artifacts/diagrams/robot-system-connections-2026-11-05.png)
 
@@ -18,7 +21,7 @@ pin labels and the exact signal tables below when wiring.
 | Raspberry Pi Pico W | Beside laptop | USB-to-Wi-Fi relay for video and status; no GPIO wires to the car. |
 | Original FireBeetle ESP32, DFR0478 | Car | Creates the private 2.4 GHz Wi-Fi network and bridges robot status over UART. |
 | MSP430 #1, MSP-EXP430F5529LP | Car | **Main robot controller**; supervises Uno, authorisation and communication timeouts. Job/spray logic remains pending. |
-| Arduino Uno R3 | Car | Reads the two IR sensors and controls the L298N under MSP430 supervision. Physical calibration and track following remain deferred. |
+| Arduino Uno R3 + Zumo Shield | Car | Six-sensor black-line following and built-in motor control. MSP is flashed for obstacle stopping; Uno awaits the user's matching upload. |
 | XIAO ESP32-S3 Sense camera | Car | Sends continuous OV3660 camera video wirelessly through the existing ESP32 network. USB-C supplies power from a power bank. |
 | MSP430 #2 + Booster Board | Dock, planned | Local dock sensors and refill control. Pins, communication and firmware are not integrated. |
 | Spray pump and suitable driver | Car, planned | Future bounded spraying authorised by the main MSP430; hardware/pins pending. |
@@ -40,7 +43,7 @@ Laptop <== USB data + power ==> Desk Pico W
                           |
                      Arduino Uno
                           |
-                    L298N + wheels
+                 Zumo Shield + tracks
 ```
 
 - **Video:** camera → ESP32 private Wi-Fi access point → Pico → USB → laptop.
@@ -77,41 +80,37 @@ only its laptop USB connection in the current design.
 
 | From | To | Purpose |
 | --- | --- | --- |
-| MSP430 P3.3, TX | Uno D5, RX | Supervisor commands |
-| Uno D6, TX | Divider, then MSP430 P3.4, RX | Acknowledgements and status |
+| MSP430 P3.3, TX | Uno D6, RX | Supervisor commands |
+| Uno D13, TX | Divider, then MSP430 P3.4, RX | Acknowledgements and status |
 | MSP430 GND | Uno GND | Shared reference |
 
-Keep the existing Uno TX divider:
+User-specified current Uno TX divider:
 
 ```text
-Uno D6 ── 1 kΩ ── RX junction ── MSP430 P3.4
-                         ├── 2.2 kΩ ── GND
-                         └── 2.2 kΩ ── GND
+Uno D13 ── 2.2 kΩ ── RX junction ── MSP430 P3.4
+                            └── 2.2 kΩ ── GND
 ```
 
-The two 2.2 kΩ resistors are **parallel**, not series. Nominal output is about
-2.62 V for a 5 V input. Do not wire the Uno's 5 V TX directly to the MSP430.
+The two 2.2 kΩ resistors are in series between TX and GND, with MSP RX at
+their junction. Nominal output is 2.5V for a 5V input. Do not wire the Uno's
+5V TX directly to the MSP430. D13 is reserved for UART, including its shield LED.
 
-### Uno, IR sensors and wheel motors
+### Zumo array, motors and MSP sensors
 
 | From | To |
 | --- | --- |
-| Left IR OUT | Uno D2 |
-| Right IR OUT | Uno D4 |
-| Both IR VCC / GND | Uno 3.3 V / GND, matching the present setup |
-| Uno D7 | L298N IN1 |
-| Uno D8 | L298N IN2 |
-| Uno D9 | L298N IN3 |
-| Uno D10 | L298N IN4 |
-| Uno GND | L298N GND |
-| L298N OUT1 / OUT2 | Left motor |
-| L298N OUT3 / OUT4 | Right motor |
+| Zumo six-sensor array and motor driver | Shield's built-in Uno connections |
+| MSP P3.2 | HC-SR04 TRIG |
+| HC-SR04 ECHO | 2.2kΩ -> MSP P2.7 junction -> 3.3kΩ -> GND |
+| HC-SR04 VCC / GND | 5V / common GND |
+| Water sensor S | MSP P6.0 / ADC A0 |
+| Water sensor V/+ and G/- | MSP 3.3V / common GND |
 
-ENA and ENB jumpers are fitted for on/off drive, with no PWM speed regulation
-or wheel-encoder feedback. Left/right are viewed from behind, facing forward.
-The current follower expects both sensors black when centred on a wide strip.
-Sensor height, spacing, sensitivity and track calibration still need physical
-validation. Reported controller state is not measured wheel motion.
+No external L298N or two separate IR sensors are used. The supplied Zumo code
+follows black on white; MSP stopping also covers its powered calibration sweep.
+Water ADC policy is pending; pump/MOSFET/driver are not connected. Firmware and
+host tests are verified in software, not on the new assembly. Reported controller
+state is not measured wheel motion.
 
 ## Power and mounting
 
@@ -119,7 +118,7 @@ validation. Reported controller state is not measured wheel motion.
 - Camera: power-bank USB-C power only; video travels over Wi-Fi.
 - FireBeetle, MSP430 and Uno: keep their existing USB power supplies. A complete
   shared mobile power distribution/load test has not been established.
-- L298N motors: separate four-AA supply, with common signal ground to Uno.
+- Zumo motors: use the Zumo's supported battery/driver arrangement.
 - Motor/pump current goes through suitable drivers and supplies, not GPIO.
 
 Switch off interconnected board power before changing wires. Keep the motor
@@ -136,9 +135,10 @@ See [camera evidence](../../Artifacts/verification/camera-live-stream-2026-11-05
 and [power-bank evidence](../../Artifacts/verification/camera-powerbank-wireless.json).
 These checks do not establish complete physical driving or autonomous spraying.
 
-Next: IR calibration/track tests, pest detection, sensor eligibility checks,
-bounded spray control, and second-MSP dock integration. Ultrasonic, ADC tank/
-soil/leaf sensing, nozzle and dock interfaces have no final pins here. Charging
+Next: install both matching Zumo images, known-distance sonar checks, calibration
+and track/stopping tests, pest detection, sensor eligibility checks, bounded spray
+control, and second-MSP dock integration. Water ADC logic, nozzle and dock
+interfaces remain unfinished. Charging
 remains manual; wireless charging and spill sensing are not added requirements.
 
 ## Historical illustration

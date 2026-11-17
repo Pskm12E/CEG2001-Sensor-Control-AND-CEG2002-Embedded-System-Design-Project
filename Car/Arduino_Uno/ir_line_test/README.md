@@ -1,4 +1,9 @@
-# Two-sensor IR black-line test
+# Legacy DIGITAL two-sensor IR test
+
+The latest wiring clarification is LEFT OUT -> D4, RIGHT OUT -> D2, sensor VCC
+-> Uno 5V. Use the [current integrated digital source](../msp_line_follow/README.md)
+for the white road with black borders. This earlier sensor-only test uses
+historical labels/supply notes and is retained as history.
 
 For the Arduino Uno, using the user's requested updated wiring:
 
@@ -92,7 +97,7 @@ MSP430 control is implemented by this sensor-only test.
   IDE, resolving its Missing FQBN error. Serial Monitor is now open at 115200 baud
   and receiving live uncalibrated readings. Physical contrast calibration remains.
 
-Reference: [Pololu reflectance application note](https://www.pololu.com/Laptop/Documentation/0J13/all)
+Reference: [Pololu reflectance application note](https://www.pololu.com/docs/0J13/all)
 explains how surface reflection, height and lighting affect line sensing.
 It is background reading, not identification or wiring documentation for the
 user's unconfirmed module.

@@ -1,0 +1,26 @@
+{
+  "date": "2026-11-12",
+  "scope": "Sensor-only analogue IR calibration V3; no driving firmware change",
+  "pins": {"left": "A0", "right": "A1", "vcc_user_reported": "3.3 V"},
+  "change": "Adjustable classification threshold: default sensitivity 70, range 25..75, sense N and +/- commands. At 50 use midpoint; at 70 threshold lies 30 percent from white towards black, independently for each head's polarity.",
+  "unchanged_guards": {"min_contrast_counts": 40, "max_capture_spread_counts": 30, "hysteresis_counts": 8},
+  "validation": {
+    "actual_sketch_host_assertions": 66,
+    "host_result": "PASS",
+    "uno_compile": "PASS",
+    "flash_bytes": 6018,
+    "ram_bytes": 282,
+    "build_note": "Sandbox compiler could not load its DLL; local compile outside sandbox using installed Arduino AVR 1.8.8 succeeded. No upload."
+  },
+  "user_observation": "Non-reflective paper produces a response when brought very close. Exact module model unknown, probably supplied with car kit.",
+  "interpretation": "Height and material need controlled same-distance comparison. Not proof of correct analogue output type or of usable white/black contrast.",
+  "manufacturer_comparison_sources": [
+    "https://www.pololu.com/docs/0J13/all",
+    "https://www.pololu.com/docs/0J12/all",
+    "https://wiki.dfrobot.com/sen0017/"
+  ],
+  "hardware_test": "NOT PERFORMED; accepted physical white/black captures not provided",
+  "uploaded": false,
+  "motor_commands_sent": false,
+  "physical_fix_verified": false
+}

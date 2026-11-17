@@ -1,0 +1,43 @@
+{
+  "tank": {
+    "size_mm": [
+      25.0,
+      15,
+      55
+    ],
+    "triangle_count": 92,
+    "closed_manifold": true,
+    "consistent_outward_winding": true,
+    "connected_shells": 1,
+    "solid_volume_mm3": 8613.0
+  },
+  "holder": {
+    "size_mm": [
+      30.0,
+      20.0,
+      75
+    ],
+    "triangle_count": 296,
+    "closed_manifold": true,
+    "consistent_outward_winding": true,
+    "connected_shells": 1,
+    "solid_volume_mm3": 9172.0
+  },
+  "dimensions": {
+    "tank_cavity_mm": [
+      21,
+      11,
+      52
+    ],
+    "holder_pocket_mm": [
+      26.0,
+      16.0
+    ],
+    "nominal_side_clearance_mm": 0.5,
+    "empty_brim_capacity_ml": 12.012,
+    "illustrated_water_depth_mm": 35,
+    "illustrated_net_water_ml": 7.029,
+    "example_sensor_width_clearance_each_mm": 0.5
+  },
+  "physical_validation": "NOT PERFORMED: actual sensor fit, printing, leaks, splash, adhesive, wheel clearance"
+}

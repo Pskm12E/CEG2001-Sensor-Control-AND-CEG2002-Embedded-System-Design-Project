@@ -1,32 +1,44 @@
 #include <Arduino.h>
 #include <stdio.h>
 
-// Looking forward from behind the car: D2 = LEFT IR, D4 = RIGHT IR.
-// Sensor VCC = 3.3V; GNDs common. Do not use INPUT_PULLUP here.
+// Looking forward from behind the car: D4 = LEFT IR, D2 = RIGHT IR.
+// Both IR VCC -> Uno 5V; common GND. No INPUT_PULLUP.
 // L298N: D7 IN1, D8 IN2, D9 IN3, D10 IN4; ENA/ENB jumpers fitted.
-// Mount both sensors ahead of the wheels, close enough that BOTH see black
-// when centred on the strip. This is not the white/white-centred arrangement.
-const uint8_t IR_PINS[2] = {2, 4};
+// Follow the WHITE road inside BLACK borders. Both heads see white when centred.
+// One head sees black: steer AWAY from that border.
+// Arduino-only: no MSP/ESP UART, approval, heartbeat or ultrasonic dependency.
+// Calibrate actual WHITE with w and actual BLACK with b; do not swap them.
+const uint8_t IR_PINS[2] = {4, 2};
 const uint8_t MOTOR_PINS[4] = {7, 8, 9, 10};
 const bool LEFT_FORWARD_IN1_HIGH = true;
 const bool RIGHT_FORWARD_IN3_HIGH = true;
+// OUT1/2 = left wheel; OUT3/4 = right wheel. Do not exchange turn outputs:
+// left black -> left wheel forward/right stopped -> steer right (and vice versa).
+const bool REVERSE_TURN_OUTPUTS = false;
 const uint32_t FILTER_MS = 8;
-const uint32_t RECOVERY_MS = 250;
-const uint32_t TURN_LIMIT_MS = 750;
+const uint32_t TURN_LIMIT_MS = 3000; // Slow-corner allowance; no endless stall.
 const uint32_t UNSTABLE_LIMIT_MS = 150;
 const uint32_t REPORT_MS = 500;
 
 // BEGIN CONTROL LOGIC
-enum Action : uint8_t { STOP, FORWARD, TURN_LEFT, TURN_RIGHT, LOST };
+enum Action : uint8_t { STOP, FORWARD, TURN_LEFT, TURN_RIGHT };
 constexpr bool contrast(int8_t white, int8_t black) {
   return white >= 0 && black >= 0 && white != black;
 }
 constexpr bool blackReading(uint8_t value, int8_t white, int8_t black) {
   return contrast(white, black) && value == black;
 }
+constexpr bool whiteReading(uint8_t value, int8_t white, int8_t black) {
+  return contrast(white, black) && value == white;
+}
 constexpr Action steerFor(bool leftBlack, bool rightBlack) {
-  return leftBlack ? (rightBlack ? FORWARD : TURN_LEFT)
-                   : (rightBlack ? TURN_RIGHT : LOST);
+  return leftBlack ? (rightBlack ? STOP : TURN_RIGHT)
+                   : (rightBlack ? TURN_LEFT : FORWARD);
+}
+constexpr Action motorOutputFor(Action action, bool reverseTurns) {
+  return !reverseTurns ? action
+         : action == TURN_LEFT ? TURN_RIGHT
+         : action == TURN_RIGHT ? TURN_LEFT : action;
 }
 constexpr bool expired(uint32_t now, uint32_t start, uint32_t limit) {
   return static_cast<uint32_t>(now - start) >= limit;
@@ -37,12 +49,6 @@ constexpr bool leftWheelOn(Action action) {
 constexpr bool rightWheelOn(Action action) {
   return action == FORWARD || action == TURN_LEFT;
 }
-constexpr Action recoveryFor(uint32_t now, uint32_t lossStart,
-                             uint32_t lastSeen, Action lastDirection) {
-  return (lastDirection == TURN_LEFT || lastDirection == TURN_RIGHT) &&
-         !expired(now, lossStart, RECOVERY_MS) && !expired(now, lastSeen, RECOVERY_MS)
-         ? lastDirection : STOP;
-}
 // END CONTROL LOGIC
 
 struct Sensor {
@@ -52,26 +58,24 @@ struct Sensor {
   bool settled = false;
 };
 Sensor sensors[2];
-bool following = false, losing = false, turning = false, uncertain = false;
-Action lastTurn = STOP;
-uint32_t lossSince = 0, turnSince = 0, uncertainSince = 0;
-uint32_t lastTurnSeen = 0, lastReport = 0;
+bool following = false, turning = false, uncertain = false;
+uint32_t turnSince = 0, uncertainSince = 0, lastReport = 0;
 const char* mode = "STOP";
 
 void drive(Action action) {
-  const bool leftOn = leftWheelOn(action);
-  const bool rightOn = rightWheelOn(action);
-  digitalWrite(7, leftOn && LEFT_FORWARD_IN1_HIGH ? HIGH : LOW);
-  digitalWrite(8, leftOn && !LEFT_FORWARD_IN1_HIGH ? HIGH : LOW);
-  digitalWrite(9, rightOn && RIGHT_FORWARD_IN3_HIGH ? HIGH : LOW);
-  digitalWrite(10, rightOn && !RIGHT_FORWARD_IN3_HIGH ? HIGH : LOW);
+  const Action output = motorOutputFor(action, REVERSE_TURN_OUTPUTS);
+  const bool channelAOn = leftWheelOn(output);
+  const bool channelBOn = rightWheelOn(output);
+  digitalWrite(7, channelAOn && LEFT_FORWARD_IN1_HIGH ? HIGH : LOW);
+  digitalWrite(8, channelAOn && !LEFT_FORWARD_IN1_HIGH ? HIGH : LOW);
+  digitalWrite(9, channelBOn && RIGHT_FORWARD_IN3_HIGH ? HIGH : LOW);
+  digitalWrite(10, channelBOn && !RIGHT_FORWARD_IN3_HIGH ? HIGH : LOW);
 }
 
 void stopFollowing(const char* reason) {
   drive(STOP);
   following = false;
-  losing = turning = uncertain = false;
-  lastTurn = STOP;
+  turning = uncertain = false;
   mode = reason;
 }
 
@@ -82,6 +86,11 @@ bool calibrated() {
 
 bool blackAt(uint8_t index) {
   return blackReading(sensors[index].stable,
+                      sensors[index].white, sensors[index].black);
+}
+
+bool whiteAt(uint8_t index) {
+  return whiteReading(sensors[index].stable,
                       sensors[index].white, sensors[index].black);
 }
 
@@ -101,11 +110,17 @@ void readSensors(uint32_t now) {
 }
 
 void help() {
-  Serial.println(F("LINE FOLLOWER: LEFT D2, RIGHT D4; Serial 115200."));
+  Serial.println(F("UNO WHITE-ROAD STANDALONE: LEFT D4, RIGHT D2; Serial 115200."));
+  Serial.println(F("Arduino-only driving; MSP/ESP/ultrasonic do not control this sketch."));
   Serial.println(F("w: BOTH sensors over white; b: BOTH over black."));
   Serial.println(F("f: start following; s: stop; c: clear calibration."));
-  Serial.println(F("Centre BOTH sensors on black before f. ?: help."));
+  Serial.println(F("WHITE road inside BLACK borders; BOTH see WHITE before f. ?: help."));
+  Serial.println(F("Left black: turn RIGHT. Right black: turn LEFT."));
+  Serial.println(REVERSE_TURN_OUTPUTS ? F("Turn motor outputs: REVERSED for corner test.")
+                                    : F("Turn motor outputs: STANDARD."));
+  Serial.println(F("BOTH black: stop; reposition on white and send f again."));
   Serial.println(F("Motor drive is full-on with the existing ENA/ENB jumpers."));
+  Serial.print(F("Corner turn limit (ms): ")); Serial.println(TURN_LIMIT_MS);
 }
 
 void capture(bool black) {
@@ -124,7 +139,7 @@ void capture(bool black) {
     delay(5);  // Calibration only: motors are already stopped.
   }
   for (uint8_t i = 0; i < 2; ++i) {
-    Serial.print(i == 0 ? F("LEFT D2: ") : F("RIGHT D4: "));
+    Serial.print(i == 0 ? F("LEFT D4: ") : F("RIGHT D2: "));
     if (highs[i] > 2 && highs[i] < 38) {
       Serial.println(F("unstable; hold still and retry."));
     } else {
@@ -170,14 +185,13 @@ void commands() {
     capture(!white);
   } else if (start && !following) {
     if (!calibrated()) Serial.println(F("START REFUSED: calibrate BOTH sensors with w/b."));
-    else if (!sensors[0].settled || !sensors[1].settled || !blackAt(0) || !blackAt(1))
-      Serial.println(F("START REFUSED: centre BOTH sensors over the black strip."));
+    else if (!sensors[0].settled || !sensors[1].settled || !whiteAt(0) || !whiteAt(1))
+      Serial.println(F("START REFUSED: centre on the road; BOTH must see WHITE."));
     else {
       // Print before starting motion. Repeated f does not restart recovery timers.
-      Serial.println(F("FOLLOWING. Send s to stop."));
+      Serial.println(F("FOLLOWING WHITE road. Send s to stop."));
       following = true;
-      losing = turning = uncertain = false;
-      lastTurn = STOP;
+      turning = uncertain = false;
       mode = "FORWARD";
     }
   } else if (info) {
@@ -199,29 +213,18 @@ void follow(uint32_t now) {
   uncertain = false;
   const Action action = steerFor(blackAt(0), blackAt(1));
   if (action == FORWARD) {
-    losing = turning = false;
+    turning = false;
     mode = "FORWARD";
     drive(FORWARD);
   } else if (action == TURN_LEFT || action == TURN_RIGHT) {
-    losing = false;
     if (!turning) { turning = true; turnSince = now; }
     if (expired(now, turnSince, TURN_LIMIT_MS)) { stopFollowing("TURN_TIMEOUT"); return; }
-    lastTurn = action;
-    lastTurnSeen = now;
     mode = action == TURN_LEFT ? "TURN_LEFT" : "TURN_RIGHT";
     drive(action);
   } else {
-    if (!losing) { losing = true; lossSince = now; }
-    // Only search when a recent correction supplies a direction. Two white
-    // readings alone cannot tell which side the line is on.
-    const Action recovery = recoveryFor(now, lossSince, lastTurnSeen, lastTurn);
-    if (recovery == STOP ||
-        (turning && expired(now, turnSince, TURN_LIMIT_MS))) {
-      stopFollowing("LINE_LOST");
-    } else {
-      mode = recovery == TURN_LEFT ? "RECOVER_LEFT" : "RECOVER_RIGHT";
-      drive(recovery);
-    }
+    // Both black may be a cross-strip, blocked lane or an unknown position.
+    // Latch stopped instead of choosing an arbitrary direction or driving on.
+    stopFollowing("BOTH_BLACK");
   }
 }
 
@@ -235,7 +238,7 @@ void report(uint32_t now) {
   if (!expired(now, lastReport, REPORT_MS)) return;
   lastReport = now;
   char line[64];
-  const int size = snprintf(line, sizeof(line), "L2=%s R4=%s MODE=%s\n",
+  const int size = snprintf(line, sizeof(line), "L4=%s R2=%s MODE=%s\n",
                             sensorLabel(0), sensorLabel(1), mode);
   // Never wait for serial-buffer space while steering.
   if (size > 0 && size < static_cast<int>(sizeof(line)) && Serial.availableForWrite() >= size)

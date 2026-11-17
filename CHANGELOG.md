@@ -1,6 +1,27 @@
 # Changelog
 
-## Unreleased — 2026-11-05
+## Zumo driving milestone — 2026-11-17
+
+- Replaced the L298N/two-IR base with Uno + Zumo Shield six-sensor black-line
+  following. Preserved the user's original 80-step calibration, PD settings
+  and upper-only speed clamps; added interruptible MSP-authorised motion.
+- MSP HC-SR04 stopping currently uses **2 cm STOP / 4 cm clearance**. Missing,
+  invalid and stale echoes do not stop or block motion; near data expires after
+  about 300 ms without a fresh valid reading. Manual/communication STOP and
+  the Uno one-second lease remain; no automatic restart.
+- Flashed/verified the MSP update; user-installed Uno OG3 was confirmed by serial
+  output. The user subsequently reported the driving setup working. The physical
+  braking distance and full track are not independently measured.
+- Consolidated current guides and separated previous-base instructions. Named
+  Uno timing/pin/calibration constants, clarified sonar policy, and removed
+  unreachable MSP transmit branches. Cleanup does not reflash the boards.
+- Restored the local Uno sketch from the saved complete OG3 source package
+  after finding it overwritten with a four-character note; refreshed that package.
+- Included the desktop launcher, Zumo dashboard status parsing, regression checks,
+  dated evidence and track/enclosure design sources. Pump/ADC/YOLO/dock integration
+  remain pending; the separate Pico Wi-Fi issue has not been reverified as fixed.
+
+## Folder organisation — 2026-11-05
 
 - Organised current sources into Car, Laptop and Docking_Station, with device
   guides, labelled archived experiments and an old-to-new path map.

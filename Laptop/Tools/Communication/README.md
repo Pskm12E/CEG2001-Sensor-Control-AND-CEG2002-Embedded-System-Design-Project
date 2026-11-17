@@ -4,7 +4,10 @@
 
 The Pico W is now USB-connected to the laptop and joins the robot FireBeetle's
 private Wi-Fi. The ESP uses the new three-wire UART to the main MSP430; the Uno
-retains the wheels/IR loop. Start with [desk-pico-setup.md](desk-pico-setup.md).
+now handles the Zumo array and track motors. Use the
+[Zumo wiring/firmware guide](../../../Car/Arduino_Uno/zumo_line_follow/README.md)
+for the 17 November D6 RX/D13 TX connections. Build the bridge and matching MSP
+image with `build_direct.ps1 -Zumo`. Start with [desk-pico-setup.md](desk-pico-setup.md).
 Both programs are uploaded and 20 full-path status requests passed on 5 November.
 The desk stage is read-only; it does not forward motion, calibration or STOP.
 

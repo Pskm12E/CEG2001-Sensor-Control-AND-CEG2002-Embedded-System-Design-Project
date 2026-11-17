@@ -1,0 +1,50 @@
+{
+  "date": "2026-11-12",
+  "request": "User requested removing the communication-fault STOP dependency so Arduino runs line following locally",
+  "upload_authorization": "User explicitly answered: Upload it to the Uno for me",
+  "motor_power": "Only motor battery disconnected, user-confirmed; no subsequent reconnect before upload/check",
+  "source": "Car/Arduino_Uno/line_follow_car/line_follow_car.ino",
+  "wiring": {
+    "left_ir_out": "D4",
+    "right_ir_out": "D2",
+    "ir_vcc": "Uno 5V",
+    "motor_inputs": [7, 8, 9, 10],
+    "pins_changed": false
+  },
+  "behavior": {
+    "white_white": "FORWARD",
+    "left_black_only": "TURN_RIGHT",
+    "right_black_only": "TURN_LEFT",
+    "both_black": "STOP",
+    "start": "local USB f after calibrated/stable/white checks",
+    "stop": "local USB s",
+    "msp_or_esp_approval": false,
+    "uart_heartbeat_lease": false,
+    "msp_s2_wifi_or_ultrasonic_stop_control": false,
+    "automatic_start_or_restart": false,
+    "local_sensor_fault_and_turn_limits_retained": true
+  },
+  "verification": {
+    "regression_failed_before_fix": "Physical LEFT D4 black drove toward the border in the old black-line sketch",
+    "actual_sketch_checks_passed": 1244,
+    "independent_continuous_drive_simulated_seconds": 12,
+    "continuous_drive_conditions": "One f; no MSP packets; old UART GPIO D5/D6 changing; both IR heads white",
+    "helper_compile_time_checks_passed": 29,
+    "arduino_fqbn": "arduino:avr:uno",
+    "flash_bytes": 6816,
+    "ram_bytes": 371,
+    "upload_port": "COM12",
+    "upload_exit": 0,
+    "verified_flash_bytes": 6816,
+    "hex_sha256": "BDE90A728EE858858CC43E3236DE5FB55CAF43A36451B94D78431A0861714B41",
+    "upload_log": "tmp/uno-white-road-standalone-upload-2026-11-12.log",
+    "live_command_sent": "?",
+    "live_identity": "UNO WHITE-ROAD STANDALONE: LEFT D4, RIGHT D2; Serial 115200.",
+    "live_final_status": "L4=NC R2=NC MODE=STOP",
+    "assistant_start_commands_after_upload": 0,
+    "hardware_calibration_after_upload": "Pending user placement and w/b captures",
+    "powered_driving_or_steering": "Not yet verified"
+  },
+  "root_fault_evidence": "uart-stop-diagnosis-2026-11-12.json",
+  "integrated_firmware_source_preserved": "Car/Arduino_Uno/msp_line_follow/msp_line_follow.ino"
+}

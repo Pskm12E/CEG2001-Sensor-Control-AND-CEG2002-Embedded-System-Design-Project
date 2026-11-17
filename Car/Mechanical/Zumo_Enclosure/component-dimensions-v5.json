@@ -1,0 +1,165 @@
+{
+  "units": "mm",
+  "source": "User-supplied dimensions, 17 November 2026",
+  "components": {
+    "msp430": {
+      "model": "MSP-EXP430F5529LP Rev 1.8 to check",
+      "pcb": [
+        73.66,
+        58.42
+      ],
+      "assembled_height": null,
+      "status": "User reports TI reference CAD; not independently verified against actual Rev 1.8"
+    },
+    "esp32": {
+      "model": "DFRobot FireBeetle DFR0478",
+      "pcb": [
+        58,
+        29
+      ],
+      "assembled_height": null
+    },
+    "power_bank": {
+      "model": "AUKEY PB-Y91",
+      "body": [
+        75.3,
+        66.5,
+        24.8
+      ],
+      "mass_g": null
+    },
+    "uno": {
+      "model": "Uno R3 compatible",
+      "pcb_reference": [
+        68.6,
+        53.4
+      ],
+      "actual_outline": "May differ"
+    },
+    "zumo": {
+      "overall_user_reference": [
+        98,
+        98,
+        39
+      ],
+      "includes": "Arduino per user reference; actual heights and track contact polygon unmeasured",
+      "rear_power_switch": true,
+      "mass_with_batteries_g": null,
+      "motor_gear_ratio": null
+    },
+    "bottle": {
+      "external_diameter": 60,
+      "external_height": 100,
+      "water_ml": 100,
+      "water_mass_approx_g": 100,
+      "bottle_mass_g": null,
+      "status": "User approximate measurements"
+    },
+    "mini_breadboard": {
+      "actual_dimensions": null,
+      "previous_allowance": [
+        47,
+        35
+      ],
+      "allowance_is_measurement": false
+    }
+  },
+  "proposal": {
+    "status": "Preliminary body-outline packing study, not production CAD or proof of fit",
+    "axes": "x right, y forward, origin at reference chassis centre; z datum not finalized",
+    "carrier_outline": [
+      155,
+      135
+    ],
+    "chassis_outline_reference": [
+      98,
+      98
+    ],
+    "shell_wall_proposal": 2.4,
+    "dry_bay_bounds": {
+      "x_min": -4.5,
+      "x_max": 77.5,
+      "y_min": -72.5,
+      "y_max": 62.5
+    },
+    "bank_body": {
+      "x_min": 3.25,
+      "x_max": 69.75,
+      "y_min": -17.65,
+      "y_max": 57.65,
+      "body_height": 24.8,
+      "layer": "lower, above existing Uno and soldered-wire clearance"
+    },
+    "msp_pcb": {
+      "x_min": -0.33,
+      "x_max": 73.33,
+      "y_min": 1.5,
+      "y_max": 59.92,
+      "layer": "upper dry cassette"
+    },
+    "esp_pcb": {
+      "x_min": 7.5,
+      "x_max": 65.5,
+      "y_min": -31.5,
+      "y_max": -2.5,
+      "layer": "upper dry cassette"
+    },
+    "tank": {
+      "x": -42.5,
+      "y": 0,
+      "diameter": 60,
+      "layer": "low left cradle"
+    },
+    "tank_cradle_outer_diameter_proposal": 70,
+    "mini_breadboard": "Unmeasured removable lid cartridge above MSP footprint; height and actual fit pending",
+    "port_and_bend_clearance": "Unverified; reserve covered corner/side plug bays and rear chase, revise shell if real connector bodies require it",
+    "mounting_holes": "Unassigned; measure actual chassis fixing points, no coordinates copied from image",
+    "carrier_bounds": {
+      "x_min": -77.5,
+      "x_max": 77.5,
+      "y_min": -72.5,
+      "y_max": 62.5
+    },
+    "usb_service_bay": {
+      "status": "Proposed clear space, not measured plug envelope or verified cable fit",
+      "x_min": 1.5,
+      "x_max": 71.5,
+      "y_min": -67.65,
+      "y_max": -17.65,
+      "clear_width": 70,
+      "clear_depth_from_port_face": 50,
+      "clear_height_target": 35,
+      "bank_port_face_y": -17.65,
+      "planning_depth_split": {
+        "plug_body_and_strain_relief": 30,
+        "cable_turn_space": 20
+      },
+      "actual_plug_body_and_adapter_dimensions": null,
+      "occupied_port_centres": "To measure on actual PB-Y91; manufacturer product image guides orientation only",
+      "construction": "Covered bay at power-bank level, full port-face space, removable rear/upper service cover, rear original slide-switch access remains separately below",
+      "constraints": "Do not cut bank leads or force tight bends; enlarge if actual mated plugs plus bends exceed planning allowance"
+    }
+  },
+  "proposal_checks": {
+    "bank_body_inside_dry_bay": true,
+    "msp_pcb_inside_upper_tray": true,
+    "esp_pcb_inside_upper_tray": true,
+    "upper_pcb_rectangles_overlap": false,
+    "upper_pcb_gap_y": 4,
+    "idealized_water_depth_mm": 35.3677651315323,
+    "idealized_water_centroid_above_inner_bottom_mm": 17.68388256576615,
+    "static_water_force_N": 0.980665,
+    "illustrative_only_mass_g": 575,
+    "illustrative_full_x_cg_mm": 5.304347826086956,
+    "illustrative_empty_x_cg_mm": 15.368421052631579,
+    "note": "PCB/body-outline checks exclude headers, plugs, cables, mass, frame strength, dynamic stability and actual mounting. Idealized water assumes a straight cylinder with 60 mm INTERNAL diameter, though supplied 60 mm is external/approximate, so no physical fill line is established. Illustrative masses 275 g base and 200 g bank are not measurements. V5 adds a purely geometric 70 x 50 bay with a 35 mm clear-height target; port locations, actual mated plug/strain-relief envelopes and cable bend compliance remain unverified. The bay overlaps the bank vertically only at the mating port plane; full 3D controller/header/plug fit is not checked.",
+    "usb_bay_rectangle_inside_dry_bay": true,
+    "bank_and_usb_bay_share_port_face": true,
+    "usb_clear_depth_mm": 50.00000000000001,
+    "bank_front_clearance_to_inner_wall_mm": 2.450000000000003,
+    "usb_bay_back_clearance_to_inner_wall_mm": 2.4499999999999886,
+    "bank_forward_shift_from_v4_mm": 10,
+    "carrier_length_growth_from_v4_mm": 10
+  },
+  "revision": "v5 - power-bank USB connector bay"
+}

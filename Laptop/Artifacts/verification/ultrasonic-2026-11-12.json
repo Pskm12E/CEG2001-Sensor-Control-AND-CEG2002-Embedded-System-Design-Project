@@ -1,0 +1,90 @@
+{
+  "date": "2026-11-12",
+  "feature": "Robot MSP430 HC-SR04 interlock and matching white-lane Uno receiver",
+  "sensor": {
+    "model": "HC-SR04",
+    "vcc": "5V",
+    "gnd": "shared",
+    "trig": "P3.2",
+    "echo": "P2.7 through divider",
+    "required_divider": "Echo -> 2.2k -> node/P2.7 -> 3.3k -> GND",
+    "divider_orientation_physically_verified": false
+  },
+  "policy": {
+    "stop_cm": 20,
+    "release_cm": 25,
+    "clear_samples": 2,
+    "sample_period_ms_approx": 100,
+    "echo_timeout_ms_approx": 35,
+    "valid_stale_ticks_100ms": 3,
+    "auto_restart": false,
+    "missing_echo": "unknown; does not establish clear path"
+  },
+  "sources": [
+    "Car/MSP430/robot_supervisor/main.c",
+    "Car/MSP430/robot_supervisor/ultrasonic_hcsr04.h",
+    "Car/MSP430/robot_supervisor/obstacle_guard.h",
+    "Car/MSP430/robot_supervisor/console_tx.h",
+    "Car/Arduino_Uno/msp_line_follow/msp_line_follow.ino",
+    "Car/Arduino_Uno/msp_line_follow/control.h",
+    "Car/Arduino_Uno/msp_line_follow/robot_link.h"
+  ],
+  "software_tests": {
+    "ultrasonic_and_console_queue_assertions": 3128,
+    "supervisor_assertions_including_simulated_stop_chain": 68,
+    "uno_assertions": 154,
+    "direct_uart_assertions": 60,
+    "dashboard_tests": 58,
+    "local_markdown_links": 140
+  },
+  "target_builds": {
+    "msp_esp_uart": "passed",
+    "msp_usb_bench": "passed",
+    "arduino_uno": "passed",
+    "uno_flash_bytes": 9120,
+    "uno_global_ram_bytes": 602
+  },
+  "uploaded": {
+    "robot_msp430": true,
+    "arduino_uno": true
+  },
+  "physical_range_or_stopping_validated": false,
+  "actuators_commanded": false,
+  "committed_or_pushed": false,
+  "guide": "Car/MSP430/robot_supervisor/ULTRASONIC_SETUP.md",
+  "msp_flash": {
+    "date": "2026-11-12",
+    "variant": "ESP-UART",
+    "tool": "TI DSLite 21.0.0.4166",
+    "target": "MSP430F5529",
+    "program": "Car/MSP430/robot_supervisor/Debug_wifi/robot_supervisor.out",
+    "sha256": "517AEC0A1F4997BDB0F4EA8F6C5E7B69E7E18319F38B25959D1D9362F74CE648",
+    "flash_verified": true,
+    "run_requested": true,
+    "tool_exit_code": 0,
+    "ti_reported_flash_bytes": 6066,
+    "ti_reported_ram_bytes": 1392,
+    "motor_power_off_confirmed_by_user": true,
+    "other_boards_flashed": false,
+    "physical_range_or_motor_stop_tested": false,
+    "tool_result": "Program verification successful; Running...; Success"
+  },
+  "uno_flash": {
+    "date": "2026-11-12",
+    "port": "COM12",
+    "verified_bytes": 9120,
+    "hex_sha256": "AA431EC2C4D5C82981CB82539FBB000002BEA7E073B1B6F6005715C1201BB34C",
+    "flash_verified": true,
+    "tool_exit_code": 0,
+    "new_banner_observed": true,
+    "stopped_runtime_status_observed": true,
+    "calibrated": false,
+    "live_supervisor_handshake_verified": false,
+    "physical_range_or_braking_verified": false,
+    "commands_sent": [
+      "S",
+      "STATUS"
+    ],
+    "evidence": "Laptop/Artifacts/verification/uno-ultrasonic-upload-2026-11-12.json"
+  }
+}

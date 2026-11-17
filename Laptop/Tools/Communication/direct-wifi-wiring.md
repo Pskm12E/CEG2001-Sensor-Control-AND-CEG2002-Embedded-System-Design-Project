@@ -1,5 +1,15 @@
 # Direct ESP32 Wi-Fi bridge to the robot MSP430
 
+**Zumo update, 17 November 2026:** the ESP/P4.1/P4.2 connections and bridge
+protocol are retained. The Uno now runs
+[zumo_line_follow](../../../Car/Arduino_Uno/zumo_line_follow/README.md) with
+**D6 RX/D13 TX** and the user's two-2.2kΩ TX divider. Build the MSP with
+`-EspUart -Zumo`. The Zumo Shield replaces the L298N and two separate IR sensors
+shown in the earlier diagrams below. New MSP Zumo firmware was flashed/verified
+on 17 November with sonar stopping enabled; the user will flash Uno later.
+Driving tests remain pending. Water ADC and pump control
+remain pending.
+
 Current design, 5 November 2026: Pico W sits beside the laptop as its USB-to-Wi-Fi
 bridge. The original FireBeetle ESP32 sits on the robot and creates the private
 network that Pico joins. The ESP32 has a direct UART link to the robot MSP430,

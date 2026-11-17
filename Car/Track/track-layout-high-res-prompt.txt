@@ -1,0 +1,8 @@
+Tool: built-in imagegen
+Edit target: track-layout.png (892 x 610 pixels)
+Saved result: track-layout-high-res.png (1517 x 1037 pixels)
+
+Prompt:
+Upscale this exact track diagram to high resolution, about 3072 pixels wide, preserving its aspect ratio. Keep the route geometry, line proportions, arrows, plant symbols, dock, margins and white background unchanged. Sharpen the linework and text. Preserve every label verbatim: Plant 1, Plant 2, S-turns, Dock, Start / finish, Return to dock. Add nothing.
+
+The tool returned 1517 x 1037 pixels. The original accepted image is preserved separately.

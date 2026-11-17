@@ -1,0 +1,31 @@
+{
+  "date": "2026-11-12",
+  "user_confirms": "S analogue, no potentiometer; left A0/right A1 rewired, VCC3.3V",
+  "latest_instruction": "Write and open Arduino IDE; user will upload later",
+  "board_currently_connected": false,
+  "tests": {
+    "analog_control": 411,
+    "actual_ADC_GPIO": 112,
+    "reporting": 10,
+    "legacy_control": 163,
+    "MSP_obstacle_software_path": 68
+  },
+  "builds": {
+    "integrated": {
+      "flash": 10226,
+      "ram": 632,
+      "uploaded": false
+    },
+    "IR_only": {
+      "flash": 4122,
+      "ram": 210,
+      "uploaded": false
+    }
+  },
+  "integrated_hex_sha256": "19e46260e8f1e9283c6b6424422e04f51549bd3553af6b4551f18d81abbad705",
+  "IR_only_source": "Car/Arduino_Uno/ir_analog_calibration/ir_analog_calibration.ino",
+  "physical_contrast_verified": false,
+  "physical_navigation_verified": false,
+  "no_motor_start_sent": true,
+  "no_MSP_flash": true
+}

@@ -1,0 +1,52 @@
+{
+  "date": "2026-11-12",
+  "change": "Disable prior turn-output swap; left black steers right, right black steers left",
+  "source": "Car/Arduino_Uno/msp_line_follow/msp_line_follow.ino",
+  "motor_wiring_assumption": "OUT1/2 left wheel; OUT3/4 right wheel",
+  "reverse_turn_outputs": false,
+  "corner_limit_ms": 3000,
+  "regression_failed_before_fix": true,
+  "tests": {
+    "sensor_to_gpio": 80,
+    "standalone_whole_sketch": 42,
+    "supervised_control": 163,
+    "helper_compile_time": 29,
+    "supervisor": 68
+  },
+  "builds": {
+    "integrated_flash_bytes": 9434,
+    "integrated_ram_bytes": 606,
+    "standalone_flash_bytes": 6714,
+    "standalone_ram_bytes": 371
+  },
+  "uploaded": true,
+  "port": "COM12",
+  "flash_verified": true,
+  "hex_sha256": "B92465E18E9DD2599A4E13C2F327B61590E78EEF2BB6482A19DDA550A793E158",
+  "runtime": {
+    "port": "COM12",
+    "baud": 115200,
+    "motor_power_off_confirmed": true,
+    "commands_sent": [
+      "S",
+      "STATUS"
+    ],
+    "lines": [
+      "UNO WHITE+MSP: w/b/c/f request MSP approval; s stops.",
+      "Steering: D2 BLACK -> RIGHT; D4 BLACK -> LEFT.",
+      "Corner turn limit (ms): 3000",
+      "MSP STOP received. No automatic restart.",
+      "UNO V2 CAL=0 FLAGS=112 DRIVE=0 REASON=11 RAW=0/1 REQ=0",
+      "UNO V2 CAL=0 FLAGS=96 DRIVE=0 REASON=0 RAW=0/1 REQ=0",
+      "UNO V2 CAL=0 FLAGS=96 DRIVE=0 REASON=0 RAW=0/1 REQ=0",
+      "UNO V2 CAL=0 FLAGS=96 DRIVE=0 REASON=0 RAW=0/1 REQ=0",
+      "UNO V2 CAL=0 FLAGS=96 DRIVE=0 REASON=0 RAW=0/1 REQ=0",
+      "UNO V2 CAL=0 FLAGS=96 DRIVE=0 REASON=0 RAW=0/1 REQ=0",
+      "UNO V2 CAL=0 FLAGS=96 DRIVE=0 REASON=0 RAW=0/1 REQ=0"
+    ]
+  },
+  "physical_direction_tested": false,
+  "motor_calibration_or_spray_commands_sent": false,
+  "ultrasonic_near_target_issue_resolved": false,
+  "committed_or_pushed": false
+}

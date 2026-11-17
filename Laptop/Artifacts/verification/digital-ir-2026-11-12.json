@@ -1,0 +1,32 @@
+{
+  "date": "2026-11-12",
+  "timezone": "Asia/Singapore",
+  "user_confirmed_wiring": {
+    "left_out": "Uno D4",
+    "right_out": "Uno D2",
+    "sensor_vcc": "Uno 5V"
+  },
+  "source": "Car/Arduino_Uno/msp_line_follow/msp_line_follow.ino",
+  "correction": "Read actual D4/D2 connections with digitalRead; previous A0/A1 readings did not measure the connected sensors.",
+  "layout": "WHITE_LANE",
+  "black_polarity": "Learned independently with w/b; not inferred from module LEDs",
+  "regression_before_fix": "D4/D2 physical fixture with A0/A1 zero failed digital black capture assertion",
+  "tests_passed": {
+    "digital_sensor_to_gpio_calibration_and_stop": 290,
+    "digital_usb_reporting": 15,
+    "portable_controller_protocol": 163,
+    "supervisor_including_digital_white_lane": 68
+  },
+  "uno_build": {
+    "fqbn": "arduino:avr:uno",
+    "flash_bytes": 10230,
+    "ram_bytes": 618,
+    "passed": true
+  },
+  "uploaded_by_assistant": false,
+  "motor_commands_sent": false,
+  "physical_digital_contrast_verified": false,
+  "physical_steering_verified": false,
+  "loose_driver_ground_reported_by_user": true,
+  "driver_ground_reconnection_verified": false
+}

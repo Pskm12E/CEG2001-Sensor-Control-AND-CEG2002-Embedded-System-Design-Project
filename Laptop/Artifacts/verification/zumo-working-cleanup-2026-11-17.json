@@ -1,0 +1,77 @@
+{
+  "date": "2026-11-17",
+  "timezone": "Asia/Singapore",
+  "milestone": "User-confirmed working Zumo driving setup; source cleanup and documentation",
+  "user_report": "Everything is working",
+  "confirmation_scope": "User report after installed no-echo update; no new physical test performed during cleanup",
+  "current_policy": {
+    "valid_near_stop_cm": 2,
+    "release_cm": 4,
+    "release_samples": 2,
+    "near_data_expiry_ms_approximately": 300,
+    "no_echo_stops_or_blocks_motion": false,
+    "automatic_restart": false,
+    "manual_and_communication_stops_retained": true,
+    "physical_braking_distance_measured": false
+  },
+  "cleanup": [
+    "Restored overwritten Uno source from the complete saved OG3 package",
+    "Named Uno pin, baud, calibration, line-centre and timing constants",
+    "Clarified and formatted unchanged sonar guard policy",
+    "Removed unreachable MSP UART transmit branches",
+    "Consolidated active guides and retained previous L298N instructions separately",
+    "Regenerated complete OG3 source package and verified each archived file"
+  ],
+  "firmware_uploaded_during_cleanup": false,
+  "installed_msp_image_sha256": "15d74b01b2bec01e1a33d4c4e0bf9eb945bb98708555bbfe8693d5eae5002dcc",
+  "rebuilt_msp_image_sha256": "1cf43246791a378fecf0362bd58d7020c36e224c58a121a57a81798e20690684",
+  "builds": {
+    "uno": {
+      "success": true,
+      "flash_bytes": 14238,
+      "global_ram_bytes": 825
+    },
+    "msp_esp_uart_zumo": {
+      "success": true,
+      "flash_bytes": 6324,
+      "ram_bytes_including_stack": 1398
+    }
+  },
+  "passed_assertions": {
+    "zumo_sketch_msp_sonar": 1100,
+    "ultrasonic": 3140,
+    "supervisor": 84,
+    "direct_bridge": 60,
+    "legacy_uno": 163,
+    "legacy_sonar_variants": [
+      3607,
+      3607,
+      3616
+    ],
+    "legacy_analog_sketch": 66,
+    "legacy_analog_control": 411,
+    "legacy_usb_reporting": 15,
+    "legacy_line_follow": 29,
+    "legacy_steering_gpio": 290,
+    "legacy_white_lane_sketch": 1244
+  },
+  "dashboard_tests": {
+    "run": 60,
+    "passed": 51,
+    "skipped": 9,
+    "skip_reason": "OpenCV/numpy unavailable in the default Python 3.14 test environment"
+  },
+  "javascript_syntax_check_passed": true,
+  "documentation_link_check_passed": true,
+  "remaining_limits": [
+    "Physical braking distance, calibrated sonar accuracy and full track not independently measured",
+    "Separate Pico Wi-Fi issue set aside; not reverified as fixed",
+    "Water ADC, pump/driver, trained YOLO and docking not integrated"
+  ],
+  "documentation_local_links_checked": 199,
+  "publication_audit": {
+    "known_private_network_values_and_token_patterns_absent": true,
+    "firmware_binaries_and_private_config_excluded": true,
+    "oversized_files_absent": true
+  }
+}

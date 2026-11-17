@@ -1,4 +1,28 @@
-# Version 1 wiring and board connections
+# Robot wiring and board connections
+
+## Current Zumo connections — 17 November 2026
+
+Use the [current Zumo connection table](../../Car/Arduino_Uno/zumo_line_follow/README.md#current-connections).
+MSP P3.3 -> Uno D6 RX; Uno D13 TX -> 2.2kΩ/2.2kΩ divider -> MSP P3.4.
+ESP GPIO17 TX -> P4.2 RX and P4.1 TX -> ESP GPIO16 RX. Sonar TRIG is P3.2;
+ECHO -> 2.2kΩ -> P2.7 junction -> 3.3kΩ -> GND. Water S is P6.0, powered
+from MSP 3.3V. All share GND. Pump/driver are not connected.
+
+The Uno uses the Zumo Shield's built-in motors and six-sensor array to follow
+black on white. No L298N or separate pair of IR sensors is used. The records
+below describe earlier bases and are retained as history.
+
+## Current DIGITAL line sensors — 12 November 2026
+
+User-confirmed wiring: LEFT OUT -> Uno D4; RIGHT OUT -> Uno D2; both sensor
+VCC -> Uno 5V and GND -> Uno GND. This supersedes the earlier A0/A1 and 3.3V
+assumptions. The current source uses digitalRead on D4/D2.
+Latest track clarification: WHITE road with BLACK borders; both white -> FORWARD,
+left black -> RIGHT, right black -> LEFT, both black -> STOP. Calibrate w/b at
+the same height to learn each head's digital polarity; equal or unstable
+captures reject calibration.
+Use [the active digital Uno guide](../../Car/Arduino_Uno/msp_line_follow/README.md).
+This supersedes old pin assignments, screenshots and placement diagrams.
 
 ## Current direct Wi-Fi wiring — 5 November 2026
 
@@ -10,7 +34,7 @@ This requires the new remapped MSP UART build; older pin/USB notes below are his
 
 **Current development (3 November):** the older bench notes below are retained
 for Version 1. For the running Uno/MSP link, use the
-[supervisor wiring](../../Car/MSP430/robot_supervisor/README.md#wiring-retained).
+[supervisor wiring](../../Car/MSP430/robot_supervisor/LEGACY_L298N.md#wiring-retained).
 For the newly prepared Pico/MSP connection, use the
 [I2C bridge wiring](../Tools/Communication/msp-bridge-wiring.md). This supersedes the
 older proposed bus assignments below; do not move the USB RXD/TXD caps.
@@ -42,19 +66,19 @@ The sketches assume **ENA and ENB enable jumpers** are fitted. These are separat
 from the **5V-EN regulator jumper**. Do not connect the driver's 5 V terminal to
 another supply without checking that regulator/jumper arrangement.
 
-## Two digital IR sensors → Uno
+## Current digital IR sensors → Uno
 
 | Sensor connection | Uno connection |
 | --- | --- |
-| Left OUT | D2 |
-| Right OUT | D4 |
-| Both VCC | 3.3 V, as used in this project's current test wiring |
+| Left OUT | D4 |
+| Right OUT | D2 |
+| Both VCC | Uno 5V, user-confirmed supply |
 | Both GND | GND |
 
-Left/right are viewed from behind the car, facing forward. The code uses INPUT,
-not a 5 V internal pull-up. Verify the actual modules support the chosen supply.
+Left/right are viewed from behind the car, facing forward. The code uses INPUT
+without internal pull-ups. Both sensors share Uno GND.
 Calibrate each sensor over white and black at its mounted height. This line
-follower expects **both sensors over black when centred on a wide strip**.
+follower expects **both heads over the white road, inside its black borders**.
 
 ## Robot MSP430
 

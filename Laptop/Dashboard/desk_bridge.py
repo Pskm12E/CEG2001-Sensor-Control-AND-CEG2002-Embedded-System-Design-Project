@@ -18,6 +18,12 @@ STATUS_PATTERN = re.compile(
     r"FLAGS=(\d{1,3}) RESULT=(\d{1,3}) PENDING=(\d{1,3}) "
     r"UART_ERRORS=(\d{1,10}) RX_DROPS=(\d{1,10}) BAD_FRAMES=(\d{1,10}) BRIDGE=ESP_UART_V1"
 )
+ZUMO_STATUS_PATTERN = re.compile(
+    r"STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=(READY|SYNCING) RUN=([01]) "
+    r"CAL=(NEEDED|SAMPLING|READY) BASE=ZUMO LINE=BLACK LED2=(ON|OFF) "
+    r"FLAGS=(\d{1,3}) RESULT=(\d{1,3}) PENDING=(\d{1,3}) "
+    r"UART_ERRORS=(\d{1,10}) RX_DROPS=(\d{1,10}) BAD_FRAMES=(\d{1,10}) BRIDGE=ESP_UART_V1"
+)
 PICO_PATTERN = re.compile(
     r"STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V2 LED=ON "
     r"WIFI=(UP|DOWN) ESP_LINK=(UP|DOWN) MSP_LINK=(UP|STALE|NOT_CONNECTED) READ_ONLY=1"
@@ -36,12 +42,17 @@ def parse_status(line):
     if not isinstance(line, str):
         return None
     match = STATUS_PATTERN.fullmatch(line)
-    if not match:
-        return None
-    values = match.groups()
     keys = ("uno_link", "run", "calibration", "left", "right", "led2", "flags", "result",
             "pending", "uart_errors", "rx_drops", "bad_frames")
-    result = dict(zip(keys, values))
+    if match:
+        result = dict(zip(keys, match.groups()))
+    else:
+        match = ZUMO_STATUS_PATTERN.fullmatch(line)
+        if not match:
+            return None
+        keys = ("uno_link", "run", "calibration", "led2", "flags", "result",
+                "pending", "uart_errors", "rx_drops", "bad_frames")
+        result = dict(zip(keys, match.groups()), base="ZUMO", line="BLACK", left=None, right=None)
     for key in ("run", "flags", "result", "pending", "uart_errors", "rx_drops", "bad_frames"):
         result[key] = int(result[key])
     if any(result[k] > 255 for k in ("flags", "result", "pending")):

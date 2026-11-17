@@ -1,0 +1,417 @@
+"""Run the actual Zumo sketch, MSP scheduler and sonar adapter with fake hardware.
+
+No serial ports are opened. Motor output, button events and sensor timing are
+simulated; the real AVR/CCS builds verify the target-library interfaces separately.
+"""
+from pathlib import Path
+import ast
+import re
+import subprocess
+
+ROOT = Path(__file__).resolve().parents[3]
+BUILD = ROOT / "Car/Arduino_Uno/build/zumo-tests"
+BUILD.mkdir(parents=True, exist_ok=True)
+shared = ROOT / "Car/Arduino_Uno/msp_line_follow/robot_link.h"
+bundled = ROOT / "Car/Arduino_Uno/zumo_line_follow/robot_link.h"
+assert shared.read_bytes() == bundled.read_bytes(), "Bundled UART protocol has drifted"
+source = (ROOT / "Car/MSP430/robot_supervisor/main.c").read_text()
+
+
+def function(name, returns="void"):
+    start = source.index("static " + returns + ("" if returns.endswith("*") else " ") + name + "(")
+    brace = source.index("{", start)
+    depth, end = 1, brace + 1
+    while depth:
+        depth += (source[end] == "{") - (source[end] == "}")
+        end += 1
+    return source[start:end] + "\n"
+
+
+stubs = {
+    "Arduino.h": r'''
+#pragma once
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
+#include <cassert>
+#include <deque>
+#include <vector>
+#include <string>
+#include <functional>
+inline uint32_t fakeMillis;
+inline uint8_t MCUSR;
+inline uint32_t millis() { return fakeMillis; }
+#define F(x) x
+struct FakeSerial {
+    std::deque<uint8_t> input;
+    std::vector<uint8_t> output;
+    unsigned baud=0;
+    void begin(unsigned n) { baud=n; }
+    int available() { return int(input.size()); }
+    int availableForWrite() { return 64; }
+    int read() { int c=input.front(); input.pop_front(); return c; }
+    void println(const char*) {}
+    void write(const uint8_t* b,size_t n) { output.insert(output.end(),b,b+n); }
+    void send(const char* s) { while(*s) input.push_back(uint8_t(*s++)); }
+};
+inline FakeSerial Serial;
+''',
+    "Wire.h": "#pragma once\n#include <Arduino.h>\n",
+    "SoftwareSerial.h": r'''
+#pragma once
+#include <Arduino.h>
+class SoftwareSerial: public FakeSerial {
+public:
+    unsigned rx,tx;
+    bool overflowed=false;
+    std::function<void()> beforeWrite;
+    SoftwareSerial(unsigned r,unsigned t):rx(r),tx(t) {}
+    bool overflow() { bool result=overflowed; overflowed=false; return result; }
+    void write(const uint8_t* b,size_t n) {
+        if(beforeWrite) beforeWrite();
+        FakeSerial::write(b,n);
+    }
+};
+''',
+    "ZumoShield.h": r'''
+#pragma once
+#include <Arduino.h>
+#define ZUMO_BUTTON 12
+class ZumoMotors {
+public:
+    int left=0,right=0;
+    void setSpeeds(int l,int r) { left=l; right=r; }
+};
+class Pushbutton {
+public:
+    bool pressed=false,released=false;
+    explicit Pushbutton(int) {}
+    bool isPressed() { return pressed; }
+    bool getSingleDebouncedRelease() { bool r=released; released=false; return r; }
+};
+class ZumoReflectanceSensorArray {
+public:
+    unsigned int lows[6]={},highs[6]={};
+    unsigned int* calibratedMinimumOn=lows;
+    unsigned int* calibratedMaximumOn=highs;
+    bool badContrast=false;
+    unsigned samples=0;
+    int position=2500;
+    std::function<void()> onRead;
+    void init() {}
+    void resetCalibration() { samples=0; }
+    void calibrate() {
+        ++samples; fakeMillis+=20;
+        for(int i=0;i<6;++i) { lows[i]=100; highs[i]=badContrast?100:900; }
+    }
+    int readLine(unsigned int* values) {
+        for(int i=0;i<6;++i) values[i]=(i==2)?1000:0;
+        if(onRead) { auto callback=onRead; onRead=nullptr; callback(); }
+        return position;
+    }
+};
+''',
+    "avr/wdt.h": r'''
+#pragma once
+#define WDTO_1S 1
+inline void wdt_disable() {}
+inline void wdt_enable(int) {}
+inline void wdt_reset() {}
+''',
+}
+for name, text in stubs.items():
+    path = BUILD / name
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+
+prefix = r'''
+#include <Arduino.h>
+#include <fstream>
+#define ZUMO_BASE 1
+#define SUPERVISOR_ESP_UART 1
+#define __interrupt
+#define __disable_interrupt() ((void)0)
+#define __enable_interrupt() ((void)0)
+#define __bic_SR_register_on_exit(x) ((void)(x))
+#include "../../zumo_line_follow/zumo_line_follow.ino"
+#include "../../../ESP32_Gateway/robot_wifi_gateway/direct_protocol.h"
+namespace msp {
+enum { BIT2=4,BIT7=128,TASSEL__SMCLK=512,MC__CONTINUOUS=32,TACLR=4,CCIE=16,LPM0_bits=16 };
+static uint8_t P3SEL,P3REN,P3OUT,P3DIR,P2SEL,P2DIR,P2OUT,P2REN,P2IE,P2IES,P2IFG,P2IN,P4OUT;
+static uint16_t TA2CCTL0,TA2CTL,TA2CCR0,TA2R,ticks;
+static uint16_t session=42,sequence,requestAt,lastPoll,lastLinkByte,badFrames,uartErrors,rxDrops;
+static uint8_t pending,linked,running,queued,peerFlags,peerResult;
+static RlPacket pendingPacket;
+static RlParser parser;
+static int linkRx;
+static std::string output;
+static std::vector<uint8_t> transmitted;
+static void print(const char* s) { output+=s; }
+static void number(uint16_t n) { output+=std::to_string(n); }
+static uint8_t takeLost(int*) { return 0; }
+static int pop(int*) { return -1; }
+static uint8_t put(uint8_t link,uint8_t b) { if(link) transmitted.push_back(b); return 1; }
+#include "../../../MSP430/robot_supervisor/ultrasonic_hcsr04.h"
+'''
+
+tests = r'''
+} // namespace msp
+static unsigned checks=0;
+#define CHECK(x) do { if(!(x)) { fprintf(stderr,"FAIL line %d: %s\n",__LINE__,#x); std::abort(); } ++checks; } while(0)
+static bool stopped() { return motors.left==0 && motors.right==0; }
+static void reset() {
+    fakeMillis=0; robot=ZumoControl(); parser={}; motors=ZumoMotors();
+    reflectanceSensors=ZumoReflectanceSensorArray();
+    // The assignment copies internal pointers, so bind them to this instance.
+    reflectanceSensors.calibratedMinimumOn=reflectanceSensors.lows;
+    reflectanceSensors.calibratedMaximumOn=reflectanceSensors.highs;
+    Serial=FakeSerial(); button.pressed=button.released=false;
+    mspSerial.input.clear(); mspSerial.output.clear(); mspSerial.overflowed=false;
+    mspSerial.beforeWrite=nullptr; usbUsed=0; usbDiscard=false; suppressButtonRelease=false;
+    usbReportPart=0;
+    lastByte=lastReport=nextCalibration=calibrationStep=0;
+    msp::ticks=msp::sequence=msp::requestAt=msp::lastPoll=msp::lastLinkByte=0;
+    msp::pending=msp::linked=msp::running=msp::peerFlags=msp::peerResult=msp::P2IN=0;
+    msp::session=42; msp::queued=RL_HELLO; msp::parser={};
+    msp::output.clear(); msp::transmitted.clear();
+    setup(); msp::sonarInit();
+    CHECK(stopped() && !robot.moving());
+}
+static void sonar(unsigned cm) {
+    msp::ticks=uint16_t(fakeMillis/100u);
+    msp::sonarPhase=msp::SONAR_DONE; msp::sonarPulseValid=1;
+    msp::sonarWidth=uint16_t((uint32_t(cm)*2097152ul+17150ul)/34300ul);
+    msp::sonarSampleAt=msp::sonarLastTrigger=msp::ticks;
+    msp::serviceObstacle();
+}
+static bool exchange() {
+    msp::transmitted.clear(); msp::ticks=uint16_t(fakeMillis/100u);
+    msp::serviceLink();
+    if(msp::transmitted.empty()) { loop(); return false; }
+    CHECK(msp::transmitted.size()==RL_SIZE);
+    for(uint8_t b:msp::transmitted) mspSerial.input.push_back(b);
+    mspSerial.output.clear(); loop();
+    CHECK(mspSerial.output.size()==RL_SIZE);
+    RlPacket reply={}; RlParser decoder={}; int decoded=0;
+    for(uint8_t b:mspSerial.output) decoded=rlFeed(&decoder,b,&reply);
+    CHECK(decoded==1); msp::response(&reply); return true;
+}
+static void step(uint32_t ms=20) { fakeMillis+=ms; sonar(40); exchange(); }
+static void stepWithoutEcho() {
+    fakeMillis+=20; msp::ticks=uint16_t(fakeMillis/100u);
+    msp::sonarPhase=msp::SONAR_DONE; msp::sonarPulseValid=0; msp::sonarWidth=0;
+    msp::sonarSampleAt=msp::sonarLastTrigger=msp::ticks;
+    msp::serviceObstacle(); exchange();
+}
+static void linkClear() {
+    CHECK(exchange() && msp::linked && robot.session);
+    sonar(40); fakeMillis+=100; sonar(40);
+    CHECK(!msp::motionBlocked());
+}
+static void releaseButton() { button.released=true; loop(); }
+static void calibrate() {
+    releaseButton(); CHECK(robot.userRequest==RL_USER_ZUMO_CALIBRATE && stopped());
+    for(unsigned i=0;i<40 && !robot.calibrating;++i) step();
+    CHECK(robot.calibrating && msp::running && !robot.calibrated);
+    CHECK(stopped()); // MSP grant begins the user's one-second wait.
+    for(unsigned i=0;i<250 && robot.calibrating;++i) step();
+    CHECK(!robot.calibrating && robot.calibrated && stopped());
+    CHECK(reflectanceSensors.samples==80);
+    for(unsigned i=0;i<30 && msp::running;++i) step();
+    CHECK(!msp::running && msp::linked && !robot.following);
+}
+static void start() {
+    releaseButton(); CHECK(robot.userRequest==RL_USER_START && stopped());
+    for(unsigned i=0;i<40 && !robot.following;++i) step();
+    CHECK(robot.following && msp::running);
+    CHECK(motors.left==150 && motors.right==150);
+}
+int main(int argc,char** argv) {
+    reset(); CHECK(mspSerial.rx==6 && mspSerial.tx==13 && mspSerial.baud==9600);
+    CHECK(Serial.baud==9600);
+    // MSP session is still required, but missing sonar is no longer a veto.
+    releaseButton(); CHECK(!robot.userRequest && stopped());
+    CHECK(exchange()); releaseButton();
+    CHECK(robot.userRequest==RL_USER_ZUMO_CALIBRATE);
+    fakeMillis=300; CHECK(exchange() && msp::queued==RL_ZUMO_CALIBRATE);
+    CHECK(exchange() && stopped() && robot.calibrating && msp::running);
+    CHECK(!msp::obstacle.valid && msp::obstacle.fault && !msp::motionBlocked());
+    // User's failing scenario: finish all 80 steps with no sonar echoes at all.
+    for(unsigned i=0;i<250 && robot.calibrating;++i) stepWithoutEcho();
+    CHECK(robot.calibrated && !robot.calibrating && reflectanceSensors.samples==80);
+    for(unsigned i=0;i<30 && msp::running;++i) stepWithoutEcho();
+    CHECK(!msp::running && stopped() && !msp::obstacle.valid);
+    releaseButton();
+    for(unsigned i=0;i<40 && !robot.following;++i) stepWithoutEcho();
+    CHECK(robot.following && msp::running);
+    for(unsigned i=0;i<100;++i) stepWithoutEcho();
+    CHECK(robot.following && msp::running && msp::obstacle.fault && !msp::motionBlocked());
+    // A real near echo still wins; later no-echo clearance cannot auto-restart.
+    sonar(2); CHECK(msp::queued==RL_STOP); exchange();
+    CHECK(!robot.following && stopped());
+    for(unsigned i=0;i<40;++i) stepWithoutEcho();
+    CHECK(!msp::motionBlocked() && !robot.following && stopped());
+
+    reset(); linkClear(); calibrate(); start();
+    reflectanceSensors.position=5000; loop();
+    CHECK(motors.left==150 && motors.right==-2350); // Original request; ZumoMotors clamps at ±400.
+    reflectanceSensors.position=0; loop();
+    CHECK(motors.left==-2350 && motors.right==150);
+    reflectanceSensors.position=2500;
+    // Real sonar policy -> MSP STOP frame -> actual sketch, motors off BEFORE ACK.
+    sonar(10); CHECK(msp::running && msp::queued!=RL_STOP);
+    sonar(3); CHECK(msp::running && msp::queued!=RL_STOP);
+    sonar(2); CHECK(!msp::running && msp::queued==RL_STOP);
+    bool stopAck=false;
+    mspSerial.beforeWrite=[&]() { CHECK(stopped() && !robot.moving()); stopAck=true; };
+    CHECK(exchange() && stopAck); mspSerial.beforeWrite=nullptr;
+    CHECK(!robot.following && robot.calibrated);
+    for(unsigned i=0;i<60;++i) step();
+    CHECK(!robot.following && !msp::running && stopped());
+    start();
+
+    // A STOP arriving during readLine wins before the new motor output.
+    reflectanceSensors.onRead=[]() {
+        RlPacket stop={RL_STOP,999,999,0,0}; uint8_t bytes[RL_SIZE]; rlEncode(&stop,bytes);
+        for(uint8_t b:bytes) mspSerial.input.push_back(b);
+    };
+    loop(); CHECK(stopped() && !robot.moving());
+
+    reset(); linkClear(); calibrate(); start();
+    // Stale/no echo must not stop driving when the Uno link remains healthy.
+    fakeMillis+=300; msp::ticks=uint16_t(fakeMillis/100u); msp::serviceObstacle();
+    CHECK(!msp::motionBlocked() && msp::queued!=RL_STOP && msp::obstacle.fault);
+    exchange();
+    CHECK(robot.following && msp::running && !stopped());
+
+    reset(); linkClear(); calibrate(); start();
+    // No MSP messages: no dependence on STOP getting through a broken cable.
+    fakeMillis=robot.lastLease+ZumoControl::LEASE_MS; loop();
+    CHECK(!robot.moving() && stopped() && robot.reason==RL_LEASE_LOST);
+    CHECK(robot.lastEvent==ZE_HEARTBEAT_LOST);
+    fakeMillis+=2000; loop(); CHECK(stopped());
+
+    reset(); linkClear(); calibrate(); start();
+    button.pressed=true; loop(); CHECK(stopped() && suppressButtonRelease);
+    button.pressed=false; button.released=true; loop();
+    CHECK(!robot.userRequest && !robot.moving() && !suppressButtonRelease);
+
+    reset(); linkClear(); calibrate(); start();
+    Serial.send("s\n"); loop(); CHECK(stopped() && !robot.following);
+
+    // Obstacle and communication loss can also interrupt the powered sweep.
+    reset(); linkClear(); releaseButton();
+    for(unsigned i=0;i<80 && !reflectanceSensors.samples;++i) step();
+    CHECK(robot.calibrating && !stopped()); sonar(2); exchange();
+    CHECK(stopped() && !robot.calibrated && !robot.calibrating);
+    CHECK(robot.lastEvent==ZE_MSP_STOP && calibrationStep>0 && calibrationStep<80);
+    for(unsigned i=0;i<40;++i) step();
+    CHECK(!robot.moving() && stopped());
+    // Reproduce the screenshot: HELLO has cleared REASON, but sweep is aborted.
+    CHECK(robot.reason==RL_OK && !robot.calibrated && robot.lastEvent==ZE_MSP_STOP);
+    Serial.output.clear(); usbReportPart=1; reportUsb(); reportUsb();
+    std::string statusText(Serial.output.begin(),Serial.output.end());
+    CHECK(statusText.find("FW=OG3 CAL=0 SWEEP=0 RUN=0 REASON=0")!=std::string::npos);
+    CHECK(statusText.find("LAST=MSP_STOP")!=std::string::npos && !usbReportPart);
+    releaseButton();
+    for(unsigned i=0;i<80 && !robot.calibrating;++i) step();
+    CHECK(robot.calibrating);
+    fakeMillis=robot.lastLease+ZumoControl::LEASE_MS; loop();
+    CHECK(stopped() && !robot.calibrated && !robot.calibrating);
+
+    reset(); linkClear(); reflectanceSensors.badContrast=true;
+    releaseButton();
+    for(unsigned i=0;i<300 && (!reflectanceSensors.samples || robot.calibrating);++i) step();
+    // Original behavior: finishing the sweep is enough, regardless of added thresholds.
+    CHECK(reflectanceSensors.samples==80 && robot.calibrated && stopped());
+    CHECK(robot.reason==RL_OK);
+    CHECK(robot.lastEvent==ZE_CAL_DONE);
+    for(unsigned i=0;i<30 && msp::running;++i) step();
+    CHECK(robot.calibrated && !msp::running && msp::linked);
+    CHECK(robot.lastEvent==ZE_CAL_DONE);
+    start();
+    CHECK(reflectanceSensors.samples==80 && robot.following && !robot.calibrating);
+
+    // Corruption, partial frames and overflow stop the actual sketch.
+    for(unsigned kind=0;kind<3;++kind) {
+        reset(); linkClear(); calibrate(); start();
+        if(kind==0) {
+            RlPacket keep={RL_KEEP,robot.session,uint16_t(robot.sequence+1),0,0};
+            uint8_t bytes[RL_SIZE]; rlEncode(&keep,bytes); bytes[10]^=1;
+            for(uint8_t b:bytes) mspSerial.input.push_back(b);
+        } else if(kind==1) {
+            mspSerial.input.push_back(0xa5); loop(); fakeMillis+=101;
+        } else mspSerial.overflowed=true;
+        loop(); CHECK(stopped() && !robot.moving() && robot.reason==RL_BAD_FRAME);
+        CHECK(robot.lastEvent==ZE_UART_ERROR);
+    }
+
+    // Duplicate KEEP cannot renew a lease, even across millis rollover.
+    ZumoControl c; c.calibrated=true;
+    RlPacket p={RL_HELLO,7,0,0,0}; c.handle(p,0xfffffff0u);
+    p={RL_START,7,1,0,0}; c.handle(p,0xfffffff0u);
+    p={RL_KEEP,7,2,0,0}; c.handle(p,0xfffffff5u);
+    c.handle(p,100); CHECK(c.lastLease==0xfffffff5u);
+    c.tick(uint32_t(0xfffffff5u+1000u)); CHECK(!c.moving() && c.reason==RL_LEASE_LOST);
+    CHECK(c.lastEvent==ZE_HEARTBEAT_LOST);
+    p={RL_STOP,7,3,0,0}; c.handle(p,1000);
+    p={RL_HELLO,8,0,0,0}; c.handle(p,1001);
+    CHECK(c.reason==RL_OK && c.lastEvent==ZE_HEARTBEAT_LOST);
+
+    // A fresh HELLO during a sweep is distinguished from an explicit STOP.
+    p={RL_ZUMO_CALIBRATE,8,1,0,0}; c.handle(p,1002);
+    p={RL_HELLO,9,0,0,0}; c.handle(p,1003);
+    CHECK(!c.calibrated && !c.calibrating && c.lastEvent==ZE_MSP_RESYNC);
+    p={RL_STOP,9,1,0,0}; c.handle(p,1004);
+    CHECK(c.lastEvent==ZE_MSP_RESYNC);
+
+    // Both diagnostic lines must fit a real Uno's 63-byte serial TX space.
+    robot.reason=robot.userRequest=255; calibrationStep=255;
+    robot.lastEvent=ZE_HEARTBEAT_LOST; fakeMillis=0xffffffffu;
+    Serial.output.clear(); usbReportPart=1; reportUsb(); reportUsb();
+    CHECK(!usbReportPart);
+    statusText.assign(Serial.output.begin(),Serial.output.end());
+    size_t lineStart=0;
+    while(lineStart<statusText.size()) {
+        size_t end=statusText.find('\n',lineStart); CHECK(end!=std::string::npos);
+        CHECK(end-lineStart+1<=63); lineStart=end+1;
+    }
+
+    // Bridge accepts the preserved status prefix and new base identity.
+    msp::output.clear(); msp::status();
+    CHECK(msp::output.find("STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 ")==0);
+    CHECK(msp::output.find("BASE=ZUMO LINE=BLACK")!=std::string::npos);
+    CHECK(msp::output.find(" L2=")==std::string::npos);
+    std::string telemetry=msp::output.substr(0,msp::output.size()-2);
+    CHECK(direct::status(telemetry.c_str()));
+    CHECK(argc==2);
+    std::ofstream(argv[1])<<telemetry;
+    printf("PASS %u Zumo sketch/MSP/sonar assertions; no hardware accessed.\n",checks);
+}
+'''
+cpp = BUILD / "zumo_tests.cpp"
+cpp.write_text(prefix + "".join(function(name, result) for name, result in (
+    ("stopRequested", "void"), ("serviceObstacle", "void"), ("userRequest", "void"),
+    ("reasonName", "const char *"), ("status", "void"), ("sendRequest", "void"),
+    ("response", "void"), ("serviceLink", "void"),
+)) + tests, encoding="utf-8")
+exe = BUILD / "zumo_tests.exe"
+subprocess.run([
+    "C:/msys64/ucrt64/bin/g++.exe", "-std=c++17", "-Wall", "-Wextra", "-Werror",
+    "-Wno-unknown-pragmas", "-Wno-unused-function", "-Wno-unused-variable",
+    "-I" + str(BUILD), "-static", str(cpp), "-o", str(exe),
+], check=True)
+telemetry_path = BUILD / "supervisor-status.txt"
+subprocess.run([str(exe), str(telemetry_path)], check=True)
+# Feed the actual emitted MSP record through the dashboard's production parser.
+# Only its pure parsing code is needed; no camera dependencies or ports are opened.
+dashboard = ast.parse((ROOT / "Laptop/Dashboard/desk_bridge.py").read_text(encoding="utf-8-sig"))
+parsing_nodes = [node for node in dashboard.body if
+                 isinstance(node, ast.FunctionDef) and node.name == "parse_status" or
+                 isinstance(node, ast.Assign) and any(isinstance(target, ast.Name) and
+                    target.id in {"STATUS_PATTERN", "ZUMO_STATUS_PATTERN"} for target in node.targets)]
+namespace = {"re": re}
+exec(compile(ast.Module(body=parsing_nodes, type_ignores=[]), "desk_bridge.py", "exec"), namespace)
+value = namespace["parse_status"](telemetry_path.read_text())
+assert value and value["base"] == "ZUMO" and value["left"] is None
+print("PASS: actual MSP status accepted by ESP bridge and dashboard parser.")

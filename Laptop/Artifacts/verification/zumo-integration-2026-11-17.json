@@ -1,0 +1,62 @@
+{
+  "date": "2026-11-17",
+  "timezone": "Asia/Singapore",
+  "scope": "Software-only Zumo Shield + Arduino Uno / MSP430F5529 integration",
+  "hardware_accessed": false,
+  "firmware_uploaded": false,
+  "motion_command_sent_to_hardware": false,
+  "uart": {"baud": 9600, "uno_rx": 6, "uno_tx": 13},
+  "initial_policy": {
+    "stop_cm": 20,
+    "release_cm": 25,
+    "clear_samples": 2,
+    "stale_range_ms_approx": 300,
+    "uno_lease_ms": 1000,
+    "automatic_restart": false,
+    "following_speed_limit": 150,
+    "calibration_speed": 200,
+    "kp": 1,
+    "kd": 0
+  },
+  "builds": {
+    "uno": {
+      "command": "Car/Arduino_Uno/build_zumo.ps1",
+      "status": "passed",
+      "board": "arduino:avr:uno",
+      "core": "1.8.8",
+      "zumo_library": "2.1.0",
+      "flash_bytes": 13988,
+      "global_ram_bytes": 665
+    },
+    "msp430": {
+      "command": "Car/MSP430/build_robot_supervisor.ps1 -EspUart -Zumo",
+      "status": "passed",
+      "compiler": "TI MSP430 21.6.3.LTS"
+    }
+  },
+  "checks": {
+    "actual_zumo_sketch_msp_sonar_simulation": {"status": "passed", "assertions": 943},
+    "actual_msp_status_through_esp_validator_and_dashboard_parser": "passed",
+    "legacy_uno_control": {"status": "passed", "assertions": 163},
+    "msp_supervisor": {"status": "passed", "assertions": 84},
+    "ultrasonic_adapter_and_policy": {"status": "passed", "assertions": 3128},
+    "direct_bridge": {"status": "passed", "assertions": 60},
+    "legacy_normal_and_ir_test_sonar_paths": {"status": "passed", "assertions": [3584, 3584, 3616]},
+    "dashboard_unittest": {
+      "run": 60,
+      "passed": 51,
+      "skipped": 9,
+      "reason": "Default Python 3.14 lacks working OpenCV/NumPy; no camera hardware used"
+    },
+    "local_documentation_links": {"status": "passed", "count": 175}
+  },
+  "unverified": [
+    "Physical UART levels and noise/error rates",
+    "Sensor calibration contrast and motor directions",
+    "HC-SR04 known-distance accuracy on new assembly",
+    "Mechanical stopping distance and loaded track operation",
+    "Dock recognition and stopping"
+  ],
+  "not_implemented": ["Water ADC reporting/control policy", "Pump/MOSFET driver control"],
+  "prior_firmware_note": "Last recorded November 12 images belong to the previous L298N base; MSP sonar bypass was enabled. Both new matching images must be installed before Zumo tests."
+}

@@ -10,13 +10,16 @@ for folder in ('Car','Laptop','Docking_Station'):
     if not (ROOT/folder/'README.md').exists():
         errors.append(f'Missing {folder}/README.md')
 for relative in (
+    'Start Robot.cmd',
     'Car/MSP430/robot_supervisor/main.c',
     'Car/Arduino_Uno/msp_line_follow/msp_line_follow.ino',
+    'Car/Arduino_Uno/zumo_line_follow/zumo_line_follow.ino',
     'Car/ESP32_Gateway/robot_wifi_gateway/robot_wifi_gateway.ino',
     'Car/XIAO_ESP32S3_Camera/xiao_camera_wifi/xiao_camera_wifi.ino',
     'Laptop/Pico_W/laptop_wifi_bridge/main.cpp',
     'Laptop/Pico_W/cmake/pico_sdk_import.cmake',
     'Laptop/Dashboard/server.py',
+    'Laptop/Dashboard/launch.py',
     'Laptop/Dashboard/Start Dashboard.cmd',
     'Laptop/YOLO_Model/README.md',
 ):

@@ -1,0 +1,34 @@
+{
+  "date": "2026-11-12",
+  "purpose": "Readable per-head calibration samples on integrated Uno without changing motion control",
+  "user_confirmed_wiring": {
+    "left_S": "D4",
+    "right_S": "D2",
+    "VCC": "3.3V",
+    "swapped": false
+  },
+  "module_specification_verified": false,
+  "regression_failed_before_fix": true,
+  "tests": {
+    "usb_report": 9,
+    "steering_GPIO": 80,
+    "supervised_control": 163
+  },
+  "build": {
+    "flash_bytes": 9664,
+    "ram_bytes": 584
+  },
+  "hex_sha256": "3a5fa7fd2bdedc3025477607ef9d6854cee42651cfc9f9b991f179311a13de43",
+  "upload_attempt": {
+    "port": "COM12",
+    "write_reached_percent": 100,
+    "verification_reached_percent": 67,
+    "flash_verified": false,
+    "error": "Uno USB device disappeared during flash verification",
+    "log": "tmp/uno-ir-report-upload.log"
+  },
+  "runtime_verified": false,
+  "no_start_or_calibration_sent": true,
+  "motor_power_off_confirmed": true,
+  "next_action": "Reconnect Uno USB; complete upload and verification before sensor test"
+}

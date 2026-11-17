@@ -1,0 +1,50 @@
+{
+  "date": "2026-11-12",
+  "scope": "Standalone Uno white lane with black boundary guides",
+  "source": "Car/Arduino_Uno/line_follow_car/line_follow_car.ino",
+  "calibration": {
+    "w": "actual white",
+    "b": "actual black",
+    "storage": "RAM; recalibrate after reset/upload"
+  },
+  "steering": {
+    "white_white": "FORWARD",
+    "black_white": "TURN_RIGHT",
+    "white_black": "TURN_LEFT",
+    "black_black": "BOTH_BLACK latched stop"
+  },
+  "software_checks": {
+    "compile_time_assertions": 21,
+    "whole_sketch_fake_gpio_serial_assertions": 40,
+    "arduino_fqbn": "arduino:avr:uno",
+    "build": "passed",
+    "flash_bytes": 6624,
+    "global_ram_bytes": 371
+  },
+  "uploaded": false,
+  "physical_track_tested": false,
+  "actuator_commands_sent": false,
+  "supervised_uno_or_msp_firmware_changed": false,
+  "committed_or_pushed": false,
+  "turn_output_adjustment": {
+    "reason": "User reports forward driving correct but opposite corner turns",
+    "configuration": "REVERSE_TURN_OUTPUTS=true",
+    "changed": "Only TURN_LEFT/TURN_RIGHT motor output patterns exchanged",
+    "unchanged": [
+      "FORWARD",
+      "STOP",
+      "channel polarity",
+      "white/black calibration",
+      "input filter",
+      "both-black stop",
+      "turn and signal timeouts"
+    ],
+    "physical_cause_confirmed": false,
+    "physical_tested": false,
+    "helper_assertions_passed": 29,
+    "whole_sketch_assertions_passed": 40,
+    "arduino_build": "passed",
+    "flash_bytes": 6682,
+    "global_ram_bytes": 371
+  }
+}

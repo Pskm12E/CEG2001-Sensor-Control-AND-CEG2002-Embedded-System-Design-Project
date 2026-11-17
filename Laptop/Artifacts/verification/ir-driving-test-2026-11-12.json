@@ -1,0 +1,41 @@
+{
+  "date": "2026-11-12",
+  "timezone": "Asia/Singapore",
+  "request": "Temporarily remove ultrasonic stopping to test IR driving",
+  "user_confirmation": "Motor power OFF; MSP430 USB connected",
+  "normal_build": {
+    "path": "Car/MSP430/robot_supervisor/Debug_wifi/robot_supervisor.out",
+    "sha256": "9D5F8417EE76E4EAC15E242FA14398ED2C66D35552657EB4A9FFE31173B5BB86",
+    "compiled": true
+  },
+  "installed_test_build": {
+    "path": "Car/MSP430/robot_supervisor/Debug_wifi_ir_test/robot_supervisor.out",
+    "sha256": "CA27CA3C062C0C710D1ECF7898D66158A6F2897F994533B371649D925695CC99",
+    "define": "IR_DRIVING_TEST=1",
+    "compiled": true,
+    "flashed_verified_and_run": true,
+    "dslite_exit_code": 0,
+    "flash_bytes": 6172,
+    "ram_bytes": 1392,
+    "ultrasonic_stop_enabled": false
+  },
+  "tests_passed": {
+    "default_integration": 698,
+    "explicit_zero_integration": 698,
+    "test_mode_integration": 732,
+    "normal_ultrasonic": 3128,
+    "supervisor": 68
+  },
+  "post_flash_observation": {
+    "source": "Existing Arduino Serial Monitor, without reopening its port",
+    "cal": 1,
+    "flags": 97,
+    "drive": 0,
+    "left": "D4 RAW=0 W=0 B=1 OK",
+    "right": "D2 RAW=0 W=0 B=1 OK"
+  },
+  "uno_flashed_or_reset": false,
+  "start_commands_sent": false,
+  "physical_driving_verified": false,
+  "flash_log": "tmp/msp-ir-driving-test-flash-2026-11-12.log"
+}
