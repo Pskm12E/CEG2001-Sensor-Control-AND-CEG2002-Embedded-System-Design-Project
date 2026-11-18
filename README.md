@@ -10,9 +10,9 @@ The user confirmed the current driving setup is working on **17 November 2026**.
 ## Source update — 18 November 2026
 
 **Temporary bench mode:** the MSP430 currently runs the separate
-[pump control-voltage test](Car/MSP430/pump_voltage_test/README.md), with the pump
-disconnected and Zumo motor power off. Press/release **MSP S2** for a three-second
-P1.6 test pulse; red LED1 blinks during it while P1.6 remains HIGH. Restore the robot supervisor before driving or using sonar STOP;
+[S2 LED-only test](Car/MSP430/s2_led_test/README.md), with pump and Zumo motor power
+off. Green LED2 indicates ready; **MSP S2** requests six red LED1 flashes.
+**P1.6 is disabled**, so this version does not run the pump. Restore the robot supervisor before driving or using sonar STOP;
 the following integrated firmware settings describe the normal robot mode.
 
 Firmware installed; live communication verified: **blue target → stop → spray for 3 seconds →

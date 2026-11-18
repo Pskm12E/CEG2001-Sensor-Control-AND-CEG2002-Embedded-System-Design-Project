@@ -1,5 +1,17 @@
 # Changelog
 
+## Isolated S2 LED test — 2026-11-18
+
+- At the user's request, isolated the button and LEDs before further pump work.
+  Green LED2 indicates ready; one S2 press gives six red LED1 flashes, then OFF.
+  The simple polling program holds P1.6 as an input with pull-down, never HIGH.
+- Compiled and passed 1664 assertions against the actual firmware main with
+  timed button inputs. Flashed/program-verified and checked green-output HIGH,
+  red GPIO configuration and the disabled pump pin. Visible LEDs await the
+  user's observation; an output latch alone is not a visual verification.
+- The agreed next step is S2 starting both pump and blinking for three seconds,
+  after the LED-only check works. No pump was activated during this LED test.
+
 ## Press-to-start blinking voltage test — 2026-11-18
 
 - Changed the standalone bench test to start on a debounced S2 press, blink red

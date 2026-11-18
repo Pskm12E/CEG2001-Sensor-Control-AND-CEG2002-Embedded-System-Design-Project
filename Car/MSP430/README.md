@@ -1,9 +1,9 @@
 # Car MSP430 — main controller
 
 **Temporary bench mode, 18 November:** the standalone
-[P1.6 voltage test](pump_voltage_test/README.md) is currently installed and running.
-MSP S2 starts a three-second GPIO pulse with red LED1 blinking and the pump
-disconnected. The robot
+[S2 LED-only test](s2_led_test/README.md) is currently installed and running.
+Green LED2 indicates ready; MSP S2 requests six red LED1 flashes. P1.6 is disabled
+while the LEDs are checked. The robot
 supervisor must be restored before driving; UART supervision and ultrasonic
 stopping are unavailable in this bench program. Keep motor power off.
 

@@ -28,12 +28,12 @@
   },
   "hardware_setup_confirmed_by_user": "Zumo motor power OFF, pump and pump battery disconnected, MSP USB connected",
   "installation": {
-    "status": "PRESS_TO_START_BLINK_VERSION_PROGRAM_VERIFIED_LEFT_RUNNING",
+    "status": "SUPERSEDED_BY_S2_LED_ONLY_TEST",
     "initial_usb_error": "Windows descriptor request failure and TI No USB FET found; no programming occurred during that attempt",
     "usb_resolution": "User changed the USB cable; MSP application COM13 and debug COM14 reappeared as TI 2047:0013",
     "program_load_reached": true,
     "flash_program_verified": true,
-    "test_left_running": true,
+    "test_left_running": false,
     "normal_supervisor_replaced": true,
     "postload_check_note": "Current image program-verified, then timer and main-loop counters advanced over three startup samples including a 1.25-second run. P1.6 starts as GPIO output LOW.",
     "idle_registers": {
@@ -42,7 +42,8 @@
       "P1SEL": 0
     },
     "idle_gpio_output_low_verified": true,
-    "next_step": "With power off remove the P1.6-to-MOSFET wire, then power only MSP USB and measure directly P1.6 to GND after one S2 press; leave the button alone for five seconds. Visible LED operation and steady unloaded HIGH remain pending. Restore supervisor before driving."
+    "next_step": "The S2 LED-only image is now running, with P1.6 disabled. Resolve the visible LED/button check first, then return to pump activation. Restore supervisor before driving.",
+    "superseded_by": "s2-led-test-2026-11-18.json"
   },
   "original_supervisor_restore_snapshot_sha256": "918ac810fa0d8a1e72b73140093a5a8bf8e41b99df713eb0188d952927d3d30f",
   "gpio_pulse_triggered_by_agent": false,

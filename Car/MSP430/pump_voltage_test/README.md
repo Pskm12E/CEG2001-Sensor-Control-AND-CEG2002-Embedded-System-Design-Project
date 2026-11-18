@@ -1,6 +1,9 @@
 # Pump control-voltage test
 
-**Installed, program-verified and left running on 18 November 2026.** The initial
+**Previously installed and program-verified on 18 November 2026.** The current
+installed program is the [S2 LED-only test](../s2_led_test/README.md), with P1.6
+disabled, while missing visible LED operation is investigated. This voltage
+test remains available for the later pump step. The initial
 USB descriptor fault was resolved by changing the USB cable. The current version
 starts on a press and blinks red LED1 while P1.6 stays HIGH. Runtime checks
 confirmed the timer/main loop advance and P1.6 starts LOW. The normal supervisor is

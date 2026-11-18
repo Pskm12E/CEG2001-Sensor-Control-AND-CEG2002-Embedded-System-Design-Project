@@ -1,0 +1,43 @@
+{
+  "date": "2026-11-18",
+  "timezone": "Asia/Singapore",
+  "purpose": "Isolate MSP S2 and onboard LEDs before adding pump activation",
+  "source": "Car/MSP430/s2_led_test/main.c",
+  "board_configured": "MSP-EXP430F5529LP",
+  "expected_behavior": "Green LED2 indicates ready. One debounced S2/P1.1 press produces six red LED1/P1.0 flashes over about three seconds, then OFF. Holding does not repeat.",
+  "pump_pin": "P1.6 input with pull-down; never driven HIGH",
+  "validation": {
+    "real_main_software_assertions": 1664,
+    "ti_compile_and_link_passed": true,
+    "image_sha256": "80ad84ec66a99151bc466890111b717c4c682fce0f78663844177e023b1941e7",
+    "flash_program_verified": true,
+    "left_running": true,
+    "startup_P1OUT": 2,
+    "startup_P1DIR": 1,
+    "startup_P1REN": 66,
+    "startup_P4OUT": 128,
+    "startup_P4DIR": 128
+  },
+  "user_observation": {
+    "green_ready_light_visible": true,
+    "red_blink_after_s2": false,
+    "green_turns_off_when_s3_pressed": true,
+    "note": "S3 is reset. A reset clears press/edge history, so zero counters after that reset cannot establish that S2 was ignored."
+  },
+  "direct_red_led_check": {
+    "duration_seconds": 30,
+    "pump_pin_kept_disabled": true,
+    "P1OUT_while_red_requested_on": 3,
+    "P1DIR": 1,
+    "P1SEL": 0,
+    "P1REN": 66,
+    "P1IN_while_halted": 190,
+    "P1OUT_after_off": 2,
+    "physical_red_visibility": "AWAITING_USER_REPORT",
+    "scope": "Debugger register write/read with CPU halted; this is not an analog pin-voltage measurement or proof of a damaged GPIO."
+  },
+  "normal_supervisor_restored": false,
+  "pump_activated_by_this_test": false,
+  "visual_red_blink_verified": false,
+  "next_step": "Obtain physical LED observation and inspect the board/LED1 path before further firmware changes. After the LED-only check works, add the user's requested three-second pump-and-blink step."
+}
