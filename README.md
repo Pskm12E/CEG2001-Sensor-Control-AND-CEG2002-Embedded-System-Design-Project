@@ -7,15 +7,30 @@ follows a black line on white using the six-sensor array and built-in motor
 driver. The MSP430 measures the HC-SR04 and sends obstacle STOP commands.
 The user confirmed the current driving setup is working on **17 November 2026**.
 
-## Current stopping distance
+## Source update — 18 November 2026
+
+Implemented; installation partly complete: **blue target → stop → spray for 3 seconds →
+continue**, **5 cm ultrasonic STOP / 7 cm clearance**, and stronger turns.
+Uno OG4 keeps straight speed at 150 and allows the outside track up to 250;
+the original calibration sweep is unchanged. Pump wiring uses MSP P1.6 and
+water ADC P6.0. **Pump output is disabled pending pump/driver qualification.**
+The pump is reported as approximately 5 V, but current/model is unknown;
+a separate battery does not qualify the 2N7000 for 3.3 V gate drive.
+See [the complete pump/cycle guide](Car/MSP430/robot_supervisor/PUMP_SETUP.md).
+**Installed:** MSP430 5 cm / 7 cm pump-disabled image, flash/program-verified;
+desk Pico V3, identity verified. **Pending:** the user will upload Uno OG4;
+FireBeetle V2 is deferred. The automatic target cycle is not yet ready for a
+physical test. MSP was left stopped with P1.6 low; no start or spray was requested.
+
+## Source stopping settings
 
 | Setting | Current behavior |
 | --- | --- |
-| Obstacle STOP | Valid measured range **2 cm or closer** |
-| Clear a recent near inhibit | Two valid readings **4 cm or farther** |
+| Obstacle STOP | Valid measured range **5 cm or closer** |
+| Clear a recent near inhibit | Two valid readings **7 cm or farther** |
 | Missing / invalid / stale echo | Does **not** stop or block calibration or driving, including startup |
 | Old near reading | Expires after about **300 ms** without a fresh valid reading |
-| Restart after STOP | Manual request required; clearing range never restarts the car |
+| Obstacle/manual/fault STOP | Manual request required; clearing range never restarts the car |
 
 These are the current configured thresholds in
 [obstacle_guard.h](Car/MSP430/robot_supervisor/obstacle_guard.h), not a measured
@@ -36,8 +51,8 @@ UART/session faults and the Uno's one-second communication lease remain active.
    After an interrupted calibration, repeat the sweep before starting.
 
 Calibration is held in RAM and must be repeated after an Uno reset. The original
-PD settings remain `kp=1`, `kd=0`, centre 2500 and `MAX_SPEED=150`, with the
-original upper-only speed clamps. USB status is **9600 baud**, firmware **OG3**.
+PD settings remain `kp=1`, `kd=0`, centre 2500 and `MAX_SPEED=150`, with a positive turn cap of 250 and reverse cap of 400. USB status is
+**9600 baud**, source firmware **OG4**.
 See [the complete Zumo wiring and operating guide](Car/Arduino_Uno/zumo_line_follow/README.md).
 
 The MSP no-echo update was flashed and program-verified; the user installed Uno
@@ -58,10 +73,9 @@ have not been independently measured.
 | [Laptop/Tools/Communication](Laptop/Tools/Communication/README.md) | Protocol, private network configuration, build helpers and checks |
 | [Docking_Station](Docking_Station/README.md) | Planned dock controller and peripherals |
 
-The water sensor is wired to MSP P6.0; ADC integration remains pending.
-**Pump/MOSFET/driver are not connected.** Trained YOLO insect recognition,
-automatic detection-triggered stop/spray jobs and dock/refill control remain
-planned. The current blue-square detector does not command movement or spraying.
+Water sensor P6.0 raw ADC reporting and the bounded target spray cycle are
+implemented in source; wet/dry calibration and physical pump/driver qualification
+are pending. Trained YOLO insect recognition and dock/refill control remain planned.
 
 ## Laptop monitor
 
@@ -70,7 +84,9 @@ planned. The current blue-square detector does not command movement or spraying.
 2. Double-click **[Start Robot.cmd](Start%20Robot.cmd)**. It opens
    **http://127.0.0.1:8765**, finds the Pico and requests wireless video.
 3. Select **Start detection** for the blue-square practice test, or launch with
-   `"Start Robot.cmd" --detect`. The launcher does not calibrate or start motors.
+   `"Start Robot.cmd" --detect`. The default launcher does not calibrate or start
+   motors; enabling detection permits the bounded cycle once all required
+   firmware and the verified pump driver are installed.
 
 [Start Dashboard.cmd](Laptop/Dashboard/Start%20Dashboard.cmd) uses the same
 launcher. Keep its server window open. Missing hardware leaves the dashboard
@@ -88,8 +104,8 @@ Car camera ── Wi-Fi ── FireBeetle AP ── Wi-Fi ── Desk Pico ─�
                      Arduino Uno ── Zumo Shield ── tracks
 ```
 
-The last separate Pico check reported its USB link working but its private
-Wi-Fi link down. That issue was set aside and has not been reverified as fixed.
+The user's latest screenshot shows live video with a confirmed blue target.
+The new target-action path has been tested in software; on-board action is pending installation.
 Driving/calibration use the MSP/Uno link directly. Each board needs its own
 appropriate supply; common GND does not power the boards. Motors use the AA supply.
 
@@ -118,6 +134,8 @@ Software-only regression checks do not open hardware:
 ```powershell
 python Car/Arduino_Uno/tests/check_zumo.py
 python Car/MSP430/tests/check_ultrasonic.py
+python Car/MSP430/tests/check_spray_job.py
+python Laptop/Tools/Communication/tests/check_desk_actions.py
 python Car/MSP430/tests/check_supervisor_logic.py
 python Laptop/Tools/Communication/tests/check_direct.py
 python -m unittest discover -s Laptop/Dashboard/tests -p "test_*.py"

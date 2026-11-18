@@ -1,5 +1,15 @@
 # Saved project artifacts
 
+## Target-cycle source — 18 November 2026
+
+[Installed-board status](verification/target-spray-installation-2026-11-18.json) ·
+[Source/build test report](verification/target-spray-source-2026-11-18.json) ·
+[Complete Uno OG4 source ZIP](setup/zumo_line_follow_OG4.zip) ·
+[Pump wiring and current installation limits](../../Car/MSP430/robot_supervisor/PUMP_SETUP.md).
+New source uses 5 cm STOP / 7 cm clearance and a three-second target spray cycle.
+Default pump output is disabled pending driver qualification. Builds/software
+tests do not mean that these images have been flashed or physically validated.
+
 Current diagrams: [boards and wiring](diagrams/robot-system-connections-2026-11-05.png)
 and [proposed laptop YOLO](diagrams/yolo-laptop-architecture-2026-11-05.png).
 Dated reports cover the October bench release and November integration work.

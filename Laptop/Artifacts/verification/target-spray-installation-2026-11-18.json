@@ -1,0 +1,145 @@
+{
+  "date": "2026-11-18",
+  "timezone": "Asia/Singapore",
+  "status": "MSP pump-disabled image and Pico V3 installed; Uno upload user-controlled; FireBeetle deferred",
+  "requested_flow": "confirmed blue target -> stop -> 3-second water spray -> fresh token-matched continuation",
+  "ultrasonic": {
+    "stop_cm": 5,
+    "release_cm": 7,
+    "release_samples": 2,
+    "no_echo_stops": false,
+    "near_expiry_ms_approximately": 300
+  },
+  "turning": {
+    "straight_command": 150,
+    "positive_turn_limit": 250,
+    "reverse_limit": 400,
+    "calibration_speed_unchanged": 200
+  },
+  "pump": {
+    "gate": "MSP430 P1.6",
+    "spray_seconds": 3,
+    "default_driver_enabled": false,
+    "reported_voltage": "approximately 5 V, user uncertain",
+    "running_current": "unknown",
+    "startup_current": "unknown",
+    "supplied_transistor": "2N7000; exact manufacturer/package unconfirmed",
+    "flyback": "1N4001; cathode stripe to pump +",
+    "gate_pull_down": "100 kOhm required; not physically verified",
+    "separate_battery": "4xAA; chemistry/output range unverified",
+    "hardware_qualification": "not established; no pump power test authorised/performed"
+  },
+  "water_sensor": {
+    "pin": "P6.0 ADC A0",
+    "source_reports_raw_12bit": true,
+    "wet_dry_calibrated": false,
+    "empty_tank_interlock": false
+  },
+  "passed_checks": {
+    "zumo_actual_sketch_msp_sonar": 1424,
+    "ultrasonic": 3140,
+    "spray_job": 119,
+    "supervisor": 84,
+    "desk_http_parser": 634,
+    "actual_pico_actions": 28,
+    "direct_bridge": 60,
+    "legacy_sonar_variants": [
+      3607,
+      3607,
+      3616
+    ],
+    "dashboard_tests": 70,
+    "dashboard_skipped": 0,
+    "javascript_syntax": true,
+    "local_documentation_links": 212
+  },
+  "builds": {
+    "uno_og4": {
+      "compiled": true,
+      "sha256": "d8ec098513741b8ebd468247c49fcaf2b648d32070f00a48344b48a2bfc34e5a",
+      "uploaded": false
+    },
+    "msp_pump_disabled": {
+      "compiled": true,
+      "sha256": "bd0e9cc893e35fd04c958376d37d23a9439cdc36eb1853a84513aac7fa401f3a",
+      "uploaded": true,
+      "ram_bytes_including_stack": 1430,
+      "flash_bytes_excluding_vectors": 7904,
+      "program_verification_successful": true,
+      "flash_bytes": 7950
+    },
+    "msp_pump_enabled_test_build_only": {
+      "compiled": true,
+      "sha256": "1b919f17c67f7aae516f8e4a748cf2bd18d4770748fc7e7cddd3b29cf68518e5",
+      "uploaded": false,
+      "ram_bytes_including_stack": 1430,
+      "flash_bytes_excluding_vectors": 7946
+    },
+    "esp32_v2": {
+      "compiled": true,
+      "sha256": "e3728b729b46946565ed674d1ea8f49b8210c4d09aafb5f592933622e6cec858",
+      "uploaded": false
+    },
+    "desk_pico_v3": {
+      "compiled": true,
+      "sha256": "fbf6df2250936afe20d4a6ff3684ac616994a8d81ac8e100872a3905699067a8",
+      "uploaded": true
+    }
+  },
+  "hardware_actions_during_update": [
+    "User confirmed motors and pump battery off before installation",
+    "Stopped detection/camera and disconnected Pico; stopped verified old local dashboard process",
+    "DSLite flash+verify+run of exact tested pump-disabled MSP image",
+    "Desk Pico V3 UF2 upload followed by PONG/status identity verification",
+    "Read-only MSP raw memory snapshot before resume; target left executing"
+  ],
+  "limits": [
+    "No physical braking, turn torque, spray flow, alignment or ADC calibration test",
+    "MSP-to-Uno link was not ready in the stopped snapshot; USB data connection to Uno was absent",
+    "ESP UART status was stale; FireBeetle work explicitly deferred"
+  ],
+  "msp_runtime": {
+    "ticks": 1466,
+    "linked": false,
+    "running": false,
+    "peer_flags": 0,
+    "job_phase": 0,
+    "pump": false,
+    "p1out_register": 2,
+    "p1_6_gate_high": false,
+    "water_raw_uncalibrated": 12,
+    "link_uart_errors": 0,
+    "console_uart_errors": 0,
+    "rx_drops": 0,
+    "bad_frames": 0
+  },
+  "pico_runtime": {
+    "firmware": "DESK_BRIDGE_V3",
+    "wifi": "UP",
+    "esp_link": "UP",
+    "msp_link": "STALE",
+    "gateway_firmware": "DIRECT_WIFI_V1",
+    "fresh_msp_telemetry": false,
+    "firmware_identity_verified": true
+  },
+  "remaining_installation": {
+    "uno": "User explicitly chose to upload OG4 themselves; no Uno USB data port was detected",
+    "firebeetle": "User explicitly deferred this board; DIRECT_WIFI_V2 source compiled but not uploaded",
+    "pump": "Disabled; unknown running/startup current and unverified 2N7000 drive rating",
+    "automatic_target_cycle": "Not ready for physical use until remaining firmware and driver qualification are complete"
+  },
+  "movement_calibration_or_spray_commands_sent": false,
+  "logs": [
+    "tmp/msp-target-pump-disabled-flash-2026-11-18.log",
+    "tmp/msp-target-runtime-2026-11-18.log"
+  ],
+  "dashboard_restored": {
+    "updated_server": true,
+    "pico_verified": true,
+    "camera_streaming": true,
+    "camera_fps_snapshot": 12.7,
+    "detection_enabled": false,
+    "target_action": "IDLE",
+    "msp_status": "STALE"
+  }
+}

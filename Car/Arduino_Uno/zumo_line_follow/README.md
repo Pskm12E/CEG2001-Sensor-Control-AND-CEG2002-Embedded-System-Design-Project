@@ -1,5 +1,15 @@
 # Zumo black-line follower with MSP430 stopping
 
+**18 November update — installation partly complete:** 5 cm STOP / 7 cm clearance;
+blue-target stop → 3-second spray → token-matched continuation. Uno OG4 raises
+the positive turn limit to 250 while straight speed stays 150. Pump gate P1.6,
+raw water ADC P6.0. The pump driver is disabled until its electrical rating is
+verified. Read [the current cycle/pump guide](../../MSP430/robot_supervisor/PUMP_SETUP.md). MSP 5 cm / 7 cm pump-disabled firmware and Pico V3 are installed/verified.
+The user will upload Uno OG4; FireBeetle V2 is deferred. Full automatic spraying
+is not yet ready for physical use. The earlier installed milestone is history below.
+
+## Previous installed milestone — 17 November 2026
+
 Current setup, **17 November 2026**: Uno + Zumo Shield control the six reflectance
 sensors and motors. MSP430F5529 measures the HC-SR04 and grants movement.
 The user confirmed the driving setup is working. Uno **OG3** is user-installed;

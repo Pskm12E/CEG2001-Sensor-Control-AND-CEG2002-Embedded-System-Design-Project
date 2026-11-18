@@ -1,0 +1,93 @@
+{
+  "date": "2026-11-18",
+  "timezone": "Asia/Singapore",
+  "status": "source compiled and software-tested; installation pending",
+  "requested_flow": "confirmed blue target -> stop -> 3-second water spray -> fresh token-matched continuation",
+  "ultrasonic": {
+    "stop_cm": 5,
+    "release_cm": 7,
+    "release_samples": 2,
+    "no_echo_stops": false,
+    "near_expiry_ms_approximately": 300
+  },
+  "turning": {
+    "straight_command": 150,
+    "positive_turn_limit": 250,
+    "reverse_limit": 400,
+    "calibration_speed_unchanged": 200
+  },
+  "pump": {
+    "gate": "MSP430 P1.6",
+    "spray_seconds": 3,
+    "default_driver_enabled": false,
+    "reported_voltage": "approximately 5 V, user uncertain",
+    "running_current": "unknown",
+    "startup_current": "unknown",
+    "supplied_transistor": "2N7000; exact manufacturer/package unconfirmed",
+    "flyback": "1N4001; cathode stripe to pump +",
+    "gate_pull_down": "100 kOhm required; not physically verified",
+    "separate_battery": "4xAA; chemistry/output range unverified",
+    "hardware_qualification": "not established; no pump power test authorised/performed"
+  },
+  "water_sensor": {
+    "pin": "P6.0 ADC A0",
+    "source_reports_raw_12bit": true,
+    "wet_dry_calibrated": false,
+    "empty_tank_interlock": false
+  },
+  "passed_checks": {
+    "zumo_actual_sketch_msp_sonar": 1424,
+    "ultrasonic": 3140,
+    "spray_job": 119,
+    "supervisor": 84,
+    "desk_http_parser": 634,
+    "actual_pico_actions": 28,
+    "direct_bridge": 60,
+    "legacy_sonar_variants": [
+      3607,
+      3607,
+      3616
+    ],
+    "dashboard_tests": 70,
+    "dashboard_skipped": 0,
+    "javascript_syntax": true,
+    "local_documentation_links": 208
+  },
+  "builds": {
+    "uno_og4": {
+      "compiled": true,
+      "sha256": "d8ec098513741b8ebd468247c49fcaf2b648d32070f00a48344b48a2bfc34e5a",
+      "uploaded": false
+    },
+    "msp_pump_disabled": {
+      "compiled": true,
+      "sha256": "bd0e9cc893e35fd04c958376d37d23a9439cdc36eb1853a84513aac7fa401f3a",
+      "uploaded": false,
+      "ram_bytes_including_stack": 1430,
+      "flash_bytes_excluding_vectors": 7904
+    },
+    "msp_pump_enabled_test_build_only": {
+      "compiled": true,
+      "sha256": "1b919f17c67f7aae516f8e4a748cf2bd18d4770748fc7e7cddd3b29cf68518e5",
+      "uploaded": false,
+      "ram_bytes_including_stack": 1430,
+      "flash_bytes_excluding_vectors": 7946
+    },
+    "esp32_v2": {
+      "compiled": true,
+      "sha256": "e3728b729b46946565ed674d1ea8f49b8210c4d09aafb5f592933622e6cec858",
+      "uploaded": false
+    },
+    "desk_pico_v3": {
+      "compiled": true,
+      "sha256": "fbf6df2250936afe20d4a6ff3684ac616994a8d81ac8e100872a3905699067a8",
+      "uploaded": false
+    }
+  },
+  "hardware_actions_during_update": [],
+  "limits": [
+    "No physical braking/torque, spray-flow, nozzle alignment, ADC calibration or driver-temperature tests",
+    "Installation readiness question pending; inventory shows MSP COM13/14 and desk Pico COM11 only, no Uno/ESP USB data port",
+    "User's live-video target screenshot is not proof of the new action path being installed"
+  ]
+}

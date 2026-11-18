@@ -39,11 +39,11 @@ int main() {
     obstacleSample(&g,1,40,1); CHECK(!g.inhibit);
     obstacleSample(&g,2,20,1); CHECK(!g.inhibit); // Old stop threshold now stays clear.
     obstacleSample(&g,2,10,1); CHECK(!g.inhibit);
-    obstacleSample(&g,2,3,1); CHECK(!g.inhibit);
-    obstacleSample(&g,2,2,1); CHECK(g.inhibit);
-    obstacleSample(&g,3,3,1); CHECK(g.inhibit && !g.clearCount);
-    obstacleSample(&g,4,4,1); CHECK(g.inhibit);
-    obstacleSample(&g,5,4,1); CHECK(!g.inhibit);
+    obstacleSample(&g,2,6,1); CHECK(!g.inhibit);
+    obstacleSample(&g,2,5,1); CHECK(g.inhibit);
+    obstacleSample(&g,3,6,1); CHECK(g.inhibit && !g.clearCount);
+    obstacleSample(&g,4,7,1); CHECK(g.inhibit);
+    obstacleSample(&g,5,7,1); CHECK(!g.inhibit);
     obstacleSample(&g,6,0,0); CHECK(!g.inhibit && !g.valid);
     obstacleSample(&g,7,0,0); CHECK(!g.inhibit);
     obstacleAge(&g,8); CHECK(!g.inhibit && g.fault);

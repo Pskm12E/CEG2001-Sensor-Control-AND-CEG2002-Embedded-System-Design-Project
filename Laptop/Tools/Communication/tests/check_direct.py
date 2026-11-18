@@ -19,6 +19,7 @@ def function(name, return_type='void'):
 prefix = r'''
 #define SUPERVISOR_ESP_UART
 #include <cassert>
+#define cancelSpray() ((void)0)
 #include <cstdint>
 #include <cstdio>
 #include <cstring>

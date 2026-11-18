@@ -4,10 +4,11 @@
 #include <string.h>
 
 namespace direct {
-enum class Op { None, Ping, Status, Stop };
+enum class Op { None, Ping, Status, Stop, Target, Resume };
 inline const char *name(Op op) {
     switch(op) { case Op::Ping:return "PING"; case Op::Status:return "STATUS";
-        case Op::Stop:return "STOP"; default:return ""; }
+        case Op::Stop:return "STOP"; case Op::Target:return "TARGET";
+        case Op::Resume:return "RESUME"; default:return ""; }
 }
 inline bool frame(const char *line,uint32_t &id,const char *&payload) {
     if(strncmp(line,"NET ",4)) return false;
@@ -33,6 +34,8 @@ inline bool status(const char *p) {
 inline bool matches(Op op,const char *p) {
     if(op==Op::Ping) return !strcmp(p,"PONG MSP430 SUPERVISOR_V2 ESP_UART_V1");
     if(op==Op::Status) return status(p);
+    if(op==Op::Target) return !strcmp(p,"TARGET ACCEPTED") || !strcmp(p,"TARGET REFUSED");
+    if(op==Op::Resume) return !strcmp(p,"RESUME ACCEPTED") || !strcmp(p,"RESUME REFUSED");
     return op==Op::Stop && !strcmp(p,"STOP REQUESTED");
 }
 }

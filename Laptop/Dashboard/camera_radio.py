@@ -83,7 +83,7 @@ class RadioCamera:
             if not self.enabled:return
             now=time.monotonic();self.jpeg=jpeg;self.received=now;self.times.append(now)
             self.value.update(sequence=self.value['sequence']+1,source_sequence=sequence,
-                              captured_at=time.time(),bytes=len(jpeg),crc32=crc,error=None)
+                              captured_at=time.time(),received_monotonic=now,bytes=len(jpeg),crc32=crc,error=None)
             self.condition.notify_all()
 
     def reject(self):

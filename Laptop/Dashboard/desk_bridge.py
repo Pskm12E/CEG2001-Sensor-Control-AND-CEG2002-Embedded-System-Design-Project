@@ -1,4 +1,4 @@
-"""Read-only desk Pico USB -> ESP Wi-Fi -> main MSP430 telemetry."""
+"""Desk Pico video/status relay and bounded MSP-owned target jobs."""
 from collections import deque
 from datetime import datetime, timezone
 import json
@@ -22,12 +22,21 @@ ZUMO_STATUS_PATTERN = re.compile(
     r"STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=(READY|SYNCING) RUN=([01]) "
     r"CAL=(NEEDED|SAMPLING|READY) BASE=ZUMO LINE=BLACK LED2=(ON|OFF) "
     r"FLAGS=(\d{1,3}) RESULT=(\d{1,3}) PENDING=(\d{1,3}) "
-    r"UART_ERRORS=(\d{1,10}) RX_DROPS=(\d{1,10}) BAD_FRAMES=(\d{1,10}) BRIDGE=ESP_UART_V1"
+    r"UART_ERRORS=(\d{1,10}) RX_DROPS=(\d{1,10}) BAD_FRAMES=(\d{1,10})"
+    r"(?: JOB=(\d) JOB_ID=(\d{1,10}) PUMP=([01]) READY=([01]) WATER=(\d{1,4}))? BRIDGE=ESP_UART_V1"
 )
 PICO_PATTERN = re.compile(
     r"STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V2 LED=ON "
     r"WIFI=(UP|DOWN) ESP_LINK=(UP|DOWN) MSP_LINK=(UP|STALE|NOT_CONNECTED) READ_ONLY=1"
 )
+PICO_JOB_PATTERN = re.compile(
+    r"STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V3 LED=ON "
+    r"WIFI=(UP|DOWN) ESP_LINK=(UP|DOWN) MSP_LINK=(UP|STALE|NOT_CONNECTED) READ_ONLY=0 TARGET_JOBS=1"
+)
+
+
+class ActionPriority(Exception):
+    """Interrupt a telemetry read to dispatch a fresh target request."""
 
 
 class TelemetryError(RuntimeError):
@@ -52,7 +61,13 @@ def parse_status(line):
             return None
         keys = ("uno_link", "run", "calibration", "led2", "flags", "result",
                 "pending", "uart_errors", "rx_drops", "bad_frames")
-        result = dict(zip(keys, match.groups()), base="ZUMO", line="BLACK", left=None, right=None)
+        result = dict(zip(keys, match.groups()[:10]), base="ZUMO", line="BLACK", left=None, right=None)
+        job = match.groups()[10:]
+        if job and job[0] is not None:
+            values = list(map(int, job))
+            if values[0] > 8 or values[1] > 4294967295 or values[4] > 4095:
+                return None
+            result.update(zip(("job", "job_id", "pump", "driver_ready", "water_raw"), values))
     for key in ("run", "flags", "result", "pending", "uart_errors", "rx_drops", "bad_frames"):
         result[key] = int(result[key])
     if any(result[k] > 255 for k in ("flags", "result", "pending")):
@@ -80,6 +95,15 @@ class Bridge:
         self.pico = None
         self.remote = None
         self.identity = False
+        self.target_supported = False
+        self.action_pending = threading.Event()
+        self.target_action = {"state": "IDLE", "error": None, "request_id": None}
+        self.action_at = 0
+        self.target_latched = False
+        self.target_absent_since = None
+        self.last_observation = None
+        self.resume_requested = False
+        self.action_command = "ROBOT TARGET"
         self.pico_seen = None
         self.last_seen = None
         self.last_seen_monotonic = None
@@ -111,7 +135,9 @@ class Bridge:
             error = self.error
             if self.connected and not fresh and not error:
                 error = "Waiting for fresh robot status through the Pico. Check power to the ESP32, MSP430 and Uno."
-            return {"mode": "hosted" if self.hosted else "local", "read_only": True,
+            return {"mode": "hosted" if self.hosted else "local", "read_only": not self.target_supported,
+                    "target_jobs": self.target_supported and not self.hosted,
+                    "target_action": dict(self.target_action),
                     "connection": {"connected": self.connected, "port": self.port, "baud": 115200,
                                    "error": error, "fresh": fresh, "last_seen": self.last_seen},
                     "links": links, "telemetry": dict(self.telemetry) if self.telemetry else None,
@@ -145,6 +171,14 @@ class Bridge:
                 self.telemetry = self.pico = self.remote = None
                 self.last_seen = self.last_seen_monotonic = self.pico_seen = None
                 self.identity = False
+                self.target_supported = False
+                self.action_pending.clear()
+                self.target_action = {"state": "IDLE", "error": None, "request_id": None}
+                self.target_latched = False
+                self.target_absent_since = None
+                self.last_observation = None
+                self.resume_requested = False
+                self.action_command = "ROBOT TARGET"
                 self.stop = threading.Event()
                 self.pending = queue.Queue(maxsize=8)
                 self.usb=UsbMultiplexer(self.video.publish,self.video.reject)
@@ -155,13 +189,19 @@ class Bridge:
     def disconnect(self):
         with self.lifecycle:
             was_connected = self.connected
+            if self.worker and self.worker.is_alive() and self.action_command == "ROBOT STOP":
+                deadline = time.monotonic()+2
+                while time.monotonic()<deadline and self.target_action["state"] not in {"CANCELLED", "ABORTED", "UNKNOWN"}:
+                    time.sleep(.02)
             self.stop.set()
+            self.action_pending.clear()
             if self.worker:
                 self.worker.join(timeout=2)
                 if self.worker.is_alive():
                     raise RuntimeError("The USB connection is closing. Try again.")
             with self.lock:
                 self.connected = False
+                self.target_supported = False
                 self.error = None
             if was_connected:
                 self.event("connection", "Desk Pico disconnected. Robot readings are no longer live.")
@@ -180,7 +220,7 @@ class Bridge:
 
     def _receive(self, line):
         if line.startswith("STATUS BOARD=PICO_W"):
-            match = PICO_PATTERN.fullmatch(line)
+            match = PICO_PATTERN.fullmatch(line) or PICO_JOB_PATTERN.fullmatch(line)
             if not match:
                 raise RuntimeError("Unexpected Pico status. Use the desk bridge firmware.")
             with self.lock:
@@ -193,7 +233,7 @@ class Bridge:
             return
         try:
             remote = json.loads(line[len("ROBOT STATE "):])
-            if not isinstance(remote, dict) or remote.get("board") != "ESP32_FIREBEETLE" or remote.get("firmware") != "DIRECT_WIFI_V1" or remote.get("main_controller") != "MSP430F5529":
+            if not isinstance(remote, dict) or remote.get("board") != "ESP32_FIREBEETLE" or remote.get("firmware") not in {"DIRECT_WIFI_V1", "DIRECT_WIFI_V2"} or remote.get("main_controller") != "MSP430F5529":
                 raise ValueError("identity")
             age = remote.get("age_ms")
             status = parse_status(remote.get("telemetry", ""))
@@ -211,8 +251,114 @@ class Bridge:
             self.last_seen = timestamp()
             self.last_seen_monotonic = time.monotonic()
             self.error = None
+            action_id = self.target_action.get("request_id")
+            if action_id and remote.get("target_id") == action_id and type(remote.get("target_id")) is int:
+                if remote.get("target_state") == "REFUSED":
+                    self.target_action.update(state="REFUSED", error="MSP refused the target job; pump not started.")
+                elif remote.get("target_state") == "REQUEST_ACCEPTED" and status.get("job_id") == action_id:
+                    names = {1: "STOPPING", 2: "STOPPING", 3: "SETTLING", 4: "SPRAYING",
+                             5: "RESUMING", 6: "COMPLETE", 7: "ABORTED", 8: "DRIVER_DISABLED"}
+                    phase = names.get(status.get("job"))
+                    if phase:
+                        detail = ("Pump driver is disabled; robot stays stopped." if phase == "DRIVER_DISABLED"
+                                  else "Cycle cancelled; use the Zumo button after checking the robot." if phase == "ABORTED" else None)
+                        self.target_action.update(state=phase, error=detail)
+                        if (phase == "RESUMING" and not self.resume_requested
+                                and self.last_observation is not None
+                                and time.monotonic()-self.last_observation < .75 and age < 750
+                                and self.video.state()["streaming"]
+                                and status["pump"] == 0 and status["driver_ready"] == 1):
+                            self.resume_requested = True
+                            self.action_command = f"ROBOT RESUME {action_id}"
+                            self.action_at = time.monotonic()
+                            self.action_pending.set()
+            stop_id = self.target_action.get("stop_request_id")
+            if (stop_id and type(remote.get("stop_id")) is int and remote.get("stop_id") == stop_id
+                    and remote.get("stop_state") == "REQUEST_ACCEPTED"
+                    and not status["run"] and not (status["flags"] & 8)):
+                self.target_action.update(state="CANCELLED", error=None)
         if first:
             self.event("connection", "Fresh MSP430 supervisor status received through Pico Wi-Fi and ESP32 UART.")
+
+    def observe_target(self, observation):
+        """One job per target appearance; require one second of fresh absence to rearm."""
+        now = time.monotonic()
+        with self.lock:
+            if self.hosted:
+                return
+            self.last_observation = now
+            if not observation.get("detected"):
+                if observation.get("box") is None:
+                    if self.target_absent_since is None:
+                        self.target_absent_since = now
+                    elif now-self.target_absent_since >= 1:
+                        self.target_latched = False
+                else:
+                    self.target_absent_since = None
+                return
+            self.target_absent_since = None
+            if self.target_latched or self.action_pending.is_set():
+                return
+            active = {"SENT", "STOPPING", "SETTLING", "SPRAYING", "RESUMING"}
+            if self.target_action["state"] in active and now-self.action_at < 10:
+                return
+            live = self.state()
+            if (not self.target_supported or not self.identity or not live["connection"]["fresh"]
+                    or not self.remote or self.remote.get("firmware") != "DIRECT_WIFI_V2"
+                    or not self.telemetry or "job" not in self.telemetry):
+                self.target_action.update(state="UNAVAILABLE", error="Target control needs updated Pico, ESP32 and MSP firmware with a live robot link.")
+                return
+            if self.telemetry.get("base") != "ZUMO" or not self.telemetry["run"]:
+                self.target_action.update(state="WAIT_DRIVING", error=None)
+                return
+            self.target_latched = True
+            self.action_at = now
+            self.action_command = "ROBOT TARGET"
+            self.resume_requested = False
+            self.target_action = {"state": "QUEUED", "error": None, "request_id": None}
+            self.action_pending.set()
+        self.event("target", "Blue target confirmed; requesting MSP stop/spray/resume cycle.")
+
+    def _send_target(self, device):
+        with self.lock:
+            self.action_pending.clear()
+            command = self.action_command
+            if command != "ROBOT STOP" and time.monotonic()-self.action_at >= .75:
+                self.target_action.update(state="EXPIRED", error="Target request expired before dispatch; nothing replayed.")
+                return
+        try:
+            prefix = " ".join(command.split()[:2])
+            reply = self._exchange(device, command, prefix + " ", 9)
+            match = re.fullmatch(re.escape(prefix) + r" SENT ID=([1-9]\d{0,9})", reply)
+            if not match or int(match[1]) > 4294967295:
+                raise RuntimeError("Target request not confirmed: " + reply)
+            with self.lock:
+                if command == "ROBOT TARGET":
+                    self.target_action.update(state="SENT", request_id=int(match[1]), error=None)
+                elif command == "ROBOT STOP":
+                    self.target_action.update(state="CANCELLING", stop_request_id=int(match[1]), error=None)
+                else:
+                    self.target_action.update(state="RESUMING", resume_request_id=int(match[1]), error=None)
+        except (RuntimeError, TimeoutError) as exc:
+            with self.lock:
+                self.target_action.update(state="UNKNOWN", error=str(exc) + " No automatic replay.")
+            self.event("error", self.target_action["error"])
+
+    def cancel_target(self):
+        with self.lock:
+            self.last_observation = None
+            if self.hosted or not self.connected or not self.target_supported:
+                return
+            if self.target_action["state"] in {"IDLE", "WAIT_DRIVING", "COMPLETE", "ABORTED", "DRIVER_DISABLED", "CANCELLED", "UNAVAILABLE"}:
+                return
+            if self.target_action["state"] == "QUEUED":
+                self.action_pending.clear()
+                self.target_action.update(state="CANCELLED", error=None)
+                return
+            self.action_at = time.monotonic()
+            self.action_command = "ROBOT STOP"
+            self.target_action.update(state="CANCELLING", error=None)
+            self.action_pending.set()
 
     def camera_command(self,command):
         if command not in ('VIDEO ON','VIDEO OFF') or not self.connected or not self.identity:
@@ -229,9 +375,13 @@ class Bridge:
         device.write((command+'\n').encode('ascii'))
         deadline=time.monotonic()+timeout
         while not self.stop.is_set() and time.monotonic()<deadline:
+            is_action = command.startswith(("ROBOT TARGET", "ROBOT STOP", "ROBOT RESUME "))
+            if self.action_pending.is_set() and command != self.action_command:
+                raise ActionPriority()
             while self.usb.lines:
                 line=self.usb.lines.popleft()
-                if line.startswith((prefix,'ERROR ','ROBOT ERROR ')):return line
+                if line.startswith(prefix):return line
+                if not is_action and line.startswith(('ERROR ','ROBOT ERROR ')):return line
                 self._receive(line)
             self._poll_input(device)
         if self.stop.is_set():return ''
@@ -242,13 +392,16 @@ class Bridge:
             reply = self._exchange(device, "PING", "PONG ", 3)
             if self.stop.is_set():
                 return
-            if reply != "PONG PICO_DESK_BRIDGE_V2":
-                raise RuntimeError("This Pico is not running DESK_BRIDGE_V2. No robot requests were sent.")
+            if reply not in {"PONG PICO_DESK_BRIDGE_V2", "PONG PICO_DESK_BRIDGE_V3"}:
+                raise RuntimeError("This Pico is not running desk bridge firmware. No robot requests were sent.")
             with self.lock:
                 self.identity = True
+                self.target_supported = reply == "PONG PICO_DESK_BRIDGE_V3" and not self.hosted
             self.event("board", reply)
             while not self.stop.is_set():
                 try:
+                    if self.action_pending.is_set():
+                        self._send_target(device)
                     try:
                         command = self.pending.get_nowait()
                     except queue.Empty:
@@ -265,12 +418,15 @@ class Bridge:
                             self.error = "Robot link unavailable: " + reply
                     else:
                         self._receive(reply)
+                except ActionPriority:
+                    continue
                 except (TimeoutError, TelemetryError) as exc:
                     with self.lock:
                         self.error = str(exc)
                         self.last_seen_monotonic = None
                 idle_until=time.monotonic()+.5
                 while not self.stop.is_set() and time.monotonic()<idle_until:
+                    if self.action_pending.is_set():break
                     self._poll_input(device)
                     while self.usb.lines:self._receive(self.usb.lines.popleft())
         except (serial.SerialException, OSError, RuntimeError, UnicodeError) as exc:

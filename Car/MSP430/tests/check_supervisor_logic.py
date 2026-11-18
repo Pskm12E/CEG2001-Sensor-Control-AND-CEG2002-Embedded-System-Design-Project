@@ -14,6 +14,7 @@ def function(name,returns='void'):
     return source[start:end]+'\n'
 prefix=r'''
 #include <cassert>
+#define cancelSpray() ((void)0)
 #include <cstdint>
 #include <cstdio>
 #include <cstring>

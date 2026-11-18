@@ -180,7 +180,7 @@ class LauncherHttpTests(unittest.TestCase):
             with self.assertRaisesRegex(launch.LaunchError, "Another application"):
                 self.client.is_running()
         with patch.object(self.client, "request", return_value={"mode": "hosted", "read_only": True}):
-            with self.assertRaisesRegex(launch.LaunchError, "local read-only"):
+            with self.assertRaisesRegex(launch.LaunchError, "local robot"):
                 self.client.local_state()
 
 

@@ -7,7 +7,7 @@
 
 // Original FireBeetle DFR0478. On robot: GPIO17 TX -> MSP P4.2 RX;
 // GPIO16 RX <- MSP P4.1 TX. 3.3V UART, 9600 8N1, shared GND.
-// Wi-Fi can request status/identity/STOP only. MSP retains all robot decisions.
+// Wi-Fi requests status/STOP or one bounded target job. MSP owns pump/resume.
 HardwareSerial supervisor(2);
 WebServer http(80);
 bench::Line<64> usbLine;
@@ -19,6 +19,8 @@ char telemetry[320]={};
 char lastError[64]="MSP not connected";
 char stopState[40]="NONE";
 uint32_t stopId=0;
+uint32_t targetId=0;
+char targetState[40]="NONE";
 
 bool fresh() { return identified && seen && static_cast<uint32_t>(millis()-lastSeen)<3500u; }
 String quoted(const char *text) {
@@ -31,7 +33,7 @@ String quoted(const char *text) {
     out+='"'; return out;
 }
 String stateJson() {
-    String json="{\"board\":\"ESP32_FIREBEETLE\",\"firmware\":\"DIRECT_WIFI_V1\",\"main_controller\":\"MSP430F5529\",\"ap_ready\":";
+    String json="{\"board\":\"ESP32_FIREBEETLE\",\"firmware\":\"DIRECT_WIFI_V2\",\"main_controller\":\"MSP430F5529\",\"ap_ready\":";
     json+=apReady?"true":"false";
     json+=",\"msp_link\":"; json+=quoted(fresh()?"UP":seen?"STALE":"NOT_CONNECTED");
     json+=",\"fresh\":"; json+=fresh()?"true":"false";
@@ -41,16 +43,27 @@ String stateJson() {
     json+=",\"pending_id\":"; json+=String(pendingId);
     json+=",\"stop_id\":"; json+=String(stopId);
     json+=",\"stop_state\":"; json+=quoted(stopState);
+    json+=",\"target_id\":"; json+=String(targetId);
+    json+=",\"target_state\":"; json+=quoted(targetState);
     json+="}"; return json;
 }
-bool request(direct::Op op,bool fromUsb=false) {
-    if(pendingId) return false; // no queue, and no replay after timeout/reconnect
-    if(op==direct::Op::Stop && !fresh()) return false;
+bool request(direct::Op op,bool fromUsb=false,uint32_t jobToken=0) {
+    const bool action=op==direct::Op::Stop || op==direct::Op::Target || op==direct::Op::Resume;
+    if(action && !fresh()) return false;
+    if(pendingId) {
+        if(!action || pendingOp==direct::Op::Stop ||
+           ((pendingOp==direct::Op::Target || pendingOp==direct::Op::Resume) && op!=direct::Op::Stop)) return false;
+        // A bounded job/STOP preempts telemetry polling, never another action.
+        pendingId=0; pendingOp=direct::Op::None; usbRequest=false;
+    }
     if(++nextId==0) ++nextId;
     pendingId=nextId; pendingOp=op; usbRequest=fromUsb;
     sentAt=lastAttempt=millis();
     if(op==direct::Op::Stop) { stopId=pendingId; strcpy(stopState,"SENT_OUTCOME_UNKNOWN"); }
-    supervisor.printf("NET %lu %s\n",static_cast<unsigned long>(pendingId),direct::name(op));
+    if(op==direct::Op::Target) { targetId=pendingId; strcpy(targetState,"SENT_OUTCOME_UNKNOWN"); }
+    if(op==direct::Op::Resume)
+        supervisor.printf("NET %lu RESUME %lu\n",static_cast<unsigned long>(pendingId),static_cast<unsigned long>(jobToken));
+    else supervisor.printf("NET %lu %s\n",static_cast<unsigned long>(pendingId),direct::name(op));
     return true;
 }
 void receive(const char *line) {
@@ -65,6 +78,8 @@ void receive(const char *line) {
         snprintf(telemetry,sizeof(telemetry),"%s",payload); seen=true; lastSeen=millis();
     }
     if(pendingOp==direct::Op::Stop) strcpy(stopState,"REQUEST_ACCEPTED");
+    if(pendingOp==direct::Op::Target)
+        strcpy(targetState,!strcmp(payload,"TARGET ACCEPTED")?"REQUEST_ACCEPTED":"REFUSED");
     lastError[0]=0;
     if(usbRequest) { Serial.print("MSP "); Serial.println(payload); }
     pendingId=0; pendingOp=direct::Op::None; usbRequest=false;
@@ -100,9 +115,26 @@ void setup() {
         if(!request(direct::Op::Stop)) { http.send(503,"application/json","{\"error\":\"MSP unavailable or busy; nothing queued\"}"); return; }
         http.send(202,"application/json",String("{\"request_id\":")+String(stopId)+",\"state\":\"SENT_OUTCOME_UNKNOWN\"}");
     });
+    http.on("/api/target",HTTP_POST,[]() {
+        if(!request(direct::Op::Target)) { http.send(503,"application/json","{\"error\":\"MSP unavailable or busy; nothing queued\"}"); return; }
+        http.send(202,"application/json",String("{\"request_id\":")+String(targetId)+",\"state\":\"SENT_OUTCOME_UNKNOWN\"}");
+    });
+    http.on("/api/resume",HTTP_POST,[]() {
+        const String token=http.arg("job_id"); uint32_t id=0; const char *p=token.c_str();
+        bool good=*p>='1' && *p<='9';
+        while(*p && good) {
+            const uint8_t d=static_cast<uint8_t>(*p++-'0');
+            if(d>9 || id>429496729u || (id==429496729u && d>5u)) good=false;
+            else id=id*10u+d;
+        }
+        if(!good || *p || !request(direct::Op::Resume,false,id)) {
+            http.send(503,"application/json","{\"error\":\"Invalid job, MSP unavailable or busy; nothing queued\"}"); return;
+        }
+        http.send(202,"application/json",String("{\"request_id\":")+String(pendingId)+",\"state\":\"SENT_OUTCOME_UNKNOWN\"}");
+    });
     http.onNotFound([]() { http.send(404,"application/json","{\"error\":\"Unsupported route or method\"}"); });
     http.begin();
-    Serial.println("ESP32 DIRECT_WIFI_V1; MSP main; STATUS/STOP bridge; Pico not required.");
+    Serial.println("ESP32 DIRECT_WIFI_V2; MSP main; status/STOP/target jobs.");
     command("STATUS");
 }
 void loop() {

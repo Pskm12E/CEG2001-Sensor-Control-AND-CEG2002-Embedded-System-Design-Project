@@ -150,6 +150,21 @@ class WorkerTests(unittest.TestCase):
         self.detector.times.extend([tick, tick, tick])
         self.assertEqual(self.detector.state()['fps'], 0)
 
+    def test_confirmed_frames_reach_callback_but_duplicates_do_not(self):
+        observations = []
+        self.detector.on_observation = lambda result: observations.append(dict(result))
+        self.detector.start()
+        after = 0
+        for source in range(1, 4):
+            self.publish(source)
+            after = self.wait_processed(after)
+            deadline = time.monotonic()+1
+            while len(observations)<source and time.monotonic()<deadline: time.sleep(.005)
+        self.assertEqual([o['detected'] for o in observations], [False, False, True])
+        self.publish(3)
+        time.sleep(.05)
+        self.assertEqual(len(observations), 3)
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

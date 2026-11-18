@@ -71,7 +71,8 @@ inline bool state(const char *p,State &result) {
         if(*p++!=',') return false;
     }
     space(p);
-    if(*p || keys!=255 || strcmp(s.board,"ESP32_FIREBEETLE") || strcmp(s.firmware,"DIRECT_WIFI_V1") || strcmp(s.main,"MSP430F5529")) return false;
+    if(*p || keys!=255 || strcmp(s.board,"ESP32_FIREBEETLE") ||
+       (strcmp(s.firmware,"DIRECT_WIFI_V1") && strcmp(s.firmware,"DIRECT_WIFI_V2")) || strcmp(s.main,"MSP430F5529")) return false;
     if(strcmp(s.link,"UP") && strcmp(s.link,"STALE") && strcmp(s.link,"NOT_CONNECTED")) return false;
     if(s.hasTelemetry && !direct::status(s.telemetry)) return false;
     if(s.fresh && (!s.hasAge || s.age>=3500u || !s.hasTelemetry || strcmp(s.link,"UP"))) return false;
@@ -81,7 +82,8 @@ struct HttpResponse {
     char buffer[3072]{};
     size_t used=0,bodyAt=0,length=0;
     bool bad=false,headers=false;
-    void reset() { used=bodyAt=length=0; bad=headers=false; buffer[0]=0; }
+    unsigned statusCode=0;
+    void reset() { used=bodyAt=length=0; bad=headers=false; statusCode=0; buffer[0]=0; }
     static bool equalHeader(const char *p,const char *end,const char *expected) {
         while(*expected && p<end) {
             char c=*p++; if(c>='A' && c<='Z') c+=32;
@@ -100,7 +102,9 @@ struct HttpResponse {
             const char *end=strstr(buffer,"\r\n\r\n");
             if(!end) { if(used>1024) bad=true; return; }
             bodyAt=static_cast<size_t>(end-buffer)+4;
-            if(bodyAt>1024 || (strncmp(buffer,"HTTP/1.1 200 ",13) && strncmp(buffer,"HTTP/1.0 200 ",13))) { bad=true; return; }
+            if(bodyAt>1024 || (strncmp(buffer,"HTTP/1.1 ",9) && strncmp(buffer,"HTTP/1.0 ",9)) ||
+               (strncmp(buffer+9,"200 ",4) && strncmp(buffer+9,"202 ",4))) { bad=true; return; }
+            statusCode=buffer[11]=='2'?202u:200u;
             const char *p=strstr(buffer,"\r\n")+2;
             bool found=false;
             while(p<end) {
@@ -124,4 +128,32 @@ struct HttpResponse {
         if(used>bodyAt+length) bad=true;
     }
 };
+
+// A 202 reply proves dispatch only. MSP acknowledgement and a subsequent fresh
+// stopped Uno status must be checked separately using this correlated ID.
+inline bool stopAccepted(const char *p,uint32_t &id) {
+    unsigned keys=0; uint32_t parsed=0;
+    space(p); if(*p++!='{') return false;
+    for(;;) {
+        char key[24],value[40]; space(p);
+        if(!string(p,key,sizeof(key))) return false;
+        space(p); if(*p++!=':') return false; space(p);
+        unsigned bit=0;
+        if(!strcmp(key,"request_id")) {
+            bit=1; size_t n=0;
+            while(*p>='0' && *p<='9' && n+1<sizeof(value)) value[n++]=*p++;
+            value[n]=0;
+            if(!number(value,parsed) || !parsed) return false;
+        } else if(!strcmp(key,"state")) {
+            bit=2;
+            if(!string(p,value,sizeof(value)) || strcmp(value,"SENT_OUTCOME_UNKNOWN")) return false;
+        } else return false;
+        if(keys&bit) return false;
+        keys|=bit; space(p);
+        if(*p=='}') { ++p; break; }
+        if(*p++!=',') return false;
+    }
+    space(p); if(*p || keys!=3) return false;
+    id=parsed; return true;
+}
 }

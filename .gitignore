@@ -13,7 +13,7 @@
 **/build-*/
 **/Debug/
 **/Debug_wifi/
-**/Debug*_zumo/
+**/Debug*_zumo*/
 **/Release/
 *.uf2
 *.elf

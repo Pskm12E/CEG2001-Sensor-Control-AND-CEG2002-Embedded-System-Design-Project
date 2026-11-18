@@ -32,7 +32,7 @@ class DashboardServer(ThreadingHTTPServer):
         self.bridge = bridge
         self.public_origin = public_origin
         self.camera = bridge.video
-        self.detector = DetectionVideo(self.camera)
+        self.detector = DetectionVideo(self.camera, None if public_origin else bridge.observe_target)
         if public_origin and not bridge.hosted:
             raise ValueError("Public hosting requires a read-only bridge.")
         super().__init__(address, Handler)
@@ -173,6 +173,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.server.bridge.connect(body.get("port"))
             elif path == "/api/disconnect":
                 self.server.detector.stop()
+                self.server.bridge.cancel_target()
                 self.server.bridge.disconnect()
             elif path == "/api/command":
                 self.server.bridge.command(body.get("command"))
@@ -182,11 +183,13 @@ class Handler(BaseHTTPRequestHandler):
                 return self._reply(405, {"error": "Snapshot polling was replaced by the live stream."})
             elif path == "/api/camera/disconnect":
                 self.server.detector.stop()
+                self.server.bridge.cancel_target()
                 self.server.camera.disconnect()
             elif path == "/api/detection/start":
                 self.server.detector.start()
             elif path == "/api/detection/stop":
                 self.server.detector.stop()
+                self.server.bridge.cancel_target()
             else:
                 return self._reply(404, {"error": "Not found"})
             self._reply(200, {"ok": True})
@@ -243,6 +246,7 @@ def main():
         pass
     finally:
         server.detector.stop()
+        bridge.cancel_target()
         bridge.disconnect()
         server.camera.disconnect()
         server.server_close()

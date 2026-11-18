@@ -3,10 +3,15 @@
 Open **http://127.0.0.1:8765** on the laptop. The robot MSP430 is the main
 embedded controller. The app runs locally; the laptop keeps its normal Wi-Fi.
 
-17 November Zumo update: telemetry accepts the six-sensor black-line base and
-shows its calibration state. See the
-[matching firmware/wiring guide](../../Car/Arduino_Uno/zumo_line_follow/README.md).
-This change does not add movement controls to the dashboard.
+18 November source update: confirmed blue targets request a bounded MSP-owned
+stop → **3-second spray** → continuation cycle. It requires Uno OG4, MSP job
+firmware, ESP32 DIRECT_WIFI_V2 and Pico DESK_BRIDGE_V3. The default MSP build
+keeps the unverified pump driver disabled and holds the robot stopped instead.
+See [pump wiring, ratings and cycle behavior](../../Car/MSP430/robot_supervisor/PUMP_SETUP.md).
+MSP and Pico updates are installed; the user will upload Uno OG4 and has
+deferred the FireBeetle. Automatic target control is not yet ready for physical use.
+Reload the page after restarting the updated dashboard. Leave detection off until
+the remaining firmware/driver checks are complete.
 
 ## Start the system
 
@@ -25,8 +30,8 @@ This change does not add movement controls to the dashboard.
 The launcher waits up to 30 seconds for hardware. Missing/busy USB ports or an
 offline camera produce **SETUP INCOMPLETE** rather than a false ready message.
 The dashboard stays available: fix power/cabling and rerun the launcher, or use
-**Connect** and **Start camera** manually. It never uploads firmware, calibrates
-sensors, moves the car or operates a pump. Closing monitoring does not command
+**Connect** and **Start camera** manually. It never uploads firmware or calibrates sensors. Starting detection explicitly
+enables target jobs with the compatible firmware. Closing monitoring does not command
 the car to stop; use the robot's stop control if a separate test is driving it.
 
 ### Launcher options
@@ -61,7 +66,7 @@ Main MSP430 <--- UART ---> FireBeetle ----+
   |
   UART + existing Uno TX divider
   |
-Arduino Uno -- L298N wheels / IR sensors
+Arduino Uno -- Zumo Shield tracks / six-sensor array
 
 Second MSP430 + Booster: separate future dock controller
 ```
@@ -87,8 +92,8 @@ sketches under `Car/XIAO_ESP32S3_Camera/Archive/xiao_camera_usb` are superseded 
 camera firmware. Current sources:
 
 - [Wireless camera](../../Car/XIAO_ESP32S3_Camera/xiao_camera_wifi/xiao_camera_wifi.ino): CAMERA_WIFI_V1.
-- [Desk Pico](../Pico_W/laptop_wifi_bridge/main.cpp): DESK_BRIDGE_V2.
-- [Robot ESP32](../../Car/ESP32_Gateway/robot_wifi_gateway/robot_wifi_gateway.ino): DIRECT_WIFI_V1.
+- [Desk Pico](../Pico_W/laptop_wifi_bridge/main.cpp): DESK_BRIDGE_V3.
+- [Robot ESP32](../../Car/ESP32_Gateway/robot_wifi_gateway/robot_wifi_gateway.ino): DIRECT_WIFI_V2.
 - [Main MSP430](../../Car/MSP430/robot_supervisor/main.c): SUPERVISOR_V2 / ESP_UART_V1.
 
 **Pause updates** closes the browser's video response; resuming requests the
@@ -119,11 +124,12 @@ camera sequence numbers do not count as new confirmation frames. Results older
 than 750 ms are marked unavailable and lose their detected flag. Freshness is
 measured from laptop processing/receipt, not a measured camera-exposure timestamp.
 
-This is **colour/shape detection, not YOLO or insect recognition**. No motor,
-STOP or pump command is sent. The future YOLO checkpoint belongs on the laptop
-under [YOLO_Model/](../YOLO_Model/README.md); no trained weights are present. The proposed
-robot loop still needs MSP430-authorised stop, recheck/alignment, bounded water
-spray and duplicate-treatment prevention.
+This is **colour/shape detection, not YOLO or insect recognition**. Confirmed fresh detections can request the bounded MSP target job; no direct
+pump-on or unrestricted START command is exposed. One continuously visible target
+gets one cycle, with one second of fresh absence required to rearm. Missing
+camera data prevents post-spray continuation. Stop detection cancels an active
+cycle. The future YOLO checkpoint belongs on the laptop
+under [YOLO_Model/](../YOLO_Model/README.md); no trained weights are present. Physical pump/driver qualification and nozzle alignment remain pending.
 
 Sources: [OpenCV HSV thresholding](https://docs.opencv.org/4.x/da/d97/tutorial_threshold_inRange.html),
 [contour features](https://docs.opencv.org/4.x/dd/d49/tutorial_py_contour_features.html).

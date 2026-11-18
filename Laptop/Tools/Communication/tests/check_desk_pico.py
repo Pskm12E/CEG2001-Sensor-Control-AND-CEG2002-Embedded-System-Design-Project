@@ -66,6 +66,23 @@ int main() {
     std::string longHeader(1100,'X'); huge.feed(longHeader.data(),longHeader.size()); CHECK(huge.bad);
     std::string upper=raw; upper.replace(upper.find("Content-Length"),14,"CONTENT-LENGTH");
     desk::HttpResponse casing; casing.feed(upper.data(),upper.size()); CHECK(casing.complete());
+    uint32_t id=0;
+    CHECK(desk::stopAccepted("{\"request_id\":4294967295,\"state\":\"SENT_OUTCOME_UNKNOWN\"}",id) && id==UINT32_MAX);
+    CHECK(desk::stopAccepted("{\"state\":\"SENT_OUTCOME_UNKNOWN\",\"request_id\":1}",id) && id==1);
+    for(const char *bad : {
+        "{\"request_id\":0,\"state\":\"SENT_OUTCOME_UNKNOWN\"}",
+        "{\"request_id\":01,\"state\":\"SENT_OUTCOME_UNKNOWN\"}",
+        "{\"request_id\":4294967296,\"state\":\"SENT_OUTCOME_UNKNOWN\"}",
+        "{\"request_id\":true,\"state\":\"SENT_OUTCOME_UNKNOWN\"}",
+        "{\"request_id\":1,\"request_id\":2,\"state\":\"SENT_OUTCOME_UNKNOWN\"}",
+        "{\"request_id\":1,\"state\":\"STOPPED\"}",
+        "{\"request_id\":1,\"state\":\"SENT_OUTCOME_UNKNOWN\"}garbage"}) CHECK(!desk::stopAccepted(bad,id));
+    const std::string accepted="{\"request_id\":12,\"state\":\"SENT_OUTCOME_UNKNOWN\"}";
+    const std::string post="HTTP/1.1 202 Accepted\r\nContent-Length: "+std::to_string(accepted.size())+"\r\n\r\n"+accepted;
+    for(size_t split=0;split<=post.size();++split) {
+        desk::HttpResponse http; http.feed(post.data(),split); http.feed(post.data()+split,post.size()-split);
+        CHECK(http.complete() && http.statusCode==202 && desk::stopAccepted(http.body(),id) && id==12);
+    }
     printf("PASS %u desk bridge assertions: HTTP splits, lengths, JSON identity, stale data and malformed input.\n",checks);
 }
 '''

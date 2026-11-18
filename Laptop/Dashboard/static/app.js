@@ -156,6 +156,7 @@ function detectionControls() {
 
 function renderDetection() {
   const detector = state?.detection;
+  const action = state?.target_action;
   const live = serverAvailable && !paused && cameraActive && detector?.enabled && detector.fresh;
   const names = {SEARCHING: "Searching", CHECKING: "Checking target", DETECTED: "Blue target detected"};
   const status = !serverAvailable ? "Offline" : paused ? "Updates paused" : !detector?.enabled ? "Off" : live ? names[detector.status] || "Waiting for video" : "Waiting for video";
@@ -164,13 +165,18 @@ function renderDetection() {
   text("detection-position", live && detector.centre ? `Centre: ${detector.centre[0]}, ${detector.centre[1]} px · ${detector.fps} fps` : "");
   const prompt = !detector?.available ? "Detection is unavailable. Install the dashboard requirements and restart it." :
     $("camera-source").value !== "xiao" ? "Choose the XIAO camera for the blue-square test." :
-    !detector?.enabled ? "Start the XIAO camera, then show the blue square. Detection only; no movement or spraying." :
-    paused ? "Preview and readings are paused. No robot commands are sent." :
-    live && detector.detected ? "Blue square confirmed across 3 frames. No robot commands are sent." :
+    !detector?.enabled ? "Start detection to stop at a blue target, spray, then continue." :
+    action?.state === "SPRAYING" ? "Robot stopped. Spraying water." :
+    action?.state === "SETTLING" || action?.state === "STOPPING" ? "Target confirmed. Stopping before spraying." :
+    action?.state === "RESUMING" ? "Spray finished. Resuming line following." :
+    action?.state === "COMPLETE" ? (state?.connection?.fresh && state?.telemetry?.run ? "Spray cycle finished. Following the line." : "Spray cycle finished.") :
+    action?.state === "WAIT_DRIVING" ? "Target visible. Start line following with the Zumo button." :
+    paused ? "Preview paused; detection continues on the laptop." :
+    live && detector.detected ? "Blue target confirmed. Requesting the MSP cycle." :
     live && detector.status === "CHECKING" ? `Checking ${detector.streak} of ${detector.required_frames} frames. Hold the square face-on.` :
     live ? "Show the blue square face-on. Other similar blue shapes can also match." : "Waiting for fresh camera frames. Check camera power.";
   text("detection-message", prompt);
-  message("detection-error", detector?.error || "");
+  message("detection-error", action?.error || detector?.error || "");
   if (live) text("observe-status", detector.detected ? "Blue test target detected" : "Blue-target test running");
   if (cameraActive && $("camera-source").value === "xiao" && relayDetection !== Boolean(detector?.enabled)) attachLiveRelay();
   detectionControls();

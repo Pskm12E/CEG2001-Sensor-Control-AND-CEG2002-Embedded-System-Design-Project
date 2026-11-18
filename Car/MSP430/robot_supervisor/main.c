@@ -1,7 +1,8 @@
 /* Robot MSP430F5529 supervisor. MSP is the authority for Uno line following.
  * UART0 P3.3/P3.4: Uno link; default UART1 P4.4/P4.5: USB console.
  * SUPERVISOR_ESP_UART: UART1 remapped P4.1 TX/P4.2 RX, status/STOP bridge.
- * HC-SR04 TRIG P3.2; divided ECHO P2.7. No automatic start or restart.
+ * HC-SR04 TRIG P3.2; divided ECHO P2.7. No unsolicited start/restart.
+ * A completed target job requires its matching continuation before resuming.
  * IR_DRIVING_TEST=1 explicitly disables only the ultrasonic motion veto.
  * ZUMO_BASE=1: powered calibration/black-line Zumo follower, valid-near STOP.
  * Missing/stale sonar echoes are diagnostic only; see obstacle_guard.h.
@@ -11,6 +12,15 @@
 #include <string.h>
 #include "../../Arduino_Uno/msp_line_follow/robot_link.h"
 #include "console_tx.h"
+#ifdef ZUMO_BASE
+#include "spray_job.h"
+static SprayJob sprayJob;
+static uint16_t waterRaw,waterAt;
+static void pumpOff(void) { P1OUT&=~BIT6; sprayJob.pump=0; }
+static void cancelSpray(void) { pumpOff(); sprayCancel(&sprayJob); }
+#else
+#define cancelSpray() ((void)0)
+#endif
 #if defined(ZUMO_BASE) && defined(IR_DRIVING_TEST) && IR_DRIVING_TEST
 #error Zumo_requires_the_ultrasonic_interlock
 #endif
@@ -29,7 +39,7 @@ static RlPacket pendingPacket;
 static uint16_t session=0x430u,sequence,requestAt,lastPoll,lastLinkByte;
 static uint8_t pending,linked,running,queued,peerFlags,peerResult;
 static uint16_t badFrames;
-static char usbLine[32];
+static char usbLine[48];
 static uint8_t usbUsed,usbDiscard;
 #ifndef SUPERVISOR_ESP_UART
 static void bridgeInit(void);
@@ -78,6 +88,15 @@ static void number(uint16_t n) {
 #include "ultrasonic_hcsr04.h"
 static void init(void) {
     WDTCTL=WDTPW|WDTHOLD;
+#ifdef ZUMO_BASE
+    /* Set the output latch low before enabling the gate pin. External gate
+     * pull-down is required to hold the pump off during reset/programming. */
+    P1SEL&=~BIT6; P1OUT&=~BIT6; P1DIR|=BIT6;
+    P6SEL|=BIT0; P6DIR&=~BIT0;
+    ADC12CTL0=ADC12SHT0_2|ADC12ON;
+    ADC12CTL1=ADC12SHP; ADC12MCTL0=ADC12INCH_0;
+    ADC12CTL0|=ADC12ENC;
+#endif
     UCSCTL3=SELREF__REFOCLK;
     __bis_SR_register(SCG0); UCSCTL0=0; UCSCTL1=DCORSEL_2;
     UCSCTL2=FLLD_1|31u;
@@ -117,12 +136,19 @@ static void init(void) {
     bridgeInit();
 #endif
     __enable_interrupt();
+#if defined(ZUMO_BASE) && PUMP_DRIVER_VERIFIED
+    WDTCTL=WDTPW|WDTCNTCL|WDTSSEL__ACLK|WDTIS__32K;
+#endif
 }
 static void stopRequested(void) {
+    cancelSpray();
     running=0; P4OUT&=~BIT7; queued=RL_STOP;
 }
 static void serviceObstacle(void) {
     sonarService();
+#ifdef ZUMO_BASE
+    if(motionBlocked() && sprayActive(&sprayJob)) stopRequested();
+#endif
     if(motionBlocked() && (running || queued==RL_START || queued==RL_ZUMO_CALIBRATE ||
        (pending && (pendingPacket.type==RL_START || pendingPacket.type==RL_ZUMO_CALIBRATE)) || (peerFlags&RL_MOVING)) &&
        queued!=RL_STOP && !(pending && pendingPacket.type==RL_STOP)) {
@@ -131,6 +157,9 @@ static void serviceObstacle(void) {
 }
 static void userRequest(uint8_t request) {
     uint8_t op=0;
+#ifdef ZUMO_BASE
+    if(request && sprayActive(&sprayJob)) { stopRequested(); return; }
+#endif
     if(!linked || running || queued || pending) return;
     if(request==RL_USER_WHITE) op=RL_WHITE;
     else if(request==RL_USER_BLACK) op=RL_BLACK;
@@ -187,6 +216,16 @@ static void status(void) {
     print(" PENDING="); number(pending?pendingPacket.type:0);
     print(" UART_ERRORS="); number(uartErrors); print(" RX_DROPS="); number(rxDrops);
     print(" BAD_FRAMES="); number(badFrames);
+#ifdef ZUMO_BASE
+    print(" JOB="); number(sprayJob.phase);
+    print(" JOB_ID=");
+    { char digits[11]; uint8_t used=0; uint32_t n=sprayJob.id;
+      do { digits[used++]=(char)('0'+n%10ul); n/=10ul; } while(n);
+      while(used) put(0,(uint8_t)digits[--used]); }
+    print(" PUMP="); number(sprayJob.pump);
+    print(" READY="); number(PUMP_DRIVER_VERIFIED);
+    print(" WATER="); number(waterRaw);
+#endif
 #ifdef SUPERVISOR_ESP_UART
     print(" BRIDGE=ESP_UART_V1\r\n");
 #else
@@ -194,7 +233,7 @@ static void status(void) {
 #endif
 }
 #ifdef SUPERVISOR_ESP_UART
-/* Only status, identity and STOP cross the Wi-Fi bridge in this stage.
+/* Wi-Fi requests status, STOP or a bounded MSP-owned target job.
  * Positive IDs correlate replies; malformed/overflow IDs never execute. */
 static uint8_t netCommand(const char *line) {
     const char *p=line,*idStart; uint32_t id=0; uint8_t digits=0;
@@ -214,6 +253,31 @@ static uint8_t netCommand(const char *line) {
     else if(!strcmp(p,"STATUS")) status();
     else if(!strcmp(p,"SONAR")) sonarReport();
     else if(!strcmp(p,"STOP")) { stopRequested(); print("STOP REQUESTED\r\n"); }
+#ifdef ZUMO_BASE
+    else if(!strcmp(p,"TARGET")) {
+        uint8_t eligible=linked && running && (peerFlags&RL_CAL) &&
+            (peerFlags&RL_MOVING) && !(peerFlags&(RL_CALIBRATING|RL_FAULT)) &&
+            !motionBlocked() && !stopButton && queued!=RL_STOP;
+        if(sprayBegin(&sprayJob,ticks,id,eligible)) {
+            /* Deliberate job STOP; all other stopRequested paths cancel it. */
+            running=0; P4OUT&=~BIT7; queued=RL_STOP;
+            print("TARGET ACCEPTED\r\n");
+        } else print("TARGET REFUSED\r\n");
+    }
+    else if(!strncmp(p,"RESUME ",7)) {
+        const char *token=p+7; uint32_t jobId=0; uint8_t good=*token>='1' && *token<='9';
+        while(*token && good) {
+            uint8_t d=(uint8_t)(*token++-'0');
+            if(d>9u || jobId>429496729u || (jobId==429496729u && d>5u)) good=0;
+            else jobId=jobId*10u+d;
+        }
+        if(good && !*token && !motionBlocked() && !stopButton && linked && !running && !queued &&
+           (peerFlags&RL_CAL) && !(peerFlags&(RL_MOVING|RL_CALIBRATING|RL_FAULT)) &&
+           sprayAllowResume(&sprayJob,jobId,1)) {
+            queued=RL_START; print("RESUME ACCEPTED\r\n");
+        } else print("RESUME REFUSED\r\n");
+    }
+#endif
     else print("ERROR UNSUPPORTED\r\n");
     return 1;
 }
@@ -301,6 +365,7 @@ static void sendRequest(uint8_t op) {
     pendingPacket.arg=pendingPacket.detail=0;
     rlEncode(&pendingPacket,b); pending=1; requestAt=lastPoll=ticks;
     for(i=0;i<RL_SIZE;++i) if(!put(1,b[i])) {
+        cancelSpray();
         pending=linked=running=0; P4OUT&=~BIT7; queued=RL_STOP;
         print("LINK TRANSMIT FAILED; STOPPING\r\n"); return;
     }
@@ -313,6 +378,9 @@ static void response(const RlPacket *p) {
     if(!pending || p->type!=(uint8_t)(op|RL_REPLY) ||
        p->session!=pendingPacket.session || p->seq!=pendingPacket.seq) return;
     pending=0; peerFlags=p->arg; peerResult=p->detail;
+#ifdef ZUMO_BASE
+    if(op==RL_STOP) sprayStopAck(&sprayJob,ticks,p->detail==RL_OK && !(p->arg&RL_MOVING));
+#endif
     if(op==RL_HELLO) linked=(p->detail==RL_OK);
     else if(op==RL_STOP) { linked=running=0; if(!queued) queued=RL_HELLO; }
     else if(op==RL_START || op==RL_ZUMO_CALIBRATE) {
@@ -320,6 +388,9 @@ static void response(const RlPacket *p) {
         if(running) print(op==RL_START?"FOLLOWING; S TO STOP\r\n":"ZUMO CALIBRATING; S TO STOP\r\n");
         else print("START REFUSED; RESULT=");
         if(!running) { print(reasonName(p->detail)); print("\r\n"); }
+#ifdef ZUMO_BASE
+        if(op==RL_START) sprayResumeAck(&sprayJob,running);
+#endif
     }
 #ifdef ZUMO_BASE
     if(wasCalibrating && p->detail==RL_OK && (p->arg&RL_CAL) &&
@@ -352,6 +423,7 @@ static void serviceLink(void) {
         else if(result>0) response(&p);
     }
     if(pending && (uint16_t)(ticks-requestAt)>=5u) {
+        cancelSpray();
         op=pendingPacket.type; pending=linked=running=0; P4OUT&=~BIT7;
         queued=(op==RL_STOP)?RL_HELLO:RL_STOP;
         print("LINK TIMEOUT; STOPPING; F REQUIRED AFTER RECOVERY\r\n");
@@ -369,12 +441,36 @@ static void serviceLink(void) {
 #ifndef SUPERVISOR_ESP_UART
 #include "supervisor_i2c.h"
 #endif
+#ifdef ZUMO_BASE
+static void serviceSpray(void) {
+    uint8_t ready=linked && !running && !pending && !queued &&
+        (peerFlags&RL_CAL) && !(peerFlags&(RL_MOVING|RL_CALIBRATING|RL_FAULT));
+    /* A healthy pending STATUS does not invalidate a stopped grant. */
+    if(linked && !running && !queued && pending && pendingPacket.type==RL_STATUS)
+        ready=(peerFlags&RL_CAL) && !(peerFlags&(RL_MOVING|RL_CALIBRATING|RL_FAULT));
+    sprayTick(&sprayJob,ticks,ready,motionBlocked() || stopButton,PUMP_DRIVER_VERIFIED);
+    __disable_interrupt();
+    if(sprayJob.pump && PUMP_DRIVER_VERIFIED && !stopButton &&
+       (uint16_t)(ticks-sprayJob.since)<PUMP_SPRAY_TICKS) P1OUT|=BIT6;
+    else P1OUT&=~BIT6;
+    __enable_interrupt();
+    /* One asynchronous 12-bit sample per second; raw data only until tank
+     * wet/dry calibration defines a valid water-level policy. */
+    if(ADC12IFG&BIT0) { waterRaw=ADC12MEM0; ADC12IFG&=~BIT0; }
+    if((uint16_t)(ticks-waterAt)>=10u && !(ADC12CTL1&ADC12BUSY)) {
+        waterAt=ticks; ADC12CTL0|=ADC12SC;
+    }
+}
+#endif
 int main(void) {
     init(); print("ROBOT SUPERVISOR V2; STOPPED; TYPE HELP\r\n");
 #if defined(IR_DRIVING_TEST) && IR_DRIVING_TEST
     print("IR DRIVING TEST: ULTRASONIC STOP DISABLED; MANUAL STOP ACTIVE.\r\n");
 #endif
     for(;;) {
+#if defined(ZUMO_BASE) && PUMP_DRIVER_VERIFIED
+        WDTCTL=WDTPW|WDTCNTCL|WDTSSEL__ACLK|WDTIS__32K;
+#endif
         serviceObstacle();
 #ifndef SUPERVISOR_ESP_UART
         bridgeService();
@@ -382,6 +478,9 @@ int main(void) {
         readUsb();
         if(stopButton) { stopButton=0; stopRequested(); print("S2 STOP REQUESTED\r\n"); }
         serviceLink();
+#ifdef ZUMO_BASE
+        serviceSpray();
+#endif
         __disable_interrupt();
         if(usbRx.head!=usbRx.tail || linkRx.head!=linkRx.tail || stopButton || sonarPhase==SONAR_DONE
 #ifndef SUPERVISOR_ESP_UART
@@ -414,12 +513,19 @@ __interrupt void link_uart_isr(void) {
 __interrupt void heartbeat_isr(void) {
     static uint8_t step;
     ++ticks; if(++step>=10u) step=0;
+#ifdef ZUMO_BASE
+    /* Independent upper bound even if main-loop work is delayed. */
+    if(sprayJob.pump && (uint16_t)(ticks-sprayJob.since)>=PUMP_SPRAY_TICKS) pumpOff();
+#endif
     if(step==0u || step==2u) P1OUT|=BIT0; else P1OUT&=~BIT0;
     __bic_SR_register_on_exit(LPM0_bits);
 }
 #pragma vector=PORT1_VECTOR
 __interrupt void button_isr(void) {
     if(P1IFG&BIT1) {
+#ifdef ZUMO_BASE
+        pumpOff();
+#endif
         P1IE&=~BIT1; P1IFG&=~BIT1; buttonDown=0;
         TA1CCTL0=CCIE; TA1CTL=TASSEL__ACLK|MC__UP|TACLR;
         stopButton=1; __bic_SR_register_on_exit(LPM0_bits); // stop on first falling edge

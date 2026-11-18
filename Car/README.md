@@ -1,5 +1,15 @@
 # Car electronics
 
+**18 November update — installation partly complete:** 5 cm STOP / 7 cm clearance;
+blue-target stop → 3-second spray → token-matched continuation. Uno OG4 raises
+the positive turn limit to 250 while straight speed stays 150. Pump gate P1.6,
+raw water ADC P6.0. The pump driver is disabled until its electrical rating is
+verified. Read [the current cycle/pump guide](MSP430/robot_supervisor/PUMP_SETUP.md). MSP 5 cm / 7 cm pump-disabled firmware and Pico V3 are installed/verified.
+The user will upload Uno OG4; FireBeetle V2 is deferred. Full automatic spraying
+is not yet ready for physical use. The earlier installed milestone is history below.
+
+## Previous installed milestone — 17 November 2026
+
 Current base, **17 November 2026**: **Arduino Uno + Zumo Shield** follows a black
 line on white. The **MSP430 is the main controller**, measuring the HC-SR04 and
 granting movement. The user confirmed the driving setup is working.

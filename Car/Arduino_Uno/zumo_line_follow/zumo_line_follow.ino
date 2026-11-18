@@ -28,6 +28,8 @@ ZumoControl robot;
 RlParser parser={};
 
 const int MAX_SPEED=150;
+const int TURN_MAX_SPEED=250;
+const int REVERSE_MAX_SPEED=400;
 const float kp=1.0f, kd=0.0f;
 int lastError=0;
 uint8_t calibrationStep=0;
@@ -49,7 +51,7 @@ void reportUsb() {
     char line[64];
     int n;
     if(usbReportPart==1) {
-        n=snprintf(line,sizeof(line),"ZUMO FW=OG3 CAL=%u SWEEP=%u RUN=%u REASON=%u REQ=%u\n",
+        n=snprintf(line,sizeof(line),"ZUMO FW=OG4 CAL=%u SWEEP=%u RUN=%u REASON=%u REQ=%u\n",
             robot.calibrated,robot.calibrating,robot.following,robot.reason,robot.userRequest);
     } else {
         const char *event="BOOT";
@@ -64,7 +66,7 @@ void reportUsb() {
         case ZE_LOCAL_STOP: event="LOCAL_STOP"; break;
         case ZE_SESSION_ERROR: event="SESSION_ERROR"; break;
         }
-        n=snprintf(line,sizeof(line),"ZUMO FW=OG3 STEP=%u/80 LAST=%s UP=%lu\n",
+        n=snprintf(line,sizeof(line),"ZUMO FW=OG4 STEP=%u/80 LAST=%s UP=%lu\n",
             calibrationStep,event,(unsigned long)(millis()/1000u));
     }
     if(n>0 && n<int(sizeof(line)) && Serial.availableForWrite()>=n) {
@@ -158,11 +160,13 @@ void serviceMotion() {
         int error=read_position-LINE_CENTER;
         int speedDiff=kp*error+kd*(error-lastError);
         lastError=error;
-        // Original motor calculation: upper clamp only; reverse remains allowed.
+        // Keep straight speed at 150; allow the outside track more drive in turns.
         int m1Speed=MAX_SPEED+speedDiff;
         int m2Speed=MAX_SPEED-speedDiff;
-        if(m1Speed>MAX_SPEED) m1Speed=MAX_SPEED;
-        if(m2Speed>MAX_SPEED) m2Speed=MAX_SPEED;
+        if(m1Speed>TURN_MAX_SPEED) m1Speed=TURN_MAX_SPEED;
+        if(m2Speed>TURN_MAX_SPEED) m2Speed=TURN_MAX_SPEED;
+        if(m1Speed<-REVERSE_MAX_SPEED) m1Speed=-REVERSE_MAX_SPEED;
+        if(m2Speed<-REVERSE_MAX_SPEED) m2Speed=-REVERSE_MAX_SPEED;
         motors.setSpeeds(m1Speed,m2Speed);
     }
 }
@@ -172,7 +176,7 @@ void setup() {
     Serial.begin(SERIAL_BAUD);
     mspSerial.begin(SERIAL_BAUD);
     reflectanceSensors.init();
-    Serial.println(F("ZUMO FW=OG3 ORIGINAL CAL+PD + MSP STOP"));
+    Serial.println(F("ZUMO FW=OG4 CAL+PD TURN=250 + MSP STOP"));
     Serial.println(F("USB 9600: C=sweep request, F=follow request, S=stop, STATUS."));
     wdt_enable(WDTO_1S);
 }

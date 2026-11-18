@@ -129,6 +129,7 @@ prefix = r'''
 #include <fstream>
 #define ZUMO_BASE 1
 #define SUPERVISOR_ESP_UART 1
+#define PUMP_DRIVER_VERIFIED 1
 #define __interrupt
 #define __disable_interrupt() ((void)0)
 #define __enable_interrupt() ((void)0)
@@ -136,9 +137,13 @@ prefix = r'''
 #include "../../zumo_line_follow/zumo_line_follow.ino"
 #include "../../../ESP32_Gateway/robot_wifi_gateway/direct_protocol.h"
 namespace msp {
-enum { BIT2=4,BIT7=128,TASSEL__SMCLK=512,MC__CONTINUOUS=32,TACLR=4,CCIE=16,LPM0_bits=16 };
+enum { BIT0=1,BIT2=4,BIT6=64,BIT7=128,TASSEL__SMCLK=512,MC__CONTINUOUS=32,TACLR=4,CCIE=16,LPM0_bits=16,ADC12BUSY=1,ADC12SC=1 };
 static uint8_t P3SEL,P3REN,P3OUT,P3DIR,P2SEL,P2DIR,P2OUT,P2REN,P2IE,P2IES,P2IFG,P2IN,P4OUT;
 static uint16_t TA2CCTL0,TA2CTL,TA2CCR0,TA2R,ticks;
+static uint8_t P1OUT,stopButton;
+static uint16_t ADC12IFG,ADC12MEM0,ADC12CTL0,ADC12CTL1,waterRaw,waterAt;
+#include "../../../MSP430/robot_supervisor/spray_job.h"
+static SprayJob sprayJob;
 static uint16_t session=42,sequence,requestAt,lastPoll,lastLinkByte,badFrames,uartErrors,rxDrops;
 static uint8_t pending,linked,running,queued,peerFlags,peerResult;
 static RlPacket pendingPacket;
@@ -150,7 +155,7 @@ static void print(const char* s) { output+=s; }
 static void number(uint16_t n) { output+=std::to_string(n); }
 static uint8_t takeLost(int*) { return 0; }
 static int pop(int*) { return -1; }
-static uint8_t put(uint8_t link,uint8_t b) { if(link) transmitted.push_back(b); return 1; }
+static uint8_t put(uint8_t link,uint8_t b) { if(link) transmitted.push_back(b); else output+=char(b); return 1; }
 #include "../../../MSP430/robot_supervisor/ultrasonic_hcsr04.h"
 '''
 
@@ -160,6 +165,7 @@ static unsigned checks=0;
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"FAIL line %d: %s\n",__LINE__,#x); std::abort(); } ++checks; } while(0)
 static bool stopped() { return motors.left==0 && motors.right==0; }
 static void reset() {
+    msp::sprayJob={}; msp::P1OUT=0; msp::stopButton=0;
     fakeMillis=0; robot=ZumoControl(); parser={}; motors=ZumoMotors();
     reflectanceSensors=ZumoReflectanceSensorArray();
     // The assignment copies internal pointers, so bind them to this instance.
@@ -196,7 +202,7 @@ static bool exchange() {
     for(uint8_t b:mspSerial.output) decoded=rlFeed(&decoder,b,&reply);
     CHECK(decoded==1); msp::response(&reply); return true;
 }
-static void step(uint32_t ms=20) { fakeMillis+=ms; sonar(40); exchange(); }
+static void step(uint32_t ms=20) { fakeMillis+=ms; sonar(40); exchange(); msp::serviceSpray(); }
 static void stepWithoutEcho() {
     fakeMillis+=20; msp::ticks=uint16_t(fakeMillis/100u);
     msp::sonarPhase=msp::SONAR_DONE; msp::sonarPulseValid=0; msp::sonarWidth=0;
@@ -254,14 +260,16 @@ int main(int argc,char** argv) {
 
     reset(); linkClear(); calibrate(); start();
     reflectanceSensors.position=5000; loop();
-    CHECK(motors.left==150 && motors.right==-2350); // Original request; ZumoMotors clamps at ±400.
+    CHECK(motors.left==250 && motors.right==-400);
     reflectanceSensors.position=0; loop();
-    CHECK(motors.left==-2350 && motors.right==150);
+    CHECK(motors.left==-400 && motors.right==250);
+    reflectanceSensors.position=2575; loop();
+    CHECK(motors.left==225 && motors.right==75); // More outer-track drive at ordinary bends.
     reflectanceSensors.position=2500;
     // Real sonar policy -> MSP STOP frame -> actual sketch, motors off BEFORE ACK.
     sonar(10); CHECK(msp::running && msp::queued!=RL_STOP);
-    sonar(3); CHECK(msp::running && msp::queued!=RL_STOP);
-    sonar(2); CHECK(!msp::running && msp::queued==RL_STOP);
+    sonar(6); CHECK(msp::running && msp::queued!=RL_STOP);
+    sonar(5); CHECK(!msp::running && msp::queued==RL_STOP);
     bool stopAck=false;
     mspSerial.beforeWrite=[&]() { CHECK(stopped() && !robot.moving()); stopAck=true; };
     CHECK(exchange() && stopAck); mspSerial.beforeWrite=nullptr;
@@ -311,7 +319,7 @@ int main(int argc,char** argv) {
     CHECK(robot.reason==RL_OK && !robot.calibrated && robot.lastEvent==ZE_MSP_STOP);
     Serial.output.clear(); usbReportPart=1; reportUsb(); reportUsb();
     std::string statusText(Serial.output.begin(),Serial.output.end());
-    CHECK(statusText.find("FW=OG3 CAL=0 SWEEP=0 RUN=0 REASON=0")!=std::string::npos);
+    CHECK(statusText.find("FW=OG4 CAL=0 SWEEP=0 RUN=0 REASON=0")!=std::string::npos);
     CHECK(statusText.find("LAST=MSP_STOP")!=std::string::npos && !usbReportPart);
     releaseButton();
     for(unsigned i=0;i<80 && !robot.calibrating;++i) step();
@@ -377,6 +385,32 @@ int main(int argc,char** argv) {
         CHECK(end-lineStart+1<=63); lineStart=end+1;
     }
 
+    // Real target command -> STOP ACK -> settle -> bounded pump -> token-gated resume.
+    reset(); linkClear(); calibrate(); start();
+    CHECK(msp::netCommand("NET 123 TARGET"));
+    CHECK(msp::sprayJob.phase==msp::SJ_STOPPING && !msp::sprayJob.pump);
+    CHECK(exchange() && stopped());
+    for(unsigned i=0;i<100 && msp::sprayJob.phase!=msp::SJ_SPRAYING;++i) {
+        step(); CHECK(stopped());
+    }
+    CHECK(msp::sprayJob.pump && (msp::P1OUT&msp::BIT6));
+    for(unsigned i=0;i<200 && msp::sprayJob.phase==msp::SJ_SPRAYING;++i) {
+        step(); CHECK(stopped());
+    }
+    CHECK(msp::sprayJob.phase==msp::SJ_RESUMING && !msp::sprayJob.pump && !(msp::P1OUT&msp::BIT6));
+    CHECK(msp::netCommand("NET 124 RESUME 999") && msp::queued!=RL_START);
+    CHECK(msp::netCommand("NET 125 RESUME 123") && msp::queued==RL_START);
+    CHECK(exchange()); loop();
+    CHECK(msp::sprayJob.phase==msp::SJ_COMPLETE && robot.following);
+    msp::netCommand("NET 126 TARGET");
+    exchange();
+    for(unsigned i=0;i<100 && msp::sprayJob.phase!=msp::SJ_SPRAYING;++i) step();
+    CHECK(msp::sprayJob.pump);
+    sonar(5); exchange();
+    CHECK(stopped() && !msp::sprayJob.pump && msp::sprayJob.phase==msp::SJ_ABORTED);
+    msp::netCommand("NET 127 RESUME 126");
+    CHECK(msp::queued!=RL_START && !msp::sprayJob.pump);
+
     // Bridge accepts the preserved status prefix and new base identity.
     msp::output.clear(); msp::status();
     CHECK(msp::output.find("STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 ")==0);
@@ -391,9 +425,11 @@ int main(int argc,char** argv) {
 '''
 cpp = BUILD / "zumo_tests.cpp"
 cpp.write_text(prefix + "".join(function(name, result) for name, result in (
+    ("pumpOff", "void"), ("cancelSpray", "void"),
     ("stopRequested", "void"), ("serviceObstacle", "void"), ("userRequest", "void"),
     ("reasonName", "const char *"), ("status", "void"), ("sendRequest", "void"),
     ("response", "void"), ("serviceLink", "void"),
+    ("serviceSpray", "void"), ("netCommand", "uint8_t"),
 )) + tests, encoding="utf-8")
 exe = BUILD / "zumo_tests.exe"
 subprocess.run([

@@ -7,8 +7,8 @@
 #include <stdint.h>
 
 /* Current user-selected thresholds; these are not measured braking distances. */
-#define OBSTACLE_STOP_CM 2u
-#define OBSTACLE_RELEASE_CM 4u
+#define OBSTACLE_STOP_CM 5u
+#define OBSTACLE_RELEASE_CM 7u
 #define OBSTACLE_STALE_TICKS 3u
 
 typedef struct {

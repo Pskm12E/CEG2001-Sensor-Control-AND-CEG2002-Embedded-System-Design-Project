@@ -50,8 +50,8 @@ class LocalDashboard:
 
     def local_state(self):
         state = self.request("/api/state")
-        if state.get("mode") != "local" or state.get("read_only") is not True:
-            raise LaunchError("This launcher requires the local read-only robot dashboard.")
+        if state.get("mode") != "local" or not (state.get("read_only") is True or state.get("target_jobs") is True):
+            raise LaunchError("This launcher requires the local robot dashboard.")
         return state
 
 

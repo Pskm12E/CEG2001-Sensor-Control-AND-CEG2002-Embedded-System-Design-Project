@@ -1,16 +1,21 @@
-param([switch]$EspUart, [switch]$IrDrivingTest, [switch]$Zumo)
+param([switch]$EspUart, [switch]$IrDrivingTest, [switch]$Zumo,
+      [switch]$PumpDriverVerified, [ValidateRange(1,3)][int]$SpraySeconds=3)
 $ErrorActionPreference = 'Stop'
 if($Zumo -and $IrDrivingTest) { throw 'Zumo requires ultrasonic stopping; do not combine -Zumo with -IrDrivingTest.' }
+if($PumpDriverVerified -and -not $Zumo) { throw 'Pump jobs require the Zumo configuration.' }
 $taskCompiler = 'D:/Apps/ccs/tools/compiler/ti-cgt-msp430_21.6.3.LTS'
 $taskDevice = 'D:/Apps/ccs/ccs_base/msp430'
 $taskProject = Join-Path $PSScriptRoot 'robot_supervisor'
 $taskBuildName = if($EspUart) { 'Debug_wifi' } else { 'Debug' }
 if($Zumo) { $taskBuildName += '_zumo' }
+if($PumpDriverVerified) { $taskBuildName += '_pump' }
 if($IrDrivingTest) { $taskBuildName += '_ir_test' }
 $taskBuild = Join-Path $taskProject $taskBuildName
 $taskDefines = @()
 if($EspUart) { $taskDefines += '--define=SUPERVISOR_ESP_UART' }
 if($Zumo) { $taskDefines += '--define=ZUMO_BASE=1' }
+if($Zumo) { $taskDefines += "--define=PUMP_SPRAY_TICKS=$($SpraySeconds*10)" }
+if($PumpDriverVerified) { $taskDefines += '--define=PUMP_DRIVER_VERIFIED=1' }
 if($IrDrivingTest) {
     $taskDefines += '--define=IR_DRIVING_TEST=1'
     Write-Host 'IR DRIVING TEST: ultrasonic obstacle stopping is disabled in this separate build.'

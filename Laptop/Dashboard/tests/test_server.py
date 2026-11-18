@@ -171,7 +171,7 @@ class HttpTests(unittest.TestCase):
         self.assertEqual(self.request('/api/camera/stream')[0],409)
         self.assertEqual(self.request('/api/camera/capture',{})[0],405)
 
-    def test_detection_requires_camera_and_stays_observation_only(self):
+    def test_detection_requires_camera_and_exposes_target_callback(self):
         self.assertEqual(self.request('/api/detection/start',{})[0],409)
         self.assertEqual(self.request('/api/detection/stream')[0],409)
         self.assertEqual(self.request('/api/detection/stop',{})[0],200)
@@ -179,7 +179,7 @@ class HttpTests(unittest.TestCase):
         detection=json.loads(body)['detection']
         self.assertFalse(detection['enabled'])
         self.assertFalse(detection['detected'])
-        self.assertFalse(detection['actuator_control'])
+        self.assertTrue(detection['actuator_control'])
         self.assertTrue(self.bridge.pending.empty())
 
     def test_response_limits_camera_and_frames(self):

@@ -9,20 +9,24 @@
 #include "bridge_response.h"
 #include "video_receiver.h"
 
-// Desk Pico: USB <-> HTTP status over private Wi-Fi. No GPIO wires or actuator
-// commands. The robot ESP32 owns the AP and UART bridge to the main MSP430.
+// Desk Pico: USB <-> private Wi-Fi status/video, STOP and bounded target jobs.
+// No unrestricted start/calibration/pump commands. MSP owns the entire cycle.
 static tcp_pcb *connection=nullptr;
 static desk::HttpResponse response;
 static desk::State remote;
 static bench::Line<64> usbLine;
-enum class Reply { None, Ping, State, Msp };
+enum class Reply { None, Ping, State, Msp, Stop, Target, Resume };
 static Reply wanted=Reply::None;
+static uint32_t resumeToken=0;
+static bool action(Reply r) { return r==Reply::Stop || r==Reply::Target || r==Reply::Resume; }
+static const char *actionName(Reply r) { return r==Reply::Stop?"STOP":r==Reply::Target?"TARGET":"RESUME"; }
 static bool done=false,failed=false,haveState=false;
 static uint32_t started=0,lastAttempt=0,lastGood=0,lastWifi=0,lastRenew=0;
 static bool attempted=false,wifiAttempted=false;
 // lwIP's initial TCP retransmission timeout is 3 s. Allow that retry to occur;
 // an equal 3 s application deadline aborted otherwise recoverable reads.
 static constexpr uint32_t HTTP_TIMEOUT_MS=8000u;
+static constexpr uint32_t ACTION_TIMEOUT_MS=750u;
 static unsigned goodReads=0,failedReads=0;
 static int tcpError=0;
 static const char *fault="NONE";
@@ -89,11 +93,14 @@ static bool mspUp(uint32_t now) {
 static void closeConnection() {
     if(!connection) return;
     tcp_arg(connection,nullptr); tcp_recv(connection,nullptr); tcp_err(connection,nullptr);
+    // Never leave an abandoned actuator request in lwIP's retransmit queue.
+    if(action(wanted)) { tcp_abort(connection); connection=nullptr; return; }
     if(tcp_close(connection)!=ERR_OK) tcp_abort(connection);
     connection=nullptr;
 }
 static void errorReply(const char *reason) {
-    if(wanted!=Reply::None) printf("ROBOT ERROR %s\n",reason);
+    if(action(wanted)) printf("ROBOT %s ERROR %s\n",actionName(wanted),reason);
+    else if(wanted!=Reply::None) printf("ROBOT ERROR %s\n",reason);
     wanted=Reply::None;
 }
 static err_t received(void *,tcp_pcb *pcb,pbuf *p,err_t error) {
@@ -114,13 +121,25 @@ static void networkError(void *,err_t error) {
 }
 static err_t connected(void *,tcp_pcb *pcb,err_t error) {
     if(error!=ERR_OK) { failed=done=true; return ERR_OK; }
-    static constexpr char request[]="GET /api/state HTTP/1.0\r\nHost: 192.168.4.1\r\nConnection: close\r\n\r\n";
-    if(tcp_write(pcb,request,sizeof(request)-1,TCP_WRITE_FLAG_COPY)!=ERR_OK || tcp_output(pcb)!=ERR_OK)
+    char resumeRequest[160];
+    snprintf(resumeRequest,sizeof(resumeRequest),
+        "POST /api/resume?job_id=%lu HTTP/1.0\r\nHost: 192.168.4.1\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
+        static_cast<unsigned long>(resumeToken));
+    const char *request=wanted==Reply::Resume?resumeRequest:wanted==Reply::Target?
+        "POST /api/target HTTP/1.0\r\nHost: 192.168.4.1\r\nContent-Length: 0\r\nConnection: close\r\n\r\n":wanted==Reply::Stop?
+        "POST /api/stop HTTP/1.0\r\nHost: 192.168.4.1\r\nContent-Length: 0\r\nConnection: close\r\n\r\n":
+        "GET /api/state HTTP/1.0\r\nHost: 192.168.4.1\r\nConnection: close\r\n\r\n";
+    if(tcp_write(pcb,request,strlen(request),TCP_WRITE_FLAG_COPY)!=ERR_OK || tcp_output(pcb)!=ERR_OK)
         failed=done=true;
     return ERR_OK;
 }
-static bool beginRequest(Reply reply) {
+static bool beginRequest(Reply reply,uint32_t jobToken=0) {
     if(!wifiUp()) return false;
+    if(action(reply) && connection) {
+        if(wanted==Reply::Stop || (action(wanted) && reply!=Reply::Stop)) return false;
+        // Discard a read rather than queue a STOP behind an eight-second timeout.
+        closeConnection(); wanted=Reply::None;
+    }
     if(connection) {
         // An existing read may fulfil one waiting USB request; no command queue.
         if(wanted!=Reply::None || reply==Reply::None) return false;
@@ -129,6 +148,7 @@ static bool beginRequest(Reply reply) {
     connection=tcp_new_ip_type(IPADDR_TYPE_V4);
     if(!connection) return false;
     wanted=reply; response.reset(); failed=done=false; fault="NONE"; tcpError=0;
+    if(reply==Reply::Resume) resumeToken=jobToken;
     started=lastAttempt=nowMs(); attempted=true;
     tcp_recv(connection,received); tcp_err(connection,networkError);
     ip_addr_t address; ipaddr_aton("192.168.4.1",&address);
@@ -136,8 +156,19 @@ static bool beginRequest(Reply reply) {
     return true;
 }
 static void finishRequest() {
+    if(action(wanted)) {
+        uint32_t id=0;
+        const bool sent=!failed && response.complete() && response.statusCode==202u &&
+                        desk::stopAccepted(response.body(),id);
+        closeConnection(); done=false;
+        if(sent) {
+            printf("ROBOT %s SENT ID=%lu\n",actionName(wanted),static_cast<unsigned long>(id));
+            wanted=Reply::None;
+        } else errorReply("NOT_CONFIRMED_NO_REPLAY");
+        return;
+    }
     desk::State parsed;
-    const bool ok=!failed && response.complete() && desk::state(response.body(),parsed);
+    const bool ok=!failed && response.complete() && response.statusCode==200u && desk::state(response.body(),parsed);
     closeConnection(); done=false;
     if(!ok) {
         ++failedReads;
@@ -150,7 +181,7 @@ static void finishRequest() {
     ++goodReads;
     remote=parsed; haveState=true; lastGood=nowMs();
     switch(wanted) {
-    case Reply::Ping: printf("ROBOT PONG ESP32_DIRECT_WIFI_V1\n"); break;
+    case Reply::Ping: printf("ROBOT PONG ESP32_%s\n",remote.firmware); break;
     case Reply::State: printf("ROBOT STATE %s\n",response.body()); break;
     case Reply::Msp:
         if(mspUp(nowMs())) printf("ROBOT MSP %s\n",remote.telemetry);
@@ -165,7 +196,7 @@ static void command(const char *line) {
     else if(!strcmp(line,"VIDEO OFF")) { videoWanted=false;closeVideo();printf("VIDEO OK OFF\n"); }
     else if(!strcmp(line,"VIDEO STATUS")) printf("VIDEO STATUS LINK=%s FRAMES=%lu DROPPED=%lu CAMERA_IP=192.168.4.10 PORT=4243\n",
              videoConnected?"UP":"DOWN",static_cast<unsigned long>(videoFrames.frames),static_cast<unsigned long>(videoFrames.dropped));
-    else if(!strcmp(line,"PING")) printf("PONG PICO_DESK_BRIDGE_V2\n");
+    else if(!strcmp(line,"PING")) printf("PONG PICO_DESK_BRIDGE_V3\n");
     else if(!strcmp(line,"DIAG")) {
         printf("DIAG GOOD=%u FAIL=%u FAULT=%s TCP=%d USED=%u BODY_AT=%u LENGTH=%u\n",goodReads,failedReads,lastFault,lastTcpError,
                static_cast<unsigned>(failedBytes),static_cast<unsigned>(failedBody),static_cast<unsigned>(failedLength));
@@ -177,17 +208,27 @@ static void command(const char *line) {
     }
     else if(!strcmp(line,"STATUS")) {
         const uint32_t now=nowMs();
-        printf("STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V2 LED=ON WIFI=%s ESP_LINK=%s MSP_LINK=%s READ_ONLY=1\n",
+        printf("STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V3 LED=ON WIFI=%s ESP_LINK=%s MSP_LINK=%s READ_ONLY=0 TARGET_JOBS=1\n",
                wifiUp()?"UP":"DOWN",espUp(now)?"UP":"DOWN",mspUp(now)?"UP":haveState?"STALE":"NOT_CONNECTED");
     } else if(!strcmp(line,"HELP") || !strcmp(line,"?"))
-        printf("PING | STATUS | ROBOT PING | ROBOT STATE | ROBOT MSP STATUS. Read-only stage; no motion, spray, STOP or calibration commands.\n");
+        printf("PING | STATUS | ROBOT PING | ROBOT STATE | ROBOT MSP STATUS | ROBOT STOP | ROBOT TARGET. No direct start/pump/calibration.\n");
     else {
         Reply op=Reply::None;
+        uint32_t jobToken=0;
         if(!strcmp(line,"ROBOT PING")) op=Reply::Ping;
         else if(!strcmp(line,"ROBOT STATE") || !strcmp(line,"STATE")) op=Reply::State;
         else if(!strcmp(line,"ROBOT MSP STATUS") || !strcmp(line,"MSP STATUS")) op=Reply::Msp;
-        if(op==Reply::None) { printf("ERROR unsupported command; read-only bridge\n"); return; }
-        if(!beginRequest(op)) printf("ROBOT ERROR WIFI_DOWN_OR_BUSY\n");
+        else if(!strcmp(line,"ROBOT STOP")) op=Reply::Stop;
+        else if(!strcmp(line,"ROBOT TARGET")) op=Reply::Target;
+        else if(!strncmp(line,"ROBOT RESUME ",13)) {
+            uint32_t id=0;
+            if(desk::number(line+13,id) && id) { op=Reply::Resume; jobToken=id; }
+        }
+        if(op==Reply::None) { printf("ERROR unsupported command; status and STOP only\n"); return; }
+        if(!beginRequest(op,jobToken)) {
+            if(action(op)) printf("ROBOT %s ERROR WIFI_DOWN_OR_BUSY\n",actionName(op));
+            else printf("ROBOT ERROR WIFI_DOWN_OR_BUSY\n");
+        }
     }
 }
 int main() {
@@ -197,7 +238,7 @@ int main() {
     cyw43_arch_enable_sta_mode();
     cyw43_wifi_pm(&cyw43_state,CYW43_NONE_PM);
     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN,1); // running indicator, not a Wi-Fi status LED
-    printf("Pico W DESK_BRIDGE_V2; private Wi-Fi camera and read-only robot status relay\n");
+    printf("Pico W DESK_BRIDGE_V3; private Wi-Fi camera, status and STOP relay\n");
     while(true) {
         cyw43_arch_poll();
         const uint32_t now=nowMs();
@@ -209,7 +250,9 @@ int main() {
                 cyw43_arch_wifi_connect_async(BENCH_SSID,BENCH_PASSWORD,CYW43_AUTH_WPA2_AES_PSK);
             }
         } else {
-            if(connection && static_cast<uint32_t>(now-started)>=HTTP_TIMEOUT_MS) { fault="TIMEOUT"; failed=done=true; }
+            if(connection && static_cast<uint32_t>(now-started)>=(action(wanted)?ACTION_TIMEOUT_MS:HTTP_TIMEOUT_MS)) {
+                fault="TIMEOUT"; failed=done=true;
+            }
             if(done) finishRequest();
             if(!connection && (!attempted || static_cast<uint32_t>(now-lastAttempt)>=1000u)) beginRequest(Reply::None);
             // Renew association after an AP power cycle leaves a stale UP state.

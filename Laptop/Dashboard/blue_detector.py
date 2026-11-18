@@ -1,4 +1,4 @@
-"""Local blue-square practice detector. Observations only; no robot commands.
+"""Local blue-square detector with an optional confirmed-observation callback.
 
 The camera remains a continuous wireless stream. A separate worker processes the
 newest JPEG without blocking the Pico USB reader or queuing old video frames.
@@ -107,8 +107,9 @@ class BlueSquare:
 
 class DetectionVideo:
     """One newest annotated frame, shared by all dashboard viewers."""
-    def __init__(self, camera):
+    def __init__(self, camera, on_observation=None):
         self.camera = camera
+        self.on_observation = on_observation
         self.condition = threading.Condition()
         self.enabled = False
         self.generation = 0
@@ -140,7 +141,8 @@ class DetectionVideo:
                         width=result.get("width", camera["width"]), height=result.get("height", camera["height"]),
                         frame_age_ms=round(age) if age is not None else None, fps=round(fps, 1),
                         processing_ms=self.metadata.get("processing_ms") if fresh else None,
-                        error=self.error, method="OPENCV_BLUE_SQUARE", source="PICO_WIFI", actuator_control=False)
+                        error=self.error, method="OPENCV_BLUE_SQUARE", source="PICO_WIFI",
+                        actuator_control=self.on_observation is not None)
 
     def start(self):
         if cv2 is None:
@@ -221,6 +223,14 @@ class DetectionVideo:
                                      source_generation=source_generation, captured_at=metadata["captured_at"],
                                      crc32=f"{zlib.crc32(annotated):08X}", processing_ms=round((time.perf_counter()-started)*1000, 1))
                 self.condition.notify_all()
+            # Only a newly processed, still-live source may request a job. The
+            # callback queues one bounded request; it never blocks on USB/radio.
+            current = self.camera.state()
+            if (self.on_observation and not stop.is_set() and current["streaming"]
+                    and current["generation"] == source_generation
+                    and time.monotonic()-metadata.get("received_monotonic", 0) < FRESH_SECONDS
+                    and time.perf_counter()-started < FRESH_SECONDS):
+                self.on_observation(result)
 
     def wait_frame(self, after, generation, timeout=5):
         with self.condition:

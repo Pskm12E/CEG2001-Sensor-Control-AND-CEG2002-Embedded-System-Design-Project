@@ -1,5 +1,21 @@
 # Changelog
 
+## Target stop and bounded spray source — 2026-11-18
+
+- Added confirmed blue-target requests through Pico V3 / ESP32 V2 to an MSP-owned
+  stop, settle, three-second pump pulse and token-matched continuation sequence.
+- Added duplicate-target suppression, action IDs, priority/cancellation, bounded
+  timeouts and no replay. Stale/missing camera data cannot grant continuation.
+- Changed source ultrasonic STOP/clear thresholds to 5/7 cm, retaining the user's
+  no-echo-ignore policy. Increased the Zumo outer-track turn limit to 250; straight
+  speed remains 150 and the calibration sweep remains unchanged. Uno source is OG4.
+- Added P1.6 pump control and P6.0 raw ADC reporting. Default pump driver is
+  disabled while pump current/2N7000 suitability are unknown. Added independent
+  timer cutoff and a watchdog to the explicitly enabled build.
+- Installed/program-verified the MSP pump-disabled image and verified Pico V3.
+  The user chose manual Uno OG4 upload and deferred FireBeetle V2. No drive,
+  calibration or spray commands were sent; physical spray validation is pending.
+
 ## Zumo driving milestone — 2026-11-17
 
 - Replaced the L298N/two-IR base with Uno + Zumo Shield six-sensor black-line
