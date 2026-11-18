@@ -2,7 +2,8 @@
 
 Source update: **18 November 2026**. The software sequence is implemented and
 tested with simulated hardware. **MSP pump-disabled firmware and Pico V3 are
-installed and verified. The user will upload Uno OG4; FireBeetle V2 is deferred.**
+installed and verified. Uno OG4 is user-confirmed, and FireBeetle V2 is now
+flashed/hash-verified and USB-identified. The full robot-link check awaits MSP power reconnection.**
 The pump is **disabled in the default build** while the driver rating is unresolved.
 
 ## Requested sequence

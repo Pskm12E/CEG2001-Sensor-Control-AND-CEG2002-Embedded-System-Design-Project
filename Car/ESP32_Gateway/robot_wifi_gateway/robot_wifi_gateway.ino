@@ -85,9 +85,9 @@ void receive(const char *line) {
     pendingId=0; pendingOp=direct::Op::None; usbRequest=false;
 }
 void command(const char *line) {
-    if(!strcmp(line,"PING")) Serial.println("PONG ESP32_DIRECT_WIFI_V1");
+    if(!strcmp(line,"PING")) Serial.println("PONG ESP32_DIRECT_WIFI_V2");
     else if(!strcmp(line,"STATUS")) {
-        Serial.print("STATUS BOARD=ESP32_FIREBEETLE FW=DIRECT_WIFI_V1 AP=");
+        Serial.print("STATUS BOARD=ESP32_FIREBEETLE FW=DIRECT_WIFI_V2 AP=");
         Serial.print(apReady?"READY":"FAILED");
         Serial.print(" MSP_LINK="); Serial.print(fresh()?"UP":seen?"STALE":"NOT_CONNECTED");
         Serial.print(" MSP_UART_RX=16 MSP_UART_TX=17 IP="); Serial.println(WiFi.softAPIP());

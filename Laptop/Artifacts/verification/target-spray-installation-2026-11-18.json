@@ -1,7 +1,7 @@
 {
   "date": "2026-11-18",
   "timezone": "Asia/Singapore",
-  "status": "MSP pump-disabled image and Pico V3 installed; Uno upload user-controlled; FireBeetle deferred",
+  "status": "All four firmware versions accounted for; MSP powered-link check pending; pump driver disabled",
   "requested_flow": "confirmed blue target -> stop -> 3-second water spray -> fresh token-matched continuation",
   "ultrasonic": {
     "stop_cm": 5,
@@ -57,7 +57,8 @@
     "uno_og4": {
       "compiled": true,
       "sha256": "d8ec098513741b8ebd468247c49fcaf2b648d32070f00a48344b48a2bfc34e5a",
-      "uploaded": false
+      "uploaded": true,
+      "verification": "User reports upload; supplied FW=OG4 serial screenshot. No assistant byte-for-byte readback."
     },
     "msp_pump_disabled": {
       "compiled": true,
@@ -77,8 +78,10 @@
     },
     "esp32_v2": {
       "compiled": true,
-      "sha256": "e3728b729b46946565ed674d1ea8f49b8210c4d09aafb5f592933622e6cec858",
-      "uploaded": false
+      "sha256": "9f0fa6fd0922dbc567a314d46e68cbf6ee46ef6727920f5b67486638bbe61c76",
+      "uploaded": true,
+      "segments_hash_verified": 4,
+      "usb_identity_verified": true
     },
     "desk_pico_v3": {
       "compiled": true,
@@ -96,7 +99,7 @@
   "limits": [
     "No physical braking, turn torque, spray flow, alignment or ADC calibration test",
     "MSP-to-Uno link was not ready in the stopped snapshot; USB data connection to Uno was absent",
-    "ESP UART status was stale; FireBeetle work explicitly deferred"
+    "User unplugged MSP USB to flash ESP; full powered robot link not reverified yet"
   ],
   "msp_runtime": {
     "ticks": 1466,
@@ -123,10 +126,10 @@
     "firmware_identity_verified": true
   },
   "remaining_installation": {
-    "uno": "User explicitly chose to upload OG4 themselves; no Uno USB data port was detected",
-    "firebeetle": "User explicitly deferred this board; DIRECT_WIFI_V2 source compiled but not uploaded",
+    "uno": "User-installed OG4 confirmed by screenshot",
+    "firebeetle": "Installed and verified; see firebeetle-v2-flash-2026-11-18.json",
     "pump": "Disabled; unknown running/startup current and unverified 2N7000 drive rating",
-    "automatic_target_cycle": "Not ready for physical use until remaining firmware and driver qualification are complete"
+    "automatic_target_cycle": "Requires MSP power reconnection/link verification; pump disabled until qualified"
   },
   "movement_calibration_or_spray_commands_sent": false,
   "logs": [
@@ -141,5 +144,6 @@
     "detection_enabled": false,
     "target_action": "IDLE",
     "msp_status": "STALE"
-  }
+  },
+  "firebeetle_flash_evidence": "firebeetle-v2-flash-2026-11-18.json"
 }

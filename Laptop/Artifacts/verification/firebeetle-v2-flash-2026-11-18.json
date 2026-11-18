@@ -1,0 +1,54 @@
+{
+  "date": "2026-11-18",
+  "timezone": "Asia/Singapore",
+  "board": "DFRobot FireBeetle ESP32 DFR0478",
+  "port": "COM20",
+  "usb_vid": "1A86",
+  "usb_pid": "7523",
+  "chip": "ESP32-D0WD revision 1.0",
+  "firmware": "DIRECT_WIFI_V2",
+  "app_sha256": "9f0fa6fd0922dbc567a314d46e68cbf6ee46ef6727920f5b67486638bbe61c76",
+  "source_sha256": "86fbe7de9abd66724b0b08aced7f4c092afe230ab3f4ea910577a1e02105ce3e",
+  "build": {
+    "success": true,
+    "flash_bytes": 927292,
+    "global_ram_bytes": 48392
+  },
+  "upload": {
+    "success": true,
+    "segments_hash_verified": 4,
+    "method": "esptool 5.3.1 ROM loader, no stub, uncompressed",
+    "log": "tmp/firebeetle-v2-upload-2026-11-18.log"
+  },
+  "usb_identity_verified": true,
+  "usb_ping": "PONG ESP32_DIRECT_WIFI_V2",
+  "usb_status": "STATUS BOARD=ESP32_FIREBEETLE FW=DIRECT_WIFI_V2 AP=READY MSP_LINK=NOT_CONNECTED MSP_UART_RX=16 MSP_UART_TX=17 IP=192.168.4.1",
+  "ap_ready": true,
+  "msp_link_at_usb_check": "NOT_CONNECTED",
+  "msp_usb_disconnected_by_user_for_this_upload": true,
+  "dashboard_after_upload": {
+    "pico": "UP",
+    "wifi": "UP",
+    "esp": "UP",
+    "msp": "STALE",
+    "camera_streaming": true,
+    "camera_fps": 7.3,
+    "detection_enabled": false,
+    "target_action": "IDLE"
+  },
+  "read_only_verification_commands": [
+    "PING",
+    "STATUS",
+    "STATE"
+  ],
+  "drive_calibration_target_spray_or_resume_requested": false,
+  "pump_driver_enabled": false,
+  "uno_upload": "User-installed OG4 confirmed by supplied serial screenshot; assistant did not upload Uno",
+  "remaining": "Reconnect/power MSP for full robot-link check; pump current and driver qualification remain unresolved",
+  "checks": {
+    "direct_protocol_assertions": 60,
+    "uploader_powershell_syntax": true,
+    "tracked_documentation_links": 214,
+    "credential_and_binary_exclusion_audit": true
+  }
+}

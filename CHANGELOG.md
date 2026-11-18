@@ -13,8 +13,11 @@
   disabled while pump current/2N7000 suitability are unknown. Added independent
   timer cutoff and a watchdog to the explicitly enabled build.
 - Installed/program-verified the MSP pump-disabled image and verified Pico V3.
-  The user chose manual Uno OG4 upload and deferred FireBeetle V2. No drive,
-  calibration or spray commands were sent; physical spray validation is pending.
+  The user subsequently confirmed Uno OG4, then connected FireBeetle on COM20.
+  Flashed/hash-verified DIRECT_WIFI_V2 and checked USB identity, AP/Pico/video
+  recovery; fixed the two stale USB V1 labels and added an explicit Direct uploader
+  option. Reconnect/power MSP for a full robot-link check. Pump remains disabled;
+  no drive, calibration or spray commands were sent.
 
 ## Zumo driving milestone — 2026-11-17
 

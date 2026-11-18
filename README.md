@@ -9,7 +9,7 @@ The user confirmed the current driving setup is working on **17 November 2026**.
 
 ## Source update — 18 November 2026
 
-Implemented; installation partly complete: **blue target → stop → spray for 3 seconds →
+Firmware versions installed; powered robot-link verification pending: **blue target → stop → spray for 3 seconds →
 continue**, **5 cm ultrasonic STOP / 7 cm clearance**, and stronger turns.
 Uno OG4 keeps straight speed at 150 and allows the outside track up to 250;
 the original calibration sweep is unchanged. Pump wiring uses MSP P1.6 and
@@ -18,9 +18,11 @@ The pump is reported as approximately 5 V, but current/model is unknown;
 a separate battery does not qualify the 2N7000 for 3.3 V gate drive.
 See [the complete pump/cycle guide](Car/MSP430/robot_supervisor/PUMP_SETUP.md).
 **Installed:** MSP430 5 cm / 7 cm pump-disabled image, flash/program-verified;
-desk Pico V3, identity verified. **Pending:** the user will upload Uno OG4;
-FireBeetle V2 is deferred. The automatic target cycle is not yet ready for a
-physical test. MSP was left stopped with P1.6 low; no start or spray was requested.
+desk Pico V3, identity verified; Uno OG4, confirmed by the user’s serial
+screenshot; FireBeetle V2, flashed/hash-verified and USB-identified. The user
+unplugged the MSP to connect the FireBeetle, so the complete robot link awaits
+MSP power reconnection. Pump output remains disabled pending driver qualification;
+no drive, calibration or spray was requested during installation.
 
 ## Source stopping settings
 

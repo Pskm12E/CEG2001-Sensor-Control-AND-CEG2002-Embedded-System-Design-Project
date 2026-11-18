@@ -2,6 +2,7 @@
 
 ## Target-cycle source — 18 November 2026
 
+[FireBeetle V2 flash/readback](verification/firebeetle-v2-flash-2026-11-18.json) ·
 [Installed-board status](verification/target-spray-installation-2026-11-18.json) ·
 [Source/build test report](verification/target-spray-source-2026-11-18.json) ·
 [Complete Uno OG4 source ZIP](setup/zumo_line_follow_OG4.zip) ·
