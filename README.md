@@ -119,6 +119,8 @@ Car camera ── Wi-Fi ── FireBeetle AP ── Wi-Fi ── Desk Pico ─�
 The user's target trial confirmed the MSP stop path. The pump-disabled build
 holds the robot stopped; physical spraying and automatic continuation are pending
 pump/driver qualification.
+On **18 November**, the user confirmed that both blue-target stopping and
+ultrasonic obstacle stopping work. The pump is the remaining physical test.
 Driving/calibration use the MSP/Uno link directly. Each board needs its own
 appropriate supply; common GND does not power the boards. Motors use the AA supply.
 
