@@ -1,0 +1,242 @@
+{
+  "date": "2026-11-18",
+  "timezone": "Asia/Singapore",
+  "problem": "ESP32 MSP UART replies timed out although MSP received PING requests",
+  "before": {
+    "cold_history": {
+      "console_queue_used_bytes": 511,
+      "uart_errors": 0,
+      "received_ping_and_queued_correct_pong": true
+    },
+    "warm_stopped_capture": {
+      "ticks": 34,
+      "tx_head": 170,
+      "tx_tail": 62,
+      "pending_tx_bytes": 108,
+      "uca1_ie": 3,
+      "uca1_ifg": 0,
+      "p4sel": 6,
+      "p4map_tx": 12,
+      "p4map_rx": 11,
+      "baud_divisor": 109,
+      "uart_errors": 0,
+      "running": false,
+      "pump": false
+    }
+  },
+  "debugger_limitation": "Connect reset peripheral registers while preserving older RAM; configuration diagnosis uses the explicit fresh stopped run, not the initial post-connect peripheral values",
+  "cause": "Reading UCA1IV acknowledges TXIFG. When the queue becomes empty, TXIE is disabled; later enqueue only re-enabled TXIE and did not re-arm the now-cleared TXIFG, so no further TX interrupt occurred.",
+  "fix": "Atomically enqueue and re-arm TXIFG before enabling an idle UART1 transmitter. Preserve nonblocking output, motion supervision and pump-disabled configuration.",
+  "reference": {
+    "url": "https://www.ti.com/lit/ug/slau208q/slau208q.pdf",
+    "section": "36.3.15.1 and 36.3.15.3; UART TX and interrupt-vector flag acknowledgement"
+  },
+  "regression": {
+    "old_code_reproduced_stalled_second_burst": true,
+    "actual_console_isr_assertions_passed": 4614,
+    "zumo_msp_sonar_assertions": 1424,
+    "ultrasonic_assertions": 3140,
+    "supervisor_assertions": 84,
+    "spray_policy_assertions": 119,
+    "tracked_documentation_links": 215
+  },
+  "firmware": {
+    "image_sha256": "918ac810fa0d8a1e72b73140093a5a8bf8e41b99df713eb0188d952927d3d30f",
+    "flash_program_verified": true,
+    "flash_bytes": 7976,
+    "ram_bytes_including_stack": 1430,
+    "pump_driver_enabled": false,
+    "stop_cm": 5,
+    "clear_cm": 7,
+    "spray_seconds_configured": 3,
+    "installed_image_and_map_kept_local": "Car/MSP430/robot_supervisor/build-installed-uart-kick-2026-11-18/"
+  },
+  "hardware_precondition": "User explicitly confirmed motor and pump power OFF, USB boards powered before debugger and correction upload",
+  "after": {
+    "distinct_received_status_records": 4,
+    "snapshots": [
+      {
+        "links": {
+          "pico": "UP",
+          "wifi": "UP",
+          "esp": "UP",
+          "msp": "UP",
+          "uno": "READY"
+        },
+        "connection": {
+          "connected": true,
+          "port": "COM11",
+          "baud": 115200,
+          "error": null,
+          "fresh": true,
+          "last_seen": "2026-11-18T09:24:25.451+00:00"
+        },
+        "telemetry": {
+          "uno_link": "READY",
+          "run": 0,
+          "calibration": "NEEDED",
+          "led2": "OFF",
+          "flags": 0,
+          "result": 0,
+          "pending": 0,
+          "uart_errors": 0,
+          "rx_drops": 0,
+          "bad_frames": 0,
+          "base": "ZUMO",
+          "line": "BLACK",
+          "left": null,
+          "right": null,
+          "job": 0,
+          "job_id": 0,
+          "pump": 0,
+          "driver_ready": 0,
+          "water_raw": 9,
+          "board": "MSP430F5529",
+          "firmware": "SUPERVISOR_V2"
+        },
+        "detection_enabled": false,
+        "target_action": "IDLE",
+        "camera_streaming": true
+      },
+      {
+        "links": {
+          "pico": "UP",
+          "wifi": "UP",
+          "esp": "UP",
+          "msp": "UP",
+          "uno": "READY"
+        },
+        "connection": {
+          "connected": true,
+          "port": "COM11",
+          "baud": 115200,
+          "error": null,
+          "fresh": true,
+          "last_seen": "2026-11-18T09:24:26.248+00:00"
+        },
+        "telemetry": {
+          "uno_link": "READY",
+          "run": 0,
+          "calibration": "NEEDED",
+          "led2": "OFF",
+          "flags": 0,
+          "result": 0,
+          "pending": 0,
+          "uart_errors": 0,
+          "rx_drops": 0,
+          "bad_frames": 0,
+          "base": "ZUMO",
+          "line": "BLACK",
+          "left": null,
+          "right": null,
+          "job": 0,
+          "job_id": 0,
+          "pump": 0,
+          "driver_ready": 0,
+          "water_raw": 6,
+          "board": "MSP430F5529",
+          "firmware": "SUPERVISOR_V2"
+        },
+        "detection_enabled": false,
+        "target_action": "IDLE",
+        "camera_streaming": true
+      },
+      {
+        "links": {
+          "pico": "UP",
+          "wifi": "UP",
+          "esp": "UP",
+          "msp": "UP",
+          "uno": "READY"
+        },
+        "connection": {
+          "connected": true,
+          "port": "COM11",
+          "baud": 115200,
+          "error": null,
+          "fresh": true,
+          "last_seen": "2026-11-18T09:24:26.809+00:00"
+        },
+        "telemetry": {
+          "uno_link": "READY",
+          "run": 0,
+          "calibration": "NEEDED",
+          "led2": "OFF",
+          "flags": 0,
+          "result": 0,
+          "pending": 0,
+          "uart_errors": 0,
+          "rx_drops": 0,
+          "bad_frames": 0,
+          "base": "ZUMO",
+          "line": "BLACK",
+          "left": null,
+          "right": null,
+          "job": 0,
+          "job_id": 0,
+          "pump": 0,
+          "driver_ready": 0,
+          "water_raw": 2,
+          "board": "MSP430F5529",
+          "firmware": "SUPERVISOR_V2"
+        },
+        "detection_enabled": false,
+        "target_action": "IDLE",
+        "camera_streaming": true
+      },
+      {
+        "links": {
+          "pico": "UP",
+          "wifi": "UP",
+          "esp": "UP",
+          "msp": "UP",
+          "uno": "READY"
+        },
+        "connection": {
+          "connected": true,
+          "port": "COM11",
+          "baud": 115200,
+          "error": null,
+          "fresh": true,
+          "last_seen": "2026-11-18T09:26:08.932+00:00"
+        },
+        "telemetry": {
+          "uno_link": "READY",
+          "run": 0,
+          "calibration": "NEEDED",
+          "led2": "OFF",
+          "flags": 0,
+          "result": 0,
+          "pending": 0,
+          "uart_errors": 0,
+          "rx_drops": 0,
+          "bad_frames": 0,
+          "base": "ZUMO",
+          "line": "BLACK",
+          "left": null,
+          "right": null,
+          "job": 0,
+          "job_id": 0,
+          "pump": 0,
+          "driver_ready": 0,
+          "water_raw": 8,
+          "board": "MSP430F5529",
+          "firmware": "SUPERVISOR_V2"
+        },
+        "detection_enabled": false,
+        "target_action": "IDLE",
+        "camera_streaming": true
+      }
+    ],
+    "calibration": "NEEDED",
+    "all_links_ready": true,
+    "zero_uart_errors_observed": true
+  },
+  "motion_calibration_target_spray_or_resume_commands_sent": false,
+  "no_physical_driving_or_spray_test": true,
+  "logs": [
+    "tmp/powered-msp-link-2026-11-18.log",
+    "tmp/warm-uart-2026-11-18.log",
+    "tmp/msp-uart-kick-flash-2026-11-18.log"
+  ]
+}

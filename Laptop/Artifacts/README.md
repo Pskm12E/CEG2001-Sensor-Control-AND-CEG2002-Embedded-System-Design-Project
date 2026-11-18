@@ -2,6 +2,8 @@
 
 ## Target-cycle source — 18 November 2026
 
+[MSP UART idle-restart fix and live robot-link verification](verification/msp-uart-idle-restart-fix-2026-11-18.json).
+
 [FireBeetle V2 flash/readback](verification/firebeetle-v2-flash-2026-11-18.json) ·
 [Installed-board status](verification/target-spray-installation-2026-11-18.json) ·
 [Source/build test report](verification/target-spray-source-2026-11-18.json) ·

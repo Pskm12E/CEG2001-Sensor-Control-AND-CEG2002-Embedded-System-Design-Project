@@ -9,8 +9,9 @@ firmware, ESP32 DIRECT_WIFI_V2 and Pico DESK_BRIDGE_V3. The default MSP build
 keeps the unverified pump driver disabled and holds the robot stopped instead.
 See [pump wiring, ratings and cycle behavior](../../Car/MSP430/robot_supervisor/PUMP_SETUP.md).
 MSP and Pico updates are installed; Uno OG4 is user-confirmed and FireBeetle V2
-is flashed/hash-verified and identified. Reconnect/power the MSP to verify the
-complete robot link. The pump remains disabled pending driver qualification.
+is flashed/hash-verified and identified. The MSP UART idle-restart correction
+restored fresh MSP/Uno status; all links are verified while stopped, with zero
+UART errors. The pump remains disabled pending driver qualification.
 Reload the page after restarting the updated dashboard. Leave detection off until
 the remaining firmware/driver checks are complete.
 

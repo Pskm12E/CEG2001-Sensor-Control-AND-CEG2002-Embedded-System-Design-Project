@@ -3,8 +3,9 @@
 **Installed 18 November 2026: DIRECT_WIFI_V2**, flashed on COM20 with all four
 segments hash-verified. USB PING, STATUS and STATE confirm V2 and AP ready.
 The desk Pico Wi-Fi link and live camera recovered after the restart. The user
-unplugged the MSP430 for this upload; complete robot-link verification awaits
-MSP power reconnection. Pump output remains disabled pending driver qualification.
+initially unplugged the MSP430 for upload. After reconnecting it, corrected an
+MSP UART idle-transmit bug; fresh MSP/Uno status now reaches the dashboard with
+zero UART errors while stopped. Pump remains disabled pending driver qualification.
 
 Board: **DFRobot FireBeetle ESP32 DFR0478**. Source:
 [robot_wifi_gateway.ino](robot_wifi_gateway/robot_wifi_gateway.ino).

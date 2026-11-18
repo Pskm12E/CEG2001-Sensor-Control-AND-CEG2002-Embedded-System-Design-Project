@@ -9,7 +9,7 @@ The user confirmed the current driving setup is working on **17 November 2026**.
 
 ## Source update — 18 November 2026
 
-Firmware versions installed; powered robot-link verification pending: **blue target → stop → spray for 3 seconds →
+Firmware installed; live communication verified: **blue target → stop → spray for 3 seconds →
 continue**, **5 cm ultrasonic STOP / 7 cm clearance**, and stronger turns.
 Uno OG4 keeps straight speed at 150 and allows the outside track up to 250;
 the original calibration sweep is unchanged. Pump wiring uses MSP P1.6 and
@@ -19,10 +19,11 @@ a separate battery does not qualify the 2N7000 for 3.3 V gate drive.
 See [the complete pump/cycle guide](Car/MSP430/robot_supervisor/PUMP_SETUP.md).
 **Installed:** MSP430 5 cm / 7 cm pump-disabled image, flash/program-verified;
 desk Pico V3, identity verified; Uno OG4, confirmed by the user’s serial
-screenshot; FireBeetle V2, flashed/hash-verified and USB-identified. The user
-unplugged the MSP to connect the FireBeetle, so the complete robot link awaits
-MSP power reconnection. Pump output remains disabled pending driver qualification;
-no drive, calibration or spray was requested during installation.
+screenshot; FireBeetle V2, flashed/hash-verified and USB-identified. Corrected
+the MSP UART idle-transmit restart bug and verified live Pico/Wi-Fi/ESP/MSP/Uno
+links, stopped motion and zero UART errors. Calibration is needed. Pump output
+remains disabled pending driver qualification; no drive, calibration or spray
+was requested during installation or verification.
 
 ## Source stopping settings
 
@@ -136,6 +137,7 @@ Software-only regression checks do not open hardware:
 ```powershell
 python Car/Arduino_Uno/tests/check_zumo.py
 python Car/MSP430/tests/check_ultrasonic.py
+python Car/MSP430/tests/check_console_tx_interrupt.py
 python Car/MSP430/tests/check_spray_job.py
 python Laptop/Tools/Communication/tests/check_desk_actions.py
 python Car/MSP430/tests/check_supervisor_logic.py

@@ -1,5 +1,16 @@
 # Changelog
 
+## MSP UART reply recovery — 2026-11-18
+
+- Fixed the nonblocking UART1 transmit queue stalling after it became idle.
+  Reading the USCI interrupt vector had cleared TXIFG; later enqueues enabled
+  TXIE without restarting transmission. Enqueue and idle restart are now atomic.
+- Reproduced the stall with actual enqueue/ISR code and a USCI flag model, then
+  passed 4614 regression assertions plus existing supervisor/sonar/Zumo checks.
+- Flashed/program-verified the corrected pump-disabled MSP image. Distinct fresh
+  dashboard records confirm Pico/Wi-Fi/ESP/MSP UP, Uno READY, RUN=0, PUMP=0,
+  READY=0 and zero UART errors. Calibration is needed; no drive/spray was requested.
+
 ## Target stop and bounded spray source — 2026-11-18
 
 - Added confirmed blue-target requests through Pico V3 / ESP32 V2 to an MSP-owned

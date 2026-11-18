@@ -1,7 +1,7 @@
 {
   "date": "2026-11-18",
   "timezone": "Asia/Singapore",
-  "status": "All four firmware versions accounted for; MSP powered-link check pending; pump driver disabled",
+  "status": "All four firmware versions accounted for; live robot links verified after MSP UART idle-restart fix; pump disabled",
   "requested_flow": "confirmed blue target -> stop -> 3-second water spray -> fresh token-matched continuation",
   "ultrasonic": {
     "stop_cm": 5,
@@ -62,12 +62,13 @@
     },
     "msp_pump_disabled": {
       "compiled": true,
-      "sha256": "bd0e9cc893e35fd04c958376d37d23a9439cdc36eb1853a84513aac7fa401f3a",
+      "sha256": "918ac810fa0d8a1e72b73140093a5a8bf8e41b99df713eb0188d952927d3d30f",
       "uploaded": true,
       "ram_bytes_including_stack": 1430,
-      "flash_bytes_excluding_vectors": 7904,
+      "flash_bytes_excluding_vectors": 7930,
       "program_verification_successful": true,
-      "flash_bytes": 7950
+      "flash_bytes": 7976,
+      "uart_idle_restart_fix_installed": true
     },
     "msp_pump_enabled_test_build_only": {
       "compiled": true,
@@ -97,11 +98,66 @@
     "Read-only MSP raw memory snapshot before resume; target left executing"
   ],
   "limits": [
-    "No physical braking, turn torque, spray flow, alignment or ADC calibration test",
-    "MSP-to-Uno link was not ready in the stopped snapshot; USB data connection to Uno was absent",
-    "User unplugged MSP USB to flash ESP; full powered robot link not reverified yet"
+    "Physical braking, turn torque, spray flow, alignment and ADC calibration remain unmeasured",
+    "Pump driver qualification unresolved; output disabled; calibration needed"
   ],
-  "msp_runtime": {
+  "remaining_installation": {
+    "uno": "User-installed OG4 confirmed by screenshot",
+    "firebeetle": "Installed and verified; see firebeetle-v2-flash-2026-11-18.json",
+    "pump": "Disabled; unknown running/startup current and unverified 2N7000 drive rating",
+    "automatic_target_cycle": "Communication verified; pump remains disabled pending driver qualification. Physical target/drive/spray test not performed."
+  },
+  "movement_calibration_or_spray_commands_sent": false,
+  "logs": [
+    "tmp/msp-target-pump-disabled-flash-2026-11-18.log",
+    "tmp/msp-target-runtime-2026-11-18.log"
+  ],
+  "firebeetle_flash_evidence": "firebeetle-v2-flash-2026-11-18.json",
+  "msp_uart_fix_evidence": "msp-uart-idle-restart-fix-2026-11-18.json",
+  "latest_dashboard": {
+    "links": {
+      "pico": "UP",
+      "wifi": "UP",
+      "esp": "UP",
+      "msp": "UP",
+      "uno": "READY"
+    },
+    "connection": {
+      "connected": true,
+      "port": "COM11",
+      "baud": 115200,
+      "error": null,
+      "fresh": true,
+      "last_seen": "2026-11-18T09:26:08.932+00:00"
+    },
+    "telemetry": {
+      "uno_link": "READY",
+      "run": 0,
+      "calibration": "NEEDED",
+      "led2": "OFF",
+      "flags": 0,
+      "result": 0,
+      "pending": 0,
+      "uart_errors": 0,
+      "rx_drops": 0,
+      "bad_frames": 0,
+      "base": "ZUMO",
+      "line": "BLACK",
+      "left": null,
+      "right": null,
+      "job": 0,
+      "job_id": 0,
+      "pump": 0,
+      "driver_ready": 0,
+      "water_raw": 8,
+      "board": "MSP430F5529",
+      "firmware": "SUPERVISOR_V2"
+    },
+    "detection_enabled": false,
+    "target_action": "IDLE",
+    "camera_streaming": true
+  },
+  "initial_installation_msp_runtime": {
     "ticks": 1466,
     "linked": false,
     "running": false,
@@ -116,7 +172,7 @@
     "rx_drops": 0,
     "bad_frames": 0
   },
-  "pico_runtime": {
+  "initial_installation_pico_runtime": {
     "firmware": "DESK_BRIDGE_V3",
     "wifi": "UP",
     "esp_link": "UP",
@@ -125,18 +181,7 @@
     "fresh_msp_telemetry": false,
     "firmware_identity_verified": true
   },
-  "remaining_installation": {
-    "uno": "User-installed OG4 confirmed by screenshot",
-    "firebeetle": "Installed and verified; see firebeetle-v2-flash-2026-11-18.json",
-    "pump": "Disabled; unknown running/startup current and unverified 2N7000 drive rating",
-    "automatic_target_cycle": "Requires MSP power reconnection/link verification; pump disabled until qualified"
-  },
-  "movement_calibration_or_spray_commands_sent": false,
-  "logs": [
-    "tmp/msp-target-pump-disabled-flash-2026-11-18.log",
-    "tmp/msp-target-runtime-2026-11-18.log"
-  ],
-  "dashboard_restored": {
+  "initial_dashboard_restoration": {
     "updated_server": true,
     "pico_verified": true,
     "camera_streaming": true,
@@ -145,5 +190,27 @@
     "target_action": "IDLE",
     "msp_status": "STALE"
   },
-  "firebeetle_flash_evidence": "firebeetle-v2-flash-2026-11-18.json"
+  "msp_runtime": {
+    "source": "fresh MSP status through ESP/Pico",
+    "linked": true,
+    "running": false,
+    "pump": false,
+    "pump_driver_enabled": false,
+    "job_phase": 0,
+    "uart_errors": 0,
+    "rx_drops": 0,
+    "bad_frames": 0,
+    "calibration": "NEEDED"
+  },
+  "pico_runtime": {
+    "firmware": "DESK_BRIDGE_V3",
+    "links": {
+      "pico": "UP",
+      "wifi": "UP",
+      "esp": "UP",
+      "msp": "UP",
+      "uno": "READY"
+    },
+    "camera_streaming": true
+  }
 }

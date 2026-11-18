@@ -71,8 +71,15 @@ static uint8_t put(uint8_t link,uint8_t b) {
     /* Status replies are long at 9600 baud. Queue them so obstacle service
      * continues instead of waiting hundreds of milliseconds for console TX. */
     if(!link) {
-        if(!consoleTxPush(&consoleTx,b)) return 0;
-        UCA1IE|=UCTXIE; return 1;
+        __disable_interrupt();
+        if(!consoleTxPush(&consoleTx,b)) { __enable_interrupt(); return 0; }
+        /* Reading UCA1IV clears TXIFG, including the final empty-queue ISR.
+         * Re-arm an idle transmitter before enabling its interrupt. Keep the
+         * enqueue/kick atomic so the ISR cannot disable TXIE between them. */
+        if(!(UCA1IE&UCTXIE)) UCA1IFG|=UCTXIFG;
+        UCA1IE|=UCTXIE;
+        __enable_interrupt();
+        return 1;
     }
     while(!(UCA0IFG&UCTXIFG))
         if((uint16_t)(ticks-start)>=3u) return 0;

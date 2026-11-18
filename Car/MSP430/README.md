@@ -6,8 +6,9 @@ the positive turn limit to 250 while straight speed stays 150. Pump gate P1.6,
 raw water ADC P6.0. The pump driver is disabled until its electrical rating is
 verified. Read [the current cycle/pump guide](robot_supervisor/PUMP_SETUP.md). MSP 5 cm / 7 cm pump-disabled firmware and Pico V3 are installed/verified.
 The user-installed Uno OG4 is confirmed by its serial banner. FireBeetle V2
-is flashed/hash-verified and identified over USB. Reconnect/power the MSP for a
-full link check. Pump output remains disabled pending driver qualification;
+is flashed/hash-verified and identified over USB. The MSP UART idle-restart
+fix is installed; live robot links are verified while stopped, with zero UART
+errors. Calibration is needed. Pump remains disabled pending driver qualification;
 physical spraying is not ready. The earlier installed milestone is history below.
 
 ## Previous installed milestone — 17 November 2026

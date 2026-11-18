@@ -6,8 +6,9 @@ the positive turn limit to 250 while straight speed stays 150. Pump gate P1.6,
 raw water ADC P6.0. The pump driver is disabled until its electrical rating is
 verified. Read [the current cycle/pump guide](PUMP_SETUP.md). MSP 5 cm / 7 cm pump-disabled firmware and Pico V3 are installed/verified.
 The user-installed Uno OG4 is confirmed by its serial banner. FireBeetle V2
-is flashed/hash-verified and identified over USB. Reconnect/power the MSP for a
-full link check. Pump output remains disabled pending driver qualification;
+is flashed/hash-verified and identified over USB. The MSP UART idle-restart
+fix is installed; live robot links are verified while stopped, with zero UART
+errors. Calibration is needed. Pump remains disabled pending driver qualification;
 physical spraying is not ready. The earlier installed milestone is history below.
 
 ## Previous installed milestone — 17 November 2026
@@ -87,3 +88,20 @@ and matching map are retained locally under ignored
 [Previous L298N supervisor guide](LEGACY_L298N.md) and
 [12 November ultrasonic test history](ULTRASONIC_SETUP.md) retain dated results
 and old pins. They do not describe the current Zumo operating procedure.
+
+## UART idle-restart correction — 18 November 2026
+
+The queued UART1 transmitter now re-arms TXIFG when starting from idle, before
+enabling TXIE. Reading UCA1IV acknowledges the interrupt flag, so enabling TXIE
+alone after the final empty-queue interrupt could strand all subsequent replies.
+See the [TI USCI UART guide](https://www.ti.com/lit/ug/slau208q/slau208q.pdf),
+section 36.3.15.3, and the actual enqueue/ISR regression:
+
+```powershell
+python Car/MSP430/tests/check_console_tx_interrupt.py
+```
+
+The fixed pump-disabled image is flashed/program-verified. Repeated fresh status
+records confirm all robot links ready, stopped motion, disabled pump and no UART
+errors. The matching image/map are retained locally under ignored
+`build-installed-uart-kick-2026-11-18/`; use these symbols for later debugging.
