@@ -1,5 +1,10 @@
 # Target stop, water spray and continuation
 
+**Temporary bench mode, 18 November:** the MSP currently runs the separate
+[P1.6 voltage test](../pump_voltage_test/README.md). The integrated supervisor
+described below must be restored before robot operation. Motors remain off and
+the pump disconnected for the voltage test.
+
 Source update: **18 November 2026**. The software sequence is implemented and
 tested with simulated hardware. **MSP pump-disabled firmware and Pico V3 are
 installed and verified. Uno OG4 is user-confirmed, and FireBeetle V2 is now
@@ -53,6 +58,11 @@ pinout; TO-92 lead order must not be inferred from a generic drawing.
 
 ## Driver qualification still needed
 
+To check the GPIO control voltage without powering the pump, use the separate
+[button-driven P1.6 voltage test](../pump_voltage_test/README.md). It produces
+a bounded 3-second pulse with the pump disconnected; it does not detect or
+qualify the pump. Building it leaves the installed supervisor unchanged.
+
 The user reports the pump is approximately **5 V**; its current/model and the
 exact 2N7000 manufacturer remain unknown. A separate battery supplies motor power
 but does not establish that the transistor can switch it. The
@@ -65,7 +75,8 @@ Verify pump running/startup current, supply voltage range and a driver whose
 on-resistance is specified for the actual gate drive. A four-AA supply may exceed
 5 V depending on cell chemistry/state. The existing 2N7000 wiring has therefore
 **not** been approved for a powered pump test. Hardware qualification is required
-before enabling P1.6. The gate pull-down is required even with firmware protection.
+before using P1.6 to switch a powered pump. The disconnected-load GPIO voltage
+test above is separate. The gate pull-down is required even with firmware protection.
 
 P6.0 is sampled as a raw 12-bit ADC value once per second (`WATER=0..4095`).
 Wet/dry calibration is pending; no tank level or empty-tank protection is claimed.

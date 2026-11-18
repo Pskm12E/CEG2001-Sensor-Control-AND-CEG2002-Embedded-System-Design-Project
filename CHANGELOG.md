@@ -1,5 +1,17 @@
 # Changelog
 
+## Standalone pump control-voltage test — 2026-11-18
+
+- Prepared separate MSP430F5529 firmware for a disconnected-load voltage check:
+  MSP S2 press/release produces a bounded three-second P1.6 pulse and LED1 signal.
+  Another press cancels early; held buttons do not repeat or activate at startup.
+- Added timer cutoff, reset watchdog, build-only helper, meter instructions and
+  5788 passing pulse-state assertions. This does not detect or qualify a pump.
+- After a replacement USB cable resolved enumeration, flashed/program-verified
+  the standalone test and checked P1.6 starts as a GPIO output LOW. Left it running
+  for the user's voltage measurement; no pulse was synthesised by the agent.
+  The robot supervisor is temporarily replaced and must be restored before driving.
+
 ## Stable target video relay — 2026-11-18
 
 - Fixed the desk Pico discarding a completed JPEG when the next partial frame

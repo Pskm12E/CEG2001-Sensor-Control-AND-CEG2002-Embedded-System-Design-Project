@@ -1,5 +1,11 @@
 # Car MSP430 — main controller
 
+**Temporary bench mode, 18 November:** the standalone
+[P1.6 voltage test](pump_voltage_test/README.md) is currently installed and running.
+MSP S2 triggers a three-second GPIO pulse with the pump disconnected. The robot
+supervisor must be restored before driving; UART supervision and ultrasonic
+stopping are unavailable in this bench program. Keep motor power off.
+
 **18 November update — firmware versions installed:** 5 cm STOP / 7 cm clearance;
 blue-target stop → 3-second spray → token-matched continuation. Uno OG4 raises
 the positive turn limit to 250 while straight speed stays 150. Pump gate P1.6,
@@ -10,6 +16,11 @@ is flashed/hash-verified and identified over USB. The MSP UART idle-restart
 fix is installed; live robot links are verified while stopped, with zero UART
 errors. Calibration is needed. Pump remains disabled pending driver qualification;
 physical spraying is not ready. The earlier installed milestone is history below.
+
+For a separate **P1.6 control-voltage check**, see
+[pump_voltage_test](pump_voltage_test/README.md). It uses MSP S2 for a 3-second
+GPIO pulse with the pump disconnected. Installing it temporarily replaces the
+supervisor; creating/building it does not change the running robot.
 
 ## Previous installed milestone — 17 November 2026
 

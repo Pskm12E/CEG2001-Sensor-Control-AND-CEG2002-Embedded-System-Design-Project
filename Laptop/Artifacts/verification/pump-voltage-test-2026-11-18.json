@@ -1,0 +1,37 @@
+{
+  "date": "2026-11-18",
+  "timezone": "Asia/Singapore",
+  "purpose": "Standalone disconnected-load P1.6 control-voltage test, not pump detection or a powered pump test",
+  "board": "MSP-EXP430F5529LP",
+  "source": "Car/MSP430/pump_voltage_test/main.c",
+  "button": "MSP S2 / P1.1; not the Zumo button",
+  "expected_behavior": "Debounced press and release raises P1.6 and red LED1 for about 3.003 seconds, then lowers them. Another press cancels early; startup/held buttons cannot cause repeated pulses.",
+  "expected_high_voltage": "Approximately board VCC (3.3 V); not physically measured",
+  "watchdog": "Reset-mode ACLK watchdog about 1 second, serviced outside the pulse timer ISR",
+  "validation": {
+    "pulse_state_assertions_passed": 5788,
+    "ti_compiler": "21.6.3.LTS",
+    "compile_and_link_passed": true,
+    "image_sha256": "18482442f23f384d73c92bf6572ab2376030292ec15f452e2c0a3d92e52f94ef"
+  },
+  "hardware_setup_confirmed_by_user": "Zumo motor power OFF, pump and pump battery disconnected, MSP USB connected",
+  "installation": {
+    "status": "INSTALLED_PROGRAM_VERIFIED_IDLE_LOW_LEFT_RUNNING",
+    "initial_usb_error": "Windows descriptor request failure and TI No USB FET found; no programming occurred during that attempt",
+    "usb_resolution": "User changed the USB cable; MSP application COM13 and debug COM14 reappeared as TI 2047:0013",
+    "program_load_reached": true,
+    "flash_program_verified": true,
+    "test_left_running": true,
+    "normal_supervisor_replaced": true,
+    "postload_check_note": "Initial debugger expression could not resolve P1OUT. Read the mapped peripheral registers instead, reverified the programmed image, then confirmed idle LOW and resumed execution.",
+    "idle_registers": {"P1OUT": 2, "P1DIR": 65, "P1SEL": 0},
+    "idle_gpio_output_low_verified": true,
+    "next_step": "User measures P1.6 to GND while pressing/releasing MSP S2; pump remains disconnected and motor power OFF. Restore supervisor before robot operation."
+  },
+  "original_supervisor_restore_snapshot_sha256": "918ac810fa0d8a1e72b73140093a5a8bf8e41b99df713eb0188d952927d3d30f",
+  "gpio_pulse_triggered_by_agent": false,
+  "voltage_measured": false,
+  "powered_pump_test_performed": false,
+  "pump_driver_qualified": false,
+  "compiled_firmware_published": false
+}

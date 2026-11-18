@@ -9,6 +9,12 @@ The user confirmed the current driving setup is working on **17 November 2026**.
 
 ## Source update — 18 November 2026
 
+**Temporary bench mode:** the MSP430 currently runs the separate
+[pump control-voltage test](Car/MSP430/pump_voltage_test/README.md), with the pump
+disconnected and Zumo motor power off. Press/release **MSP S2** for a three-second
+P1.6 test pulse. Restore the robot supervisor before driving or using sonar STOP;
+the following integrated firmware settings describe the normal robot mode.
+
 Firmware installed; live communication verified: **blue target → stop → spray for 3 seconds →
 continue**, **5 cm ultrasonic STOP / 7 cm clearance**, and stronger turns.
 Uno OG4 keeps straight speed at 150 and allows the outside track up to 250;
