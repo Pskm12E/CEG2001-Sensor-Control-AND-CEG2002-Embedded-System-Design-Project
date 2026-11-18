@@ -1,5 +1,17 @@
 # Changelog
 
+## Press-to-start blinking voltage test — 2026-11-18
+
+- Changed the standalone bench test to start on a debounced S2 press, blink red
+  LED1 at about 2 Hz, and keep P1.6 steadily HIGH for three seconds. Another
+  press cancels early; a held button does not repeat the test.
+- Added runtime progress/start/stop counters and passed 11335 pulse/LED/gate
+  assertions. Flashed/program-verified the update and checked sustained timer
+  and main-loop progress. Recorded 32 physical test starts and stops in RAM.
+- User reports varying 1.9–3.0 V readings and no visible red blink. Unloaded pin
+  voltage and visible LED operation remain under investigation; these are not
+  qualified powered-pump results. Motor power stays off and the pump disconnected.
+
 ## Standalone pump control-voltage test — 2026-11-18
 
 - Prepared separate MSP430F5529 firmware for a disconnected-load voltage check:

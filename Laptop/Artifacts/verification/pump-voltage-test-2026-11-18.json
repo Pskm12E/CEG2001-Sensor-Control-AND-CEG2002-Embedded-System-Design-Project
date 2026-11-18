@@ -5,33 +5,72 @@
   "board": "MSP-EXP430F5529LP",
   "source": "Car/MSP430/pump_voltage_test/main.c",
   "button": "MSP S2 / P1.1; not the Zumo button",
-  "expected_behavior": "Debounced press and release raises P1.6 and red LED1 for about 3.003 seconds, then lowers them. Another press cancels early; startup/held buttons cannot cause repeated pulses.",
-  "expected_high_voltage": "Approximately board VCC (3.3 V); not physically measured",
+  "expected_behavior": "A debounced S2 press starts about 3.003 seconds of steady P1.6 HIGH while red LED1 blinks at about 2 Hz, then both turn off. A second press cancels early; startup/held buttons cannot repeat the test.",
+  "expected_high_voltage": "Approximately board VCC (3.3 V); a steady unloaded HIGH remains unverified",
   "watchdog": "Reset-mode ACLK watchdog about 1 second, serviced outside the pulse timer ISR",
   "validation": {
-    "pulse_state_assertions_passed": 5788,
+    "pulse_state_assertions_passed": 11335,
     "ti_compiler": "21.6.3.LTS",
     "compile_and_link_passed": true,
-    "image_sha256": "18482442f23f384d73c92bf6572ab2376030292ec15f452e2c0a3d92e52f94ef"
+    "image_sha256": "31f076d842c4eb730a58245455d61c544788b162ca7235207142e751bf8b7403",
+    "original_steady_test_image_sha256": "18482442f23f384d73c92bf6572ab2376030292ec15f452e2c0a3d92e52f94ef",
+    "runtime_isr_ticks": [
+      33,
+      66,
+      191
+    ],
+    "runtime_main_loop_ticks": [
+      34,
+      67,
+      192
+    ],
+    "sustained_runtime_progress_verified": true
   },
   "hardware_setup_confirmed_by_user": "Zumo motor power OFF, pump and pump battery disconnected, MSP USB connected",
   "installation": {
-    "status": "INSTALLED_PROGRAM_VERIFIED_IDLE_LOW_LEFT_RUNNING",
+    "status": "PRESS_TO_START_BLINK_VERSION_PROGRAM_VERIFIED_LEFT_RUNNING",
     "initial_usb_error": "Windows descriptor request failure and TI No USB FET found; no programming occurred during that attempt",
     "usb_resolution": "User changed the USB cable; MSP application COM13 and debug COM14 reappeared as TI 2047:0013",
     "program_load_reached": true,
     "flash_program_verified": true,
     "test_left_running": true,
     "normal_supervisor_replaced": true,
-    "postload_check_note": "Initial debugger expression could not resolve P1OUT. Read the mapped peripheral registers instead, reverified the programmed image, then confirmed idle LOW and resumed execution.",
-    "idle_registers": {"P1OUT": 2, "P1DIR": 65, "P1SEL": 0},
+    "postload_check_note": "Current image program-verified, then timer and main-loop counters advanced over three startup samples including a 1.25-second run. P1.6 starts as GPIO output LOW.",
+    "idle_registers": {
+      "P1OUT": 2,
+      "P1DIR": 65,
+      "P1SEL": 0
+    },
     "idle_gpio_output_low_verified": true,
-    "next_step": "User measures P1.6 to GND while pressing/releasing MSP S2; pump remains disconnected and motor power OFF. Restore supervisor before robot operation."
+    "next_step": "With power off remove the P1.6-to-MOSFET wire, then power only MSP USB and measure directly P1.6 to GND after one S2 press; leave the button alone for five seconds. Visible LED operation and steady unloaded HIGH remain pending. Restore supervisor before driving."
   },
   "original_supervisor_restore_snapshot_sha256": "918ac810fa0d8a1e72b73140093a5a8bf8e41b99df713eb0188d952927d3d30f",
   "gpio_pulse_triggered_by_agent": false,
-  "voltage_measured": false,
   "powered_pump_test_performed": false,
   "pump_driver_qualified": false,
-  "compiled_firmware_published": false
+  "compiled_firmware_published": false,
+  "button_diagnosis": {
+    "held_s2_pin1_bit1_low_confirmed": true,
+    "retained_ram_physical_starts": 32,
+    "retained_ram_physical_stops": 32,
+    "retained_ram_isr_ticks": 17785,
+    "retained_ram_main_loop_ticks": 17786,
+    "continuous_debug_capture_scope": "The 45-second halt/resume trace did not observe a press and showed a counter restart. It is inconclusive as pulse/timing proof; debugger sampling can lengthen wall time.",
+    "original_no_visible_led_cause": "Unresolved; do not equate an output latch or software pulse count with visible LED or unloaded meter validation."
+  },
+  "agent_meter_measurement_performed": false,
+  "user_reported_voltages_v": {
+    "earlier_current_readings": [
+      0.05,
+      0.01
+    ],
+    "varying_readings_after_press": [
+      2.7,
+      1.9,
+      3.0
+    ],
+    "steady_unloaded_high": null
+  },
+  "user_visible_red_blink_confirmed": false,
+  "unloaded_pin_check_pending": true
 }

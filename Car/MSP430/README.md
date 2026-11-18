@@ -2,7 +2,8 @@
 
 **Temporary bench mode, 18 November:** the standalone
 [P1.6 voltage test](pump_voltage_test/README.md) is currently installed and running.
-MSP S2 triggers a three-second GPIO pulse with the pump disconnected. The robot
+MSP S2 starts a three-second GPIO pulse with red LED1 blinking and the pump
+disconnected. The robot
 supervisor must be restored before driving; UART supervision and ultrasonic
 stopping are unavailable in this bench program. Keep motor power off.
 
