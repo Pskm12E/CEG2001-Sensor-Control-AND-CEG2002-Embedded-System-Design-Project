@@ -7,6 +7,13 @@ is exposed. MSP is updated; user-installed Uno OG4 is confirmed, and FireBeetle 
 is installed/identified. After the MSP UART idle-restart fix, the complete
 robot-status route is verified while stopped. Pump remains disabled.
 
+The 18 November video-buffer fix is also installed. A completed JPEG now remains
+available while the next frame arrives in arbitrary TCP fragments. Two bounded
+32 KiB buffers swap on completion; older completed frames can be replaced, but
+partial frames never erase or overwrite a publishable image. Live receive rate
+improved from 4.4–6.6 to 12.9–13.3 fps, with no >400 ms gaps in either updated
+150-frame check. [Evidence](../Artifacts/verification/video-stability-2026-11-18.json).
+
 Current source: [laptop_wifi_bridge/main.cpp](laptop_wifi_bridge/main.cpp).
 Firmware identity: **DESK_BRIDGE_V3** (V2 remains supported for monitoring only).
 

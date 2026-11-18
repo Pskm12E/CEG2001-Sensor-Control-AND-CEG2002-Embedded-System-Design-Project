@@ -157,6 +157,10 @@ function detectionControls() {
 function renderDetection() {
   const detector = state?.detection;
   const action = state?.target_action;
+  const robot = serverAvailable && state?.connection?.fresh ? state?.telemetry : null;
+  const pumpDisabled = robot?.driver_ready === 0;
+  text("target-mode", pumpDisabled ? "Pump disabled: target detection stops the robot. Spraying and automatic continuation are disabled." :
+    robot?.driver_ready === 1 ? "Target cycle: stop, spray for 3 seconds, then continue." : "Waiting for pump status.");
   const live = serverAvailable && !paused && cameraActive && detector?.enabled && detector.fresh;
   const names = {SEARCHING: "Searching", CHECKING: "Checking target", DETECTED: "Blue target detected"};
   const status = !serverAvailable ? "Offline" : paused ? "Updates paused" : !detector?.enabled ? "Off" : live ? names[detector.status] || "Waiting for video" : "Waiting for video";
@@ -165,7 +169,8 @@ function renderDetection() {
   text("detection-position", live && detector.centre ? `Centre: ${detector.centre[0]}, ${detector.centre[1]} px · ${detector.fps} fps` : "");
   const prompt = !detector?.available ? "Detection is unavailable. Install the dashboard requirements and restart it." :
     $("camera-source").value !== "xiao" ? "Choose the XIAO camera for the blue-square test." :
-    !detector?.enabled ? "Start detection to stop at a blue target, spray, then continue." :
+    !detector?.enabled ? "Start detection to test the blue target." :
+    robot && !robot.run && (action?.state === "DRIVER_DISABLED" || robot.job === 8) ? "Target stop complete. Pump disabled; robot remains stopped." :
     action?.state === "SPRAYING" ? "Robot stopped. Spraying water." :
     action?.state === "SETTLING" || action?.state === "STOPPING" ? "Target confirmed. Stopping before spraying." :
     action?.state === "RESUMING" ? "Spray finished. Resuming line following." :

@@ -1,0 +1,73 @@
+{
+  "tested_at": "2026-11-18T17:50:44.128236+08:00",
+  "passed": true,
+  "images_saved": false,
+  "actuator_commands_sent": false,
+  "method": "OPENCV_BLUE_SQUARE",
+  "frames": 150,
+  "fps": 11.55,
+  "distinct_robot_updates": 5,
+  "detection": {
+    "available": true,
+    "enabled": true,
+    "connected": true,
+    "generation": 1,
+    "sequence": 150,
+    "fresh": true,
+    "status": "DETECTED",
+    "detected": true,
+    "box": [
+      94,
+      31,
+      44,
+      41
+    ],
+    "centre": [
+      116,
+      51
+    ],
+    "streak": 3,
+    "required_frames": 3,
+    "width": 320,
+    "height": 240,
+    "frame_age_ms": 16,
+    "fps": 14.2,
+    "processing_ms": 1.8,
+    "error": null,
+    "method": "OPENCV_BLUE_SQUARE",
+    "source": "PICO_WIFI",
+    "actuator_control": false
+  },
+  "confirmed_frames": 146,
+  "processing_ms_median": 2.0,
+  "callback_disconnected": true,
+  "dashboard_detection_enabled": true,
+  "camera": {
+    "connected": true,
+    "port": "PICO_WIFI",
+    "sensor": "XIAO ESP32-S3",
+    "error": null,
+    "sequence": 1004,
+    "source_sequence": 52580,
+    "captured_at": 1794995457.1040027,
+    "transport": "WIFI_VIA_PICO",
+    "width": 320,
+    "height": 240,
+    "corrupt_frames": 0,
+    "received_monotonic": 387700.843,
+    "bytes": 5457,
+    "crc32": "113F812C",
+    "streaming": true,
+    "fps": 14.0,
+    "frame_age_ms": 16,
+    "generation": 1
+  },
+  "robot_connection": {
+    "connected": true,
+    "port": "COM11",
+    "baud": 115200,
+    "error": null,
+    "fresh": true,
+    "last_seen": "2026-11-18T09:50:56.742+00:00"
+  }
+}

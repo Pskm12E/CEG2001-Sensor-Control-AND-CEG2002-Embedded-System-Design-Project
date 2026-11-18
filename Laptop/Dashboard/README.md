@@ -12,8 +12,8 @@ MSP and Pico updates are installed; Uno OG4 is user-confirmed and FireBeetle V2
 is flashed/hash-verified and identified. The MSP UART idle-restart correction
 restored fresh MSP/Uno status; all links are verified while stopped, with zero
 UART errors. The pump remains disabled pending driver qualification.
-Reload the page after restarting the updated dashboard. Leave detection off until
-the remaining firmware/driver checks are complete.
+The user's target trial confirmed STOP and `DRIVER_DISABLED`; no pump pulse ran.
+The page now shows that mode explicitly. Reload the page to load updated copy.
 
 ## Start the system
 
@@ -87,7 +87,7 @@ same USB connection. The server checks JPEG framing and CRC32, keeps the newest
 frame and relays one persistent **MJPEG video stream** to the browser. There is
 no timed snapshot/capture loop and no camera USB video connection.
 
-Current tested setting: **320 x 240**, approximately **15 fps**. The page shows
+Current setting: **320 x 240**, capped at approximately **15 fps**. The page shows
 the measured receive rate. Lighting, radio interference and distance can affect
 performance; this prototype does not promise HD or 30 fps. The USB camera bench
 sketches under `Car/XIAO_ESP32S3_Camera/Archive/xiao_camera_usb` are superseded and are not the car
@@ -97,6 +97,16 @@ camera firmware. Current sources:
 - [Desk Pico](../Pico_W/laptop_wifi_bridge/main.cpp): DESK_BRIDGE_V3.
 - [Robot ESP32](../../Car/ESP32_Gateway/robot_wifi_gateway/robot_wifi_gateway.ino): DIRECT_WIFI_V2.
 - [Main MSP430](../../Car/MSP430/robot_supervisor/main.c): SUPERVISOR_V2 / ESP_UART_V1.
+
+On **18 November**, a relay bug discarded a completed JPEG when a partial next
+header arrived in the same TCP poll. The Pico now swaps two bounded buffers only
+when the next JPEG is complete, keeping its bytes and metadata together. Two
+before/after checks improved input from **4.4–6.6 to 12.9–13.3 fps** and reduced
+the longest frame gap from **969–1282 to 281–328 ms**. The unchanged detector
+confirmed 148 of 150 target frames in both updated runs (the first two establish
+confirmation), with no later confirmation resets. This measures frame arrival
+and offline detection stability, not camera-exposure-to-screen latency.
+[Metrics and test scope](../Artifacts/verification/video-stability-2026-11-18.json).
 
 **Pause updates** closes the browser's video response; resuming requests the
 latest live feed. **Stop camera** stops the Pico camera subscription. **Save
@@ -139,13 +149,15 @@ Sources: [OpenCV HSV thresholding](https://docs.opencv.org/4.x/da/d97/tutorial_t
 ## Robot status
 
 The dashboard reads MSP run state, calibration, left/right IR readings, UART
-errors and the Pico / Wi-Fi / ESP32 / MSP430 / Uno links. It allows only PING and
-STATUS checks. Movement, STOP, calibration, spraying and job dispatch are not
-available through the app. The MSP430 retains embedded robot authority.
+errors and the Pico / Wi-Fi / ESP32 / MSP430 / Uno links. The read-only buttons
+send PING and STATUS. Enabling blue-target detection permits bounded MSP target
+jobs; no unrestricted motion or direct pump command is exposed. The MSP430
+retains embedded robot authority.
 
-IR calibration is deferred, so **Needed / Not calibrated** is expected. A
-reported stopped state is supervisor status, not wheel-encoder feedback. Pest
-detection, ADC sensor integration, spraying and the dock are still future work.
+The Zumo button performs line calibration after each reset. A reported stopped
+state is supervisor status, not wheel-encoder feedback. P6.0 raw ADC reporting
+is implemented; water-level calibration, pump qualification, pest recognition
+and the dock remain pending.
 
 Stale status is blanked until a fresh reply arrives. A temporary unavailable
 MSP430 response must not close the independent camera relay. This was fixed and
@@ -219,8 +231,16 @@ robot-status updates during the run and no actuator commands. The scene was the
 ceiling, so positive live-target confirmation still needs the square in view.
 Evidence: `../Laptop/Artifacts/verification/blue-detection-stream-2026-11-05-215150.json`.
 
-Run the live video check only after starting the camera and detection:
+The current checker reads the raw live stream and runs a private detector worker
+with its robot callback disconnected. Start the camera first; the check sends
+only GET requests and does not change another client's detection setting:
 
 ```powershell
 python tests/verify_detection_stream.py
 ```
+
+On 18 November this check passed 150 live frames at 11.55 fps with five fresh
+robot-status updates, zero corrupt frames and a 2 ms median detector processing
+time. It saved no images and sent no actuator commands. Other dashboard clients
+remained under the user's control during this check.
+[Live worker evidence](../Artifacts/verification/blue-detection-stream-2026-11-18-175057.json).

@@ -21,9 +21,17 @@ See [the complete pump/cycle guide](Car/MSP430/robot_supervisor/PUMP_SETUP.md).
 desk Pico V3, identity verified; Uno OG4, confirmed by the user’s serial
 screenshot; FireBeetle V2, flashed/hash-verified and USB-identified. Corrected
 the MSP UART idle-transmit restart bug and verified live Pico/Wi-Fi/ESP/MSP/Uno
-links, stopped motion and zero UART errors. Calibration is needed. Pump output
+links, stopped motion and zero UART errors. The subsequent target trial reached
+`DRIVER_DISABLED`: the stop worked, but no water was sprayed. Pump output
 remains disabled pending driver qualification; no drive, calibration or spray
 was requested during installation or verification.
+
+**Video stability fix installed, 18 November:** the desk Pico now keeps the
+completed JPEG while receiving the next one. Two live checks improved input from
+4.4–6.6 fps to **12.9–13.3 fps**. Longest frame gaps fell from 969–1282 ms to
+281–328 ms; target confirmation stayed steady after the first three frames.
+Detection thresholds remain unchanged. See the
+[measurement record](Laptop/Artifacts/verification/video-stability-2026-11-18.json).
 
 ## Source stopping settings
 
@@ -58,9 +66,8 @@ PD settings remain `kp=1`, `kd=0`, centre 2500 and `MAX_SPEED=150`, with a posit
 **9600 baud**, source firmware **OG4**.
 See [the complete Zumo wiring and operating guide](Car/Arduino_Uno/zumo_line_follow/README.md).
 
-The MSP no-echo update was flashed and program-verified; the user installed Uno
-OG3, confirmed by its serial output. The source cleanup does not reflash either
-board. The full track, calibrated range accuracy and physical braking distance
+The current MSP image was flashed and program-verified; the user installed Uno
+OG4, confirmed by its serial output. The full track, calibrated range accuracy and physical braking distance
 have not been independently measured.
 
 ## Find the code
@@ -94,6 +101,8 @@ are pending. Trained YOLO insect recognition and dock/refill control remain plan
 [Start Dashboard.cmd](Laptop/Dashboard/Start%20Dashboard.cmd) uses the same
 launcher. Keep its server window open. Missing hardware leaves the dashboard
 available with a setup message; see [launcher options](Laptop/Dashboard/README.md#launcher-options).
+Press **Ctrl+C** in the launcher terminal to close its dashboard, video and
+detection. Use the robot's stop control to stop independent line following.
 
 ```text
 Car camera ── Wi-Fi ── FireBeetle AP ── Wi-Fi ── Desk Pico ── USB ── Laptop
@@ -107,8 +116,9 @@ Car camera ── Wi-Fi ── FireBeetle AP ── Wi-Fi ── Desk Pico ─�
                      Arduino Uno ── Zumo Shield ── tracks
 ```
 
-The user's latest screenshot shows live video with a confirmed blue target.
-The new target-action path has been tested in software; on-board action is pending installation.
+The user's target trial confirmed the MSP stop path. The pump-disabled build
+holds the robot stopped; physical spraying and automatic continuation are pending
+pump/driver qualification.
 Driving/calibration use the MSP/Uno link directly. Each board needs its own
 appropriate supply; common GND does not power the boards. Motors use the AA supply.
 

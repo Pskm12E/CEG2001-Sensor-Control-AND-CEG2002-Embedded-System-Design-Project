@@ -1,5 +1,20 @@
 # Changelog
 
+## Stable target video relay — 2026-11-18
+
+- Fixed the desk Pico discarding a completed JPEG when the next partial frame
+  arrived in the same TCP poll. Two bounded buffers now publish complete frames
+  with matching metadata, retaining newest-frame behavior without a queue.
+- Installed the Pico update. Two live checks improved receive rate from
+  4.4–6.6 to 12.9–13.3 fps; longest gaps fell from 969–1282 to 281–328 ms.
+  The unchanged detector stayed confirmed after its initial three frames.
+- Passed 12083 real-decoder assertions and all 70 dashboard tests. Camera, MSP,
+  Uno and FireBeetle firmware were unchanged. No actuator commands were sent.
+- Clarified the dashboard's pump-disabled STOP test mode and current target-job
+  status. The user’s target trial reached DRIVER_DISABLED, so spraying and
+  automatic continuation remain unavailable until the driver is qualified.
+- Left monitoring in a visible launcher terminal with Ctrl+C shutdown.
+
 ## MSP UART reply recovery — 2026-11-18
 
 - Fixed the nonblocking UART1 transmit queue stalling after it became idle.

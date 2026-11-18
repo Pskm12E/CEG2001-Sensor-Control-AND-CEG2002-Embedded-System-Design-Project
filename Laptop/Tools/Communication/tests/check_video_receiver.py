@@ -11,8 +11,8 @@ source.write_text(r'''
 #include <string>
 #include "video_receiver.h"
 static void put(std::string &s,unsigned offset,uint32_t v) { for(unsigned n=0;n<4;++n) s[offset+n]=char(v>>(8*n)); }
-static std::string frame(size_t n) {
-    std::string raw(16+n,'X');raw.replace(0,4,"PCV1");put(raw,4,n);put(raw,8,0x12345678);put(raw,12,50);return raw;
+static std::string frame(size_t n,uint32_t sequence=50,char fill='X') {
+    std::string raw(16+n,fill);raw.replace(0,4,"PCV1");put(raw,4,n);put(raw,8,0x12345678+sequence-50);put(raw,12,sequence);return raw;
 }
 int main() {
     unsigned checks=0;const auto raw=frame(4000);
@@ -24,7 +24,26 @@ int main() {
     r.reset();auto maximum=frame(32768);r.feed((const uint8_t*)maximum.data(),maximum.size());assert(r.ready && !r.bad);++checks;
     r.reset();auto two=raw+raw;r.feed((const uint8_t*)two.data(),two.size());assert(r.ready && r.frames==3 && r.dropped==1);++checks;
     r.reset();auto bad=raw;bad[0]='?';r.feed((const uint8_t*)bad.data(),bad.size());assert(r.bad);++checks;
-    printf("PASS %u camera decoder assertions: TCP fragmentation, bounds and latest-frame replacement.\n",checks);
+    // A completed frame must survive EVERY partial-next-header/body boundary.
+    // lwIP may return at any of these points before the main loop sends USB.
+    const auto next=frame(2000,51,'Y');
+    for(size_t split=1;split<next.size();++split) {
+        video::Receiver pending;
+        auto chunk=raw+next.substr(0,split);
+        pending.feed((const uint8_t*)chunk.data(),chunk.size());
+        assert(!pending.bad && pending.ready && pending.sequence==50 && pending.length==4000 && pending.checksum==0x12345678);
+        assert(pending.dropped==0 && !memcmp(pending.jpeg,raw.data()+16,4000));checks+=2;
+        pending.feed((const uint8_t*)next.data()+split,next.size()-split);
+        assert(pending.ready && pending.sequence==51 && pending.length==2000 && pending.checksum==0x12345679 && pending.dropped==1);
+        assert(!memcmp(pending.jpeg,next.data()+16,2000));checks+=2;
+    }
+    // Consuming the published slot while the next frame is incomplete must
+    // publish that next frame without counting it as a replacement/drop.
+    r.reset();r.feed((const uint8_t*)raw.data(),raw.size());r.ready=false;
+    r.feed((const uint8_t*)next.data(),19);assert(!r.ready);++checks;
+    r.feed((const uint8_t*)next.data()+19,next.size()-19);
+    assert(r.ready && r.sequence==51 && !memcmp(r.jpeg,next.data()+16,2000));++checks;
+    printf("PASS %u camera decoder assertions: fragmentation, pending-frame integrity, bounds and latest-frame replacement.\n",checks);
 }
 ''',encoding='utf-8')
 subprocess.run(['C:/msys64/ucrt64/bin/g++.exe','-std=c++17','-Wall','-Wextra','-Werror','-static',

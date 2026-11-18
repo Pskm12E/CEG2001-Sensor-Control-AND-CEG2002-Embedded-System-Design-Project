@@ -50,7 +50,8 @@
         <div id="detection-panel" class="detection-panel">
           <div class="section-heading"><h3>Blue-square test</h3><span id="detection-badge" class="badge">Off</span></div>
           <div class="detection-controls"><button id="detection-toggle" type="button" aria-pressed="false" aria-describedby="detection-message">Start detection</button><span id="detection-position" class="helper"></span></div>
-          <p id="detection-message" class="helper" role="status">Start detection to stop at a blue target, spray, then continue.</p>
+          <p id="target-mode" class="helper" role="status">Waiting for pump status.</p>
+          <p id="detection-message" class="helper" role="status">Start detection to test the blue target.</p>
           <p id="detection-error" class="error" role="alert" hidden></p>
         </div>
       </section>
@@ -83,12 +84,12 @@
           <legend>Read-only checks</legend>
           <div class="button-row"><button type="button" data-command="PING">Ping Pico</button><button type="button" data-command="STATUS">Refresh robot status</button></div>
         </fieldset>
-        <p id="command-message" class="helper" role="status">Movement and spraying are not available in this dashboard.</p>
+        <p id="command-message" class="helper" role="status">These status checks do not move the robot.</p>
       </section>
     </div>
 
     <section class="workflow-section" aria-labelledby="workflow-title">
-      <div class="section-heading"><h2 id="workflow-title">Planned workflow</h2><span class="badge">Jobs not connected</span></div>
+      <div class="section-heading"><h2 id="workflow-title">Planned pest workflow</h2><span class="badge">Pest recognition pending</span></div>
       <ol class="workflow">
         <li><span class="step-number" aria-hidden="true">1</span><div><h3>Observe</h3><p>Camera + blue-target test</p><span id="observe-status" class="step-state">Preview available</span></div></li>
         <li><span class="step-number" aria-hidden="true">2</span><div><h3>Review</h3><p>Check a possible pest</p><span class="step-state">Pending</span></div></li>
@@ -97,7 +98,7 @@
         <li><span class="step-number" aria-hidden="true">5</span><div><h3>Spot-spray</h3><p>Bounded water dose</p><span class="step-state">Pending</span></div></li>
         <li><span class="step-number" aria-hidden="true">6</span><div><h3>Verify</h3><p>Check sensor feedback</p><span class="step-state">Pending</span></div></li>
       </ol>
-      <p class="helper">This is the intended sequence. The website does not yet send robot jobs or confirm spraying.</p>
+      <p class="helper">The blue-square test can request an MSP stop. Pest recognition, aiming and spray verification are pending.</p>
     </section>
 
     <div class="lower-grid">

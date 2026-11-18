@@ -1,0 +1,191 @@
+{
+  "tested_at": "2026-11-18T17:52:55.594889+08:00",
+  "passed": true,
+  "problem": "Completed Pico JPEG was discarded when the next partial TCP frame arrived before USB publication.",
+  "fix": "One completed slot and one in-progress slot; swap bytes and metadata only on frame completion. No JPEG queue.",
+  "measurement_budget": "Each raw-stream run stops after 25 seconds or 150 frames, whichever comes first.",
+  "conditions": "Same powered camera and target, 320x240 JPEG, same laptop HTTP client and original detector. Dashboard detection OFF during the four raw-stream runs.",
+  "samples": [
+    {
+      "label": "baseline",
+      "frames": 112,
+      "duration_seconds": 25.032,
+      "received_fps": 4.434,
+      "gap_ms": {
+        "median": 125.0,
+        "p95": 640.0,
+        "max": 1282.0
+      },
+      "usb_to_http_ms": {
+        "median": 2.01,
+        "p95": 15.757,
+        "max": 290.115
+      },
+      "jpeg_bytes": {
+        "median": 5448.0,
+        "p95": 5643,
+        "max": 5683
+      },
+      "processing_ms": {
+        "median": 16.713,
+        "p95": 24.715,
+        "max": 32.908
+      },
+      "candidate_frames": 112,
+      "confirmed_frames": 78,
+      "detected_transitions": 21,
+      "gaps_over_400ms": 17,
+      "source_sequence_delta": 230,
+      "received_sequence_delta": 111,
+      "scope": "USB arrival to local HTTP client age is measured; lens-to-display latency is not measured.",
+      "actuator_commands_sent": false,
+      "private_images_saved_locally": true
+    },
+    {
+      "label": "baseline-repeat",
+      "frames": 150,
+      "duration_seconds": 22.563,
+      "received_fps": 6.604,
+      "gap_ms": {
+        "median": 93.0,
+        "p95": 515.0,
+        "max": 969.0
+      },
+      "usb_to_http_ms": {
+        "median": 2.023,
+        "p95": 15.343,
+        "max": 429.784
+      },
+      "jpeg_bytes": {
+        "median": 5460.0,
+        "p95": 5479,
+        "max": 5503
+      },
+      "processing_ms": {
+        "median": 17.637,
+        "p95": 25.741,
+        "max": 32.512
+      },
+      "candidate_frames": 150,
+      "confirmed_frames": 123,
+      "detected_transitions": 25,
+      "gaps_over_400ms": 13,
+      "source_sequence_delta": 247,
+      "received_sequence_delta": 149,
+      "scope": "USB arrival to local HTTP client age is measured; lens-to-display latency is not measured.",
+      "actuator_commands_sent": false,
+      "private_images_saved_locally": true
+    },
+    {
+      "label": "relay-fix",
+      "frames": 150,
+      "duration_seconds": 11.547,
+      "received_fps": 12.904,
+      "gap_ms": {
+        "median": 78.0,
+        "p95": 187.0,
+        "max": 281.0
+      },
+      "usb_to_http_ms": {
+        "median": 1.087,
+        "p95": 15.887,
+        "max": 33.548
+      },
+      "jpeg_bytes": {
+        "median": 5468.0,
+        "p95": 5496,
+        "max": 5528
+      },
+      "processing_ms": {
+        "median": 19.486,
+        "p95": 27.64,
+        "max": 32.459
+      },
+      "candidate_frames": 150,
+      "confirmed_frames": 148,
+      "detected_transitions": 1,
+      "gaps_over_400ms": 0,
+      "source_sequence_delta": 149,
+      "received_sequence_delta": 149,
+      "scope": "USB arrival to local HTTP client age is measured; lens-to-display latency is not measured.",
+      "actuator_commands_sent": false,
+      "private_images_saved_locally": true
+    },
+    {
+      "label": "relay-fix-repeat",
+      "frames": 150,
+      "duration_seconds": 11.203,
+      "received_fps": 13.3,
+      "gap_ms": {
+        "median": 63.0,
+        "p95": 141.0,
+        "max": 328.0
+      },
+      "usb_to_http_ms": {
+        "median": 2.119,
+        "p95": 16.422,
+        "max": 52.68
+      },
+      "jpeg_bytes": {
+        "median": 5494.0,
+        "p95": 5518,
+        "max": 5637
+      },
+      "processing_ms": {
+        "median": 14.48,
+        "p95": 23.842,
+        "max": 29.133
+      },
+      "candidate_frames": 150,
+      "confirmed_frames": 148,
+      "detected_transitions": 1,
+      "gaps_over_400ms": 0,
+      "source_sequence_delta": 149,
+      "received_sequence_delta": 149,
+      "scope": "USB arrival to local HTTP client age is measured; lens-to-display latency is not measured.",
+      "actuator_commands_sent": false,
+      "private_images_saved_locally": true
+    }
+  ],
+  "attempts": [
+    {
+      "change": "Preserve the complete JPEG through partial next-frame input.",
+      "result": "4.434/6.604 to 12.904/13.300 fps; p95 gaps 640/515 to 187/141 ms; zero gaps over 400 ms in both updated runs.",
+      "verdict": "kept",
+      "reason": "Both updated runs exceed baseline variation; all CRC and correctness checks pass."
+    }
+  ],
+  "detector_rules_changed": false,
+  "confirmation_scope": "Unmodified BlueSquare replayed on locally captured JPEGs at original arrival times; every raw-run frame had a candidate. Updated runs stay confirmed after the first three distinct frames.",
+  "live_worker_check": "blue-detection-stream-2026-11-18-175057.json",
+  "live_worker_scope": "Separate DetectionVideo worker consumes the live raw HTTP stream with on_observation=None; GET requests only. Other user-controlled dashboard clients are not disabled or altered.",
+  "checks": {
+    "receiver_assertions": 12083,
+    "dashboard_unit_tests": 70,
+    "desk_protocol_assertions": 634,
+    "desk_action_assertions": 28,
+    "pico_release_build": true,
+    "javascript_syntax": true,
+    "live_worker_frames": 150,
+    "live_worker_fps": 11.55,
+    "live_worker_processing_ms_median": 2.0,
+    "live_worker_fresh_robot_updates": 5,
+    "live_worker_images_saved": false,
+    "live_worker_callback_disconnected": true
+  },
+  "installation": {
+    "board": "Desk Raspberry Pi Pico W",
+    "port": "COM11",
+    "identity": "DESK_BRIDGE_V3",
+    "uf2_sha256": "15054ab57d262a0433ad7a15a61cd2ff8b4f1779bb13746555cc740a5f5469f6",
+    "method": "Built UF2 copied to identity-checked newly appeared RPI-RP2 boot volume; board rebooted and V3 identity/live stream verified.",
+    "flash_readback_performed": false,
+    "other_board_firmware_changed": false,
+    "robot_stopped_and_detection_off_before_pico_update": true
+  },
+  "actuator_commands_sent_by_this_work": false,
+  "pump_driver_enabled": false,
+  "raw_images_published": false,
+  "privacy": "Raw bench JPEGs remain only in ignored local work; Git contains aggregate metrics and source, no private network configuration or compiled firmware.",
+  "limits": "Measured frame gaps and USB-receipt-to-local-HTTP age. Camera exposure-to-display latency and physical target stopping distance were not measured. Lighting, target shape/motion and radio conditions still affect results."
+}
