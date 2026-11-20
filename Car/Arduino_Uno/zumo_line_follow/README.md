@@ -1,15 +1,16 @@
 # Zumo black-line follower with MSP430 stopping
 
-**18 November update — firmware versions installed:** 5 cm STOP / 7 cm clearance;
-blue-target stop → 3-second spray → token-matched continuation. Uno OG4 raises
-the positive turn limit to 250 while straight speed stays 150. Pump gate P1.6,
-raw water ADC P6.0. The pump driver is disabled until its electrical rating is
-verified. Read [the current cycle/pump guide](../../MSP430/robot_supervisor/PUMP_SETUP.md). MSP 5 cm / 7 cm pump-disabled firmware and Pico V3 are installed/verified.
-The user-installed Uno OG4 is confirmed by its serial banner. FireBeetle V2
-is flashed/hash-verified and identified over USB. The MSP UART idle-restart
-fix is installed; live robot links are verified while stopped, with zero UART
-errors. Calibration is needed. Pump remains disabled pending driver qualification;
-physical spraying is not ready. The earlier installed milestone is history below.
+**20 November update.** The MSP430 now runs the integrated three-second pump
+profile after two user-confirmed bench runs. P1.6 drives the MOSFET gate and
+P6.0 supplies raw water ADC readings. The normal supervisor has replaced the
+LED test and is flashed/program-verified. Live status shows `READY=1`, `PUMP=0`,
+`RUN=0`, all communication links ready and zero communication errors.
+
+The confirmed-target sequence is stop, acknowledge, settle, spray for three
+seconds, turn the pump off and resume with a fresh matching camera continuation.
+The ultrasonic settings are **5 cm STOP / 7 cm clearance**. Uno OG4 uses straight
+speed 150 and an outside-track turn limit of 250. See [the cycle/pump guide](../../MSP430/robot_supervisor/PUMP_SETUP.md).
+The full physical target-to-spray-to-resume trial remains pending.
 
 ## Previous installed milestone — 17 November 2026
 
@@ -23,15 +24,15 @@ upload firmware or change the original follower settings.
 
 | Condition | Result |
 | --- | --- |
-| Valid measured distance ≤ **2 cm** | MSP sends STOP; blocks a new sweep/start while near |
-| Two valid readings ≥ **4 cm** | Clears the recent near inhibit |
+| Valid measured distance ≤ **5 cm** | MSP sends STOP; blocks a new sweep/start while near |
+| Two valid readings ≥ **7 cm** | Clears the recent near inhibit |
 | No fresh valid reading for about **300 ms** | Expires the old near inhibit |
 | Missing / invalid echo, including startup | Diagnostic fault only; does not stop or block motion |
 | Range clears after a STOP | Stays stopped until another local request |
 
 The thresholds live in [obstacle_guard.h](../../MSP430/robot_supervisor/obstacle_guard.h).
 Only 2–400 cm measurements are accepted; readings below 2 cm are invalid.
-**2 cm is a configured trigger, not a validated physical braking distance.**
+**The configured STOP trigger is 5 cm. Physical braking distance remains unmeasured.**
 A failed/disconnected sonar cannot stop the car under this requested policy.
 Manual STOP, corrupt UART/session handling and the Uno's **1000 ms lease** remain
 active. No echo does not mean an obstacle-free path.

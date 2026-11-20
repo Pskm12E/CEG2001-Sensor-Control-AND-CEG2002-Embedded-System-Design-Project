@@ -3,17 +3,15 @@
 Open **http://127.0.0.1:8765** on the laptop. The robot MSP430 is the main
 embedded controller. The app runs locally; the laptop keeps its normal Wi-Fi.
 
-18 November source update: confirmed blue targets request a bounded MSP-owned
-stop → **3-second spray** → continuation cycle. It requires Uno OG4, MSP job
-firmware, ESP32 DIRECT_WIFI_V2 and Pico DESK_BRIDGE_V3. The default MSP build
-keeps the unverified pump driver disabled and holds the robot stopped instead.
-See [pump wiring, ratings and cycle behavior](../../Car/MSP430/robot_supervisor/PUMP_SETUP.md).
-MSP and Pico updates are installed; Uno OG4 is user-confirmed and FireBeetle V2
-is flashed/hash-verified and identified. The MSP UART idle-restart correction
-restored fresh MSP/Uno status; all links are verified while stopped, with zero
-UART errors. The pump remains disabled pending driver qualification.
-The user's target trial confirmed STOP and `DRIVER_DISABLED`; no pump pulse ran.
-The page now shows that mode explicitly. Reload the page to load updated copy.
+**20 November update.** The MSP430 pump profile is installed and enabled after
+two successful three-second bench runs. Confirmed blue targets request the
+bounded stop → spray → continuation cycle through Uno OG4, MSP supervisor,
+FireBeetle DIRECT_WIFI_V2 and Pico DESK_BRIDGE_V3.
+
+Live checks report all links ready, the robot stopped, pump off and zero
+communication errors. The full physical target-to-spray-to-resume trial remains
+pending. See [pump wiring and cycle behavior](../../Car/MSP430/robot_supervisor/PUMP_SETUP.md).
+The optional pump-disabled build continues to report `DRIVER_DISABLED`.
 
 ## Start the system
 
@@ -141,7 +139,7 @@ pump-on or unrestricted START command is exposed. One continuously visible targe
 gets one cycle, with one second of fresh absence required to rearm. Missing
 camera data prevents post-spray continuation. Stop detection cancels an active
 cycle. The future YOLO checkpoint belongs on the laptop
-under [YOLO_Model/](../YOLO_Model/README.md); no trained weights are present. Physical pump/driver qualification and nozzle alignment remain pending.
+under [YOLO_Model/](../YOLO_Model/README.md); no trained weights are present. The full physical target-cycle trial and nozzle alignment remain pending.
 
 Sources: [OpenCV HSV thresholding](https://docs.opencv.org/4.x/da/d97/tutorial_threshold_inRange.html),
 [contour features](https://docs.opencv.org/4.x/dd/d49/tutorial_py_contour_features.html).
@@ -156,7 +154,7 @@ retains embedded robot authority.
 
 The Zumo button performs line calibration after each reset. A reported stopped
 state is supervisor status, not wheel-encoder feedback. P6.0 raw ADC reporting
-is implemented; water-level calibration, pump qualification, pest recognition
+is implemented; water-level calibration, the full target-cycle trial, pest recognition
 and the dock remain pending.
 
 Stale status is blanked until a fresh reply arrives. A temporary unavailable

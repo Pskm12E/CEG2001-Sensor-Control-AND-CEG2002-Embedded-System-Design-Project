@@ -1,0 +1,195 @@
+{
+  "date": "2026-11-20",
+  "timezone": "Asia/Singapore",
+  "purpose": "Enable the existing bounded target spray cycle after successful P1.6 pump bench tests",
+  "physical_bench": {
+    "pump_pin": "P1.6 to MOSFET gate; source and MSP share GND",
+    "duration_seconds": 3,
+    "user_confirmed_runs": 2,
+    "user_confirmed_automatic_stop": true,
+    "attempts_observed_successfully": [
+      3,
+      4
+    ],
+    "last_cutoff_readback": {
+      "P1OUT": 2,
+      "remaining": 0,
+      "starts": 1,
+      "stops": 1
+    }
+  },
+  "installed_firmware": {
+    "board": "MSP430F5529",
+    "image_sha256": "dbde15a3e1b146e5a4847301cb971cb923f066edd0fb4cdfc01de4642381ad8e",
+    "build_command": "./Car/MSP430/build_robot_supervisor.ps1 -EspUart -Zumo -PumpDriverVerified -SpraySeconds 3",
+    "flash_program_verified": true,
+    "left_running": true,
+    "pump_enabled": true,
+    "spray_seconds": 3,
+    "stop_cm": 5,
+    "clear_cm": 7,
+    "startup_run": 0,
+    "startup_pump": 0,
+    "runtime_ticks": [
+      3,
+      18,
+      34
+    ],
+    "watchdog_enabled_during_execution": true,
+    "snapshot_directory_local_only": "Car/MSP430/robot_supervisor/build-installed-pump-2026-11-20/"
+  },
+  "verification": {
+    "zumo_supervisor_sonar_assertions": 1424,
+    "spray_job_assertions": 119,
+    "ultrasonic_assertions": 3140,
+    "uart_interrupt_assertions": 4614,
+    "dashboard_target_job_tests": 9,
+    "direct_build_helper_syntax_passed": true,
+    "full_physical_target_spray_resume_trial_completed": false,
+    "debugger_check": "Halted expression inspection initially allowed a watchdog restart. Holding the watchdog only while halted produced advancing ticks; it was re-enabled before every run and before disconnect.",
+    "direct_build_helper_pump_profile_passed": true,
+    "firebeetle_compile_passed": true,
+    "rebuilt_msp_image_matches_installed_snapshot": true
+  },
+  "live_read_only_check": {
+    "tested_at": "2026-11-20T12:58:27.815430+08:00",
+    "scope": "Read-only status through desk Pico, private Wi-Fi and FireBeetle",
+    "target_or_motion_commands_sent": false,
+    "samples": [
+      {
+        "last_seen": "2026-11-20T04:58:30.621+00:00",
+        "links": {
+          "pico": "UP",
+          "wifi": "UP",
+          "esp": "UP",
+          "msp": "UP",
+          "uno": "READY"
+        },
+        "telemetry": {
+          "uno_link": "READY",
+          "run": 0,
+          "calibration": "NEEDED",
+          "led2": "OFF",
+          "flags": 0,
+          "result": 0,
+          "pending": 0,
+          "uart_errors": 0,
+          "rx_drops": 0,
+          "bad_frames": 0,
+          "base": "ZUMO",
+          "line": "BLACK",
+          "left": null,
+          "right": null,
+          "job": 0,
+          "job_id": 0,
+          "pump": 0,
+          "driver_ready": 1,
+          "water_raw": 2503,
+          "board": "MSP430F5529",
+          "firmware": "SUPERVISOR_V2"
+        }
+      },
+      {
+        "last_seen": "2026-11-20T04:58:31.215+00:00",
+        "links": {
+          "pico": "UP",
+          "wifi": "UP",
+          "esp": "UP",
+          "msp": "UP",
+          "uno": "READY"
+        },
+        "telemetry": {
+          "uno_link": "READY",
+          "run": 0,
+          "calibration": "NEEDED",
+          "led2": "OFF",
+          "flags": 0,
+          "result": 0,
+          "pending": 0,
+          "uart_errors": 0,
+          "rx_drops": 0,
+          "bad_frames": 0,
+          "base": "ZUMO",
+          "line": "BLACK",
+          "left": null,
+          "right": null,
+          "job": 0,
+          "job_id": 0,
+          "pump": 0,
+          "driver_ready": 1,
+          "water_raw": 2135,
+          "board": "MSP430F5529",
+          "firmware": "SUPERVISOR_V2"
+        }
+      },
+      {
+        "last_seen": "2026-11-20T04:58:31.910+00:00",
+        "links": {
+          "pico": "UP",
+          "wifi": "UP",
+          "esp": "UP",
+          "msp": "UP",
+          "uno": "READY"
+        },
+        "telemetry": {
+          "uno_link": "READY",
+          "run": 0,
+          "calibration": "NEEDED",
+          "led2": "OFF",
+          "flags": 0,
+          "result": 0,
+          "pending": 0,
+          "uart_errors": 0,
+          "rx_drops": 0,
+          "bad_frames": 0,
+          "base": "ZUMO",
+          "line": "BLACK",
+          "left": null,
+          "right": null,
+          "job": 0,
+          "job_id": 0,
+          "pump": 0,
+          "driver_ready": 1,
+          "water_raw": 2694,
+          "board": "MSP430F5529",
+          "firmware": "SUPERVISOR_V2"
+        }
+      },
+      {
+        "last_seen": "2026-11-20T04:58:32.461+00:00",
+        "links": {
+          "pico": "UP",
+          "wifi": "UP",
+          "esp": "UP",
+          "msp": "UP",
+          "uno": "READY"
+        },
+        "telemetry": {
+          "uno_link": "READY",
+          "run": 0,
+          "calibration": "NEEDED",
+          "led2": "OFF",
+          "flags": 0,
+          "result": 0,
+          "pending": 0,
+          "uart_errors": 0,
+          "rx_drops": 0,
+          "bad_frames": 0,
+          "base": "ZUMO",
+          "line": "BLACK",
+          "left": null,
+          "right": null,
+          "job": 0,
+          "job_id": 0,
+          "pump": 0,
+          "driver_ready": 1,
+          "water_raw": 2694,
+          "board": "MSP430F5529",
+          "firmware": "SUPERVISOR_V2"
+        }
+      }
+    ],
+    "passed": true
+  },
+  "compiled_firmware_published": false
+}

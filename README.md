@@ -7,38 +7,32 @@ follows a black line on white using the six-sensor array and built-in motor
 driver. The MSP430 measures the HC-SR04 and sends obstacle STOP commands.
 The user confirmed the current driving setup is working on **17 November 2026**.
 
-## Source update — 18 November 2026
+## Integrated pump update — 20 November 2026
 
-**Last verified installed MSP430 program, 18 November:** the separate
-[button LED-only test](Car/MSP430/s2_led_test/README.md), with pump and Zumo motor power
-off. The current diagnostic requests **automatic red blinking, one second ON and
-one second OFF**, with green LED2 ON. No button press is needed.
-**P1.6 is disabled**, so this version does not run the pump. Restore the robot supervisor before driving or using sonar STOP;
-the following integrated firmware settings describe the normal robot mode.
+The user confirmed two successful **three-second P1.6 pump runs**, each followed
+by automatic cutoff. The normal MSP430 supervisor has now replaced the LED test
+and is flashed/program-verified with its pump profile enabled.
 
-The previously installed normal robot firmware implements **blue target → stop → spray for 3 seconds →
-continue**, **5 cm ultrasonic STOP / 7 cm clearance**, and stronger turns.
-Uno OG4 keeps straight speed at 150 and allows the outside track up to 250;
-the original calibration sweep is unchanged. Pump wiring uses MSP P1.6 and
-water ADC P6.0. **Pump output is disabled pending pump/driver qualification.**
-The pump is reported as approximately 5 V, but current/model is unknown;
-a separate battery does not qualify the 2N7000 for 3.3 V gate drive.
-See [the complete pump/cycle guide](Car/MSP430/robot_supervisor/PUMP_SETUP.md).
-**Before the bench test:** MSP430 5 cm / 7 cm pump-disabled image, flash/program-verified;
-desk Pico V3, identity verified; Uno OG4, confirmed by the user’s serial
-screenshot; FireBeetle V2, flashed/hash-verified and USB-identified. Corrected
-the MSP UART idle-transmit restart bug and verified live Pico/Wi-Fi/ESP/MSP/Uno
-links, stopped motion and zero UART errors. The subsequent target trial reached
-`DRIVER_DISABLED`: the stop worked, but no water was sprayed. Pump output
-remains disabled pending driver qualification; no drive, calibration or spray
-was requested during installation or verification.
+The sequence is **blue target → Zumo STOP acknowledgement → 300 ms settling →
+three-second pump pulse → pump off → matching continuation → line following**.
+The laptop supplies continuation from fresh camera observations. Manual STOP,
+an ultrasonic obstacle or a communication fault cancels the job with the pump off.
 
-**Video stability fix installed, 18 November:** the desk Pico now keeps the
-completed JPEG while receiving the next one. Two live checks improved input from
-4.4–6.6 fps to **12.9–13.3 fps**. Longest frame gaps fell from 969–1282 ms to
-281–328 ms; target confirmation stayed steady after the first three frames.
-Detection thresholds remain unchanged. See the
-[measurement record](Laptop/Artifacts/verification/video-stability-2026-11-18.json).
+Live checks through Pico V3 and FireBeetle V2 report `READY=1`, `PUMP=0`, `RUN=0`,
+the Uno link ready and zero UART/framing/drop errors. Uno OG4 remains installed
+with straight speed 150 and outside-track turn speed up to 250. The ultrasonic
+setting remains **5 cm STOP / 7 cm clearance**. Calibrate the line array before
+following. MSP S2 remains a temporary debug STOP control.
+
+The combined sequence passes software integration checks. The full physical
+target-to-spray-to-resume trial is still to be observed on the track. See the
+[pump/cycle guide](Car/MSP430/robot_supervisor/PUMP_SETUP.md) and
+[installation record](Laptop/Artifacts/verification/pump-integration-2026-11-20.json).
+
+The installed desk Pico video fix keeps completed frames while receiving the
+next JPEG. The 18 November live checks measured **12.9–13.3 fps**, with longest
+gaps of 281–328 ms. See the
+[video measurement record](Laptop/Artifacts/verification/video-stability-2026-11-18.json).
 
 ## Source stopping settings
 
@@ -91,8 +85,8 @@ have not been independently measured.
 | [Docking_Station](Docking_Station/README.md) | Planned dock controller and peripherals |
 
 Water sensor P6.0 raw ADC reporting and the bounded target spray cycle are
-implemented in source; wet/dry calibration and physical pump/driver qualification
-are pending. Trained YOLO insect recognition and dock/refill control remain planned.
+implemented and the pump profile is installed; wet/dry calibration and the full
+physical target-cycle trial are pending. Trained YOLO insect recognition and dock/refill control remain planned.
 
 ## Laptop monitor
 
@@ -123,11 +117,10 @@ Car camera ── Wi-Fi ── FireBeetle AP ── Wi-Fi ── Desk Pico ─�
                      Arduino Uno ── Zumo Shield ── tracks
 ```
 
-The user's target trial confirmed the MSP stop path. The pump-disabled build
-holds the robot stopped; physical spraying and automatic continuation are pending
-pump/driver qualification.
-On **18 November**, the user confirmed that both blue-target stopping and
-ultrasonic obstacle stopping work. The pump is the remaining physical test.
+The user confirmed target and ultrasonic stopping on 18 November, then confirmed
+P1.6-controlled pump operation twice on 20 November. The integrated pump profile
+is installed. A full physical target-to-spray-to-resume trial remains pending.
+
 Driving/calibration use the MSP/Uno link directly. Each board needs its own
 appropriate supply; common GND does not power the boards. Motors use the AA supply.
 
@@ -137,14 +130,14 @@ From the repository root, compile without uploading:
 
 ```powershell
 ./Car/Arduino_Uno/build_zumo.ps1
-./Car/MSP430/build_robot_supervisor.ps1 -EspUart -Zumo
+./Car/MSP430/build_robot_supervisor.ps1 -EspUart -Zumo -PumpDriverVerified -SpraySeconds 3
 ```
 
 Radio builds reuse the existing private configuration:
 
 ```powershell
 python Laptop/Tools/Communication/configure.py
-./Laptop/Tools/Communication/build_direct.ps1 -Zumo
+./Laptop/Tools/Communication/build_direct.ps1 -Zumo -PumpDriverVerified
 ./Laptop/Tools/Communication/build_desk_pico.ps1
 ./Car/XIAO_ESP32S3_Camera/build_camera_wifi.ps1
 ```

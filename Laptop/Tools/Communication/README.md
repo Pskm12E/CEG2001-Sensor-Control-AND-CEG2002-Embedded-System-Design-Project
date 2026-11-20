@@ -7,9 +7,12 @@ private Wi-Fi. The ESP uses the new three-wire UART to the main MSP430; the Uno
 now handles the Zumo array and track motors. Use the
 [Zumo wiring/firmware guide](../../../Car/Arduino_Uno/zumo_line_follow/README.md)
 for the 17 November D6 RX/D13 TX connections. Build the bridge and matching MSP
-image with `build_direct.ps1 -Zumo`. Start with [desk-pico-setup.md](desk-pico-setup.md).
+image with `build_direct.ps1 -Zumo -PumpDriverVerified` for the tested three-second pump profile. Start with [desk-pico-setup.md](desk-pico-setup.md).
 Both programs are uploaded and 20 full-path status requests passed on 5 November.
-The desk stage is read-only; it does not forward motion, calibration or STOP.
+Pico V3 and FireBeetle V2 forward bounded target jobs and matching continuation
+requests. The MSP430 controls stopping, the three-second pump pulse and resumption.
+The pump-enabled supervisor was installed and checked through this link on
+20 November 2026. See [the cycle guide](../../../Car/MSP430/robot_supervisor/PUMP_SETUP.md).
 
 ## Archived Pico-on-robot arrangement
 

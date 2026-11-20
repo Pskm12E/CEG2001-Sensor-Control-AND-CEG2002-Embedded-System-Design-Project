@@ -1,5 +1,21 @@
 # Changelog
 
+## Integrated three-second pump profile — 2026-11-20
+
+- User confirmed the P1.6-driven pump running and automatically stopping in two
+  observed bench tests. Installed/program-verified the normal ESP-UART/Zumo
+  supervisor with the existing bounded pump profile enabled.
+- The target cycle waits for Zumo STOP acknowledgement and settling, runs the
+  pump for three seconds, turns it off, then accepts matching fresh-camera
+  continuation. Ultrasonic settings remain 5 cm STOP / 7 cm clearance.
+- The shared direct-link build helper now forwards `-PumpDriverVerified` to
+  the MSP build. Default pump-disabled builds remain available.
+- Passed 1424 Zumo/MSP/sonar assertions, 119 spray-job assertions, 3140 sonar
+  assertions, 4614 UART interrupt assertions and nine dashboard target-job tests.
+  Four live read-only updates report the pump profile enabled, stopped motion,
+  pump off, Uno ready and zero communication errors.
+- The full physical target-to-spray-to-resume trial remains pending.
+
 ## Button and automatic LED diagnostics — 2026-11-18
 
 - User confirmed red illumination during the repeated direct LED test, but

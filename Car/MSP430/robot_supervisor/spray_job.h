@@ -1,5 +1,5 @@
 /* Bounded target job. All time values use the supervisor's ~100 ms tick.
- * Hardware enable is separate: unverified pump drivers must remain disabled.
+ * The build profile explicitly enables the pump output for the installed driver.
  */
 #ifndef SPRAY_JOB_H
 #define SPRAY_JOB_H

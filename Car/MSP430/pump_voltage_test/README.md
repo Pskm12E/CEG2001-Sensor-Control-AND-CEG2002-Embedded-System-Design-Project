@@ -1,20 +1,13 @@
 # Pump control-voltage test
 
-**Previously installed and program-verified on 18 November 2026.** The current
-installed program is the [button LED-only test](../s2_led_test/README.md), currently
-using automatic LED blinking with P1.6
-disabled. The user saw no blinking in S2, SW1 or automatic mode. A direct
-three-second pump test is pending wiring readiness. This voltage
-test remains available for that pump step. The initial
-USB descriptor fault was resolved by changing the USB cable. The current version
-starts on a press and blinks red LED1 while P1.6 stays HIGH. Runtime checks
-confirmed the timer/main loop advance and P1.6 starts LOW. The normal supervisor is
-temporarily replaced; keep motor power off until it is restored. See the
-[build and installation record](../../../Laptop/Artifacts/verification/pump-voltage-test-2026-11-18.json).
+**Bench test completed, 20 November 2026.** Two user-observed pump runs confirmed
+P1.6-controlled operation and automatic cutoff after about three seconds. The
+[integrated pump supervisor](../robot_supervisor/PUMP_SETUP.md) is now installed.
+The earlier missing visible LED behavior remains unresolved.
 
-Standalone firmware for **MSP-EXP430F5529LP**, using the existing **P1.6** gate
-output. It generates a test signal; it cannot detect whether a pump is connected,
-measure pump current or confirm that water flows.
+This standalone test remains available for voltage checks. Installing it replaces
+the normal robot supervisor. The original USB descriptor fault was resolved by
+changing the USB cable.
 
 ## Measure the control signal
 
@@ -35,8 +28,8 @@ measure pump current or confirm that water flows.
    pulses; a button held during startup cannot activate the output by itself.
 
 The timer bounds each pulse and a reset-mode watchdog guards a stalled program.
-A GPIO voltage reading does **not** qualify the 2N7000 to drive the pump. Keep
-the pump disconnected until its current and driver suitability are checked.
+The measurement steps above use a disconnected load. The later connected-pump
+bench runs and current deployment are recorded in the integrated cycle guide.
 
 The timer is configured for approximately 3.003 seconds of normal execution.
 Debugger halt/resume sampling can stretch that interval in wall time; measure
@@ -56,10 +49,10 @@ From the repository root:
 Output: ignored `Debug/pump_voltage_test.out`. The build does not upload it.
 **Flashing this test replaces the robot supervisor**, so robot communications,
 ultrasonic stopping and automatic target jobs are unavailable during the test.
-Restore the normal pump-disabled supervisor afterwards:
+Restore the integrated supervisor afterwards.
 
 ```powershell
-./Car/MSP430/build_robot_supervisor.ps1 -EspUart -Zumo
+./Car/MSP430/build_robot_supervisor.ps1 -EspUart -Zumo -PumpDriverVerified -SpraySeconds 3
 ```
 
 That command also only builds; the resulting supervisor image must be flashed

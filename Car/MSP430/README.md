@@ -1,22 +1,16 @@
 # Car MSP430 — main controller
 
-**Last verified installed program, 18 November:** the standalone
-[button LED-only test](s2_led_test/README.md) is currently installed in automatic mode.
-Green LED2 is ON; red LED1 is requested ON/OFF every second without a button. P1.6 is disabled
-while the LEDs are checked. The robot
-supervisor must be restored before driving; UART supervision and ultrasonic
-stopping are unavailable in this bench program. Keep motor power off.
+**Installed and program-verified, 20 November 2026.** The normal ESP-UART/Zumo
+supervisor is running with the three-second P1.6 pump profile enabled. It replaces
+the standalone LED diagnostic. The user confirmed the pump running and stopping
+in two bench tests. Live Pico/ESP/MSP/Uno checks report `READY=1`, `PUMP=0`,
+`RUN=0`, Uno ready and zero communication errors.
 
-**Normal firmware verified before the bench test, 18 November:** 5 cm STOP / 7 cm clearance;
-blue-target stop → 3-second spray → token-matched continuation. Uno OG4 raises
-the positive turn limit to 250 while straight speed stays 150. Pump gate P1.6,
-raw water ADC P6.0. The pump driver is disabled until its electrical rating is
-verified. Read [the current cycle/pump guide](robot_supervisor/PUMP_SETUP.md). MSP 5 cm / 7 cm pump-disabled firmware and Pico V3 were installed/verified.
-The user-installed Uno OG4 is confirmed by its serial banner. FireBeetle V2
-is flashed/hash-verified and identified over USB. The MSP UART idle-restart
-fix was verified with live robot links while stopped, with zero UART
-errors. Calibration is needed. Pump remains disabled pending driver qualification;
-physical spraying is not ready. The earlier installed milestone is history below.
+Confirmed target jobs stop the Zumo, wait for its acknowledgement and settling,
+spray for three seconds, turn the pump off and resume after a fresh matching
+camera continuation. Sonar remains **5 cm STOP / 7 cm clearance**. Raw water ADC
+uses P6.0. See [the cycle/pump guide](robot_supervisor/PUMP_SETUP.md).
+The full physical moving target-cycle trial remains pending.
 
 For a separate **P1.6 control-voltage check**, see
 [pump_voltage_test](pump_voltage_test/README.md). It uses MSP S2 for a 3-second
@@ -46,15 +40,16 @@ Board: **MSP-EXP430F5529LP**. Current source:
 The user confirmed the driving setup working on 17 November 2026.
 
 ```powershell
-./Car/MSP430/build_robot_supervisor.ps1 -EspUart -Zumo
+./Car/MSP430/build_robot_supervisor.ps1 -EspUart -Zumo -PumpDriverVerified -SpraySeconds 3
 ```
 
 This compiles only; it produces ignored
-`robot_supervisor/Debug_wifi_zumo/robot_supervisor.out`. Paths use the original
-Windows CCS installation. In CCS GUI define `SUPERVISOR_ESP_UART` and `ZUMO_BASE=1`.
+`robot_supervisor/Debug_wifi_zumo_pump/robot_supervisor.out`. Paths use the original
+Windows CCS installation. In CCS GUI define `SUPERVISOR_ESP_UART`, `ZUMO_BASE=1`
+and `PUMP_DRIVER_VERIFIED=1` for the installed pump profile.
 
 The supervisor owns movement grants, HC-SR04 range and STOP/timeout handling.
-**Current STOP trigger: valid measured range ≤2 cm.** Two readings ≥4 cm clear
+**Current STOP trigger, updated 18 November, is a valid range ≤5 cm.** Two readings ≥7 cm clear
 a recent near inhibit. Missing/invalid/stale echoes do not block movement;
 old near data expires after about 300 ms. Manual and communication STOP remain,
 and no clearance/fault recovery automatically restarts the car. These are
@@ -65,8 +60,8 @@ and [the Zumo guide](../Arduino_Uno/zumo_line_follow/README.md) for full wiring
 and the button sequence. The installed no-echo update was flashed and verified;
 the source cleanup does not flash a replacement image.
 
-Water S → P6.0 / ADC A0 is wired but ADC logic is pending. Pump/driver are not
-connected. The MSP does not run YOLO or camera processing.
+Water S → P6.0 / ADC A0 is sampled once per second as raw 12-bit data. The pump
+driver is connected to P1.6 and short bench operation is confirmed. The MSP does not run YOLO or camera processing.
 
 `robot_led_test` and `robot_usb_console` are earlier bench programs; flashing one
 replaces the supervisor. [Historical IR-only test notes](LEGACY_L298N.md) and

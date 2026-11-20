@@ -1,16 +1,14 @@
 # Target stop, water spray and continuation
 
-**Temporary bench mode, 18 November:** the MSP currently runs the separate
-[LED-only test](../s2_led_test/README.md), configured for automatic blinking with P1.6 disabled. The user saw no red blinking in this mode. The integrated supervisor
-described below must be restored before robot operation. Motors remain off and
-the pump disconnected for the voltage test.
+**Installed and program-verified, 20 November 2026.** The normal ESP-UART/Zumo
+supervisor now runs with its three-second pump profile enabled. It replaces the
+standalone LED diagnostic. The user confirmed two P1.6-controlled pump runs,
+each followed by automatic cutoff.
 
-Source update: **18 November 2026**. The software sequence is implemented and
-tested with simulated hardware. **MSP pump-disabled firmware and Pico V3 are
-installed and verified. Uno OG4 is user-confirmed, and FireBeetle V2 is now
-flashed/hash-verified and USB-identified. The MSP UART idle-restart fix is
-installed, and all live links are verified while stopped with the pump disabled.**
-The pump is **disabled in the default build** while the driver rating is unresolved.
+Live status through Pico V3 and FireBeetle V2 reports `READY=1`, `PUMP=0`,
+`RUN=0`, Uno ready and zero communication errors. Uno OG4 remains installed.
+The full physical target-to-spray-to-resume trial remains pending. See the
+[installation record](../../../Laptop/Artifacts/verification/pump-integration-2026-11-20.json).
 
 ## Requested sequence
 
@@ -56,27 +54,18 @@ sensor, driver source and pump-battery negative share GND. The pump battery does
 not connect to an MSP GPIO. Confirm the actual manufacturer's transistor package
 pinout; TO-92 lead order must not be inferred from a generic drawing.
 
-## Driver qualification still needed
+## Confirmed bench operation
 
-To check the GPIO control voltage without powering the pump, use the separate
-[button-driven P1.6 voltage test](../pump_voltage_test/README.md). It produces
-a bounded 3-second pulse with the pump disconnected; it does not detect or
-qualify the pump. Building it leaves the installed supervisor unchanged.
+With Zumo track power off and the separate pump supply connected, the MSP430
+issued timer-bounded three-second P1.6 pulses. The user confirmed that the pump
+ran and stopped in two observed tests. Each readback recorded one start, one
+stop, zero remaining ticks and P1.6 LOW after cutoff. This short-run result is
+the basis for enabling the installed three-second profile.
 
-The user reports the pump is approximately **5 V**; its current/model and the
-exact 2N7000 manufacturer remain unknown. A separate battery supplies motor power
-but does not establish that the transistor can switch it. The
-[Vishay 2N7000 datasheet](https://www.vishay.com/docs/70226/70226.pdf) lists a
-200 mA continuous-current absolute maximum at 25 °C and specifies on-resistance
-at gate voltages above 3.3 V. Threshold voltage is not a full-on drive rating.
-Those limits cannot qualify an unidentified pump at a 3.3 V gate signal.
-
-Verify pump running/startup current, supply voltage range and a driver whose
-on-resistance is specified for the actual gate drive. A four-AA supply may exceed
-5 V depending on cell chemistry/state. The existing 2N7000 wiring has therefore
-**not** been approved for a powered pump test. Hardware qualification is required
-before using P1.6 to switch a powered pump. The disconnected-load GPIO voltage
-test above is separate. The gate pull-down is required even with firmware protection.
+The normal supervisor uses Timer_A0 for an independent duration cutoff and a
+reset watchdog serviced by the main loop. Startup leaves the pump off. The
+standalone [P1.6 voltage-test program](../pump_voltage_test/README.md) remains
+available for future measurements. It replaces the supervisor when installed.
 
 P6.0 is sampled as a raw 12-bit ADC value once per second (`WATER=0..4095`).
 Wet/dry calibration is pending; no tank level or empty-tank protection is claimed.
@@ -97,25 +86,25 @@ hosted preview remains read-only. Queued target/continuation requests expire;
 uncertain actions are never replayed after timeout/reconnection. The MSP rejects
 duplicate job IDs and continuation outside the matching completed spray.
 
-From the repo root, compile the pump-disabled deployment candidate:
+From the repo root, compile the current pump-enabled deployment profile.
 
 ```powershell
 ./Car/Arduino_Uno/build_zumo.ps1
-./Laptop/Tools/Communication/build_direct.ps1 -Zumo
+./Laptop/Tools/Communication/build_direct.ps1 -Zumo -PumpDriverVerified
 ./Laptop/Tools/Communication/build_desk_pico.ps1
 ```
 
-After hardware qualification, the explicitly enabled MSP build is separate:
+To build only the MSP430 image, use the following command.
 
 ```powershell
 ./Car/MSP430/build_robot_supervisor.ps1 -EspUart -Zumo -PumpDriverVerified -SpraySeconds 3
 ```
 
 That command compiles only to ignored `Debug_wifi_zumo_pump/`. It does not
-qualify the driver or upload firmware. The default `Debug_wifi_zumo/` image uses
-`READY=0`: target detection stops the Zumo, reports `DRIVER_DISABLED`, and holds
-it stopped without spraying or automatically continuing. A timer interrupt cuts
-off the pump at the duration limit; the enabled build also uses a watchdog.
+upload firmware. Omitting `-PumpDriverVerified` builds the separate
+`Debug_wifi_zumo/` profile with `READY=0`. Target detection then stops the Zumo
+and reports `DRIVER_DISABLED`. The installed image uses `READY=1` and the
+three-second pump cutoff.
 
 Software checks include the actual sketch/supervisor/sonar path, the bounded job,
 Pico command/HTTP dispatch and the detection-to-job callback. They do not measure

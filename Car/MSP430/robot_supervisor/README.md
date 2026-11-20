@@ -1,15 +1,16 @@
 # MSP430 robot supervisor — Zumo
 
-**18 November update — firmware versions installed:** 5 cm STOP / 7 cm clearance;
-blue-target stop → 3-second spray → token-matched continuation. Uno OG4 raises
-the positive turn limit to 250 while straight speed stays 150. Pump gate P1.6,
-raw water ADC P6.0. The pump driver is disabled until its electrical rating is
-verified. Read [the current cycle/pump guide](PUMP_SETUP.md). MSP 5 cm / 7 cm pump-disabled firmware and Pico V3 are installed/verified.
-The user-installed Uno OG4 is confirmed by its serial banner. FireBeetle V2
-is flashed/hash-verified and identified over USB. The MSP UART idle-restart
-fix is installed; live robot links are verified while stopped, with zero UART
-errors. Calibration is needed. Pump remains disabled pending driver qualification;
-physical spraying is not ready. The earlier installed milestone is history below.
+**20 November update.** The MSP430 now runs the integrated three-second pump
+profile after two user-confirmed bench runs. P1.6 drives the MOSFET gate and
+P6.0 supplies raw water ADC readings. The normal supervisor has replaced the
+LED test and is flashed/program-verified. Live status shows `READY=1`, `PUMP=0`,
+`RUN=0`, all communication links ready and zero communication errors.
+
+The confirmed-target sequence is stop, acknowledge, settle, spray for three
+seconds, turn the pump off and resume with a fresh matching camera continuation.
+The ultrasonic settings are **5 cm STOP / 7 cm clearance**. Uno OG4 uses straight
+speed 150 and an outside-track turn limit of 250. See [the cycle/pump guide](PUMP_SETUP.md).
+The full physical target-to-spray-to-resume trial remains pending.
 
 ## Previous installed milestone — 17 November 2026
 
@@ -21,8 +22,8 @@ The user confirmed the current setup working on **17 November 2026**.
 
 | Setting | Value |
 | --- | --- |
-| Valid near STOP trigger | **≤2 cm** |
-| Clear recent near inhibit | **Two readings ≥4 cm** |
+| Valid near STOP trigger | **≤5 cm** |
+| Clear recent near inhibit | **Two readings ≥7 cm** |
 | Expire old near data | **3 × 100 ms ticks** without a fresh valid reading |
 | Missing / invalid / stale echo, including startup | Diagnostic fault only; motion allowed with MSP grant |
 | Automatic start/restart | Disabled |
@@ -30,7 +31,7 @@ The user confirmed the current setup working on **17 November 2026**.
 The policy is in [obstacle_guard.h](obstacle_guard.h); measurement/Timer_A2/Port2
 handling is in [ultrasonic_hcsr04.h](ultrasonic_hcsr04.h). Accepted range is
 2–400 cm. A disconnected/failed sonar cannot stop motion under this policy.
-The 2 cm setting is a trigger, not a measured physical braking distance.
+The 5 cm setting is a configured trigger. Physical braking distance remains unmeasured.
 The Uno still enforces its 1000 ms grant lease and local/frame/session stops.
 
 ## Pins and matching firmware
@@ -42,23 +43,24 @@ The Uno still enforces its 1000 ms grant lease and local/frame/session stops.
 | P4.1 TX / P4.2 RX | FireBeetle GPIO16 RX / GPIO17 TX; 3.3 V UART |
 | P3.2 | HC-SR04 TRIG |
 | P2.7 | HC-SR04 ECHO via 2.2 kΩ / 3.3 kΩ divider |
-| P6.0 | Water sensor S; ADC not implemented |
+| P1.6 | Pump MOSFET gate; three-second bounded output |
+| P6.0 | Water sensor S; raw ADC A0 sampled once per second |
 | GND | Common ground for all boards and sensors |
 
 Use [the Zumo guide](../../Arduino_Uno/zumo_line_follow/README.md) for complete
 divider orientation and operation. The matching Uno source is **zumo_line_follow**,
-firmware **OG3**. No L298N/two-IR wiring is used; pump/driver are unconnected.
+firmware **OG4**. The pump driver connects to P1.6.
 
 ```powershell
-./Car/MSP430/build_robot_supervisor.ps1 -EspUart -Zumo
+./Car/MSP430/build_robot_supervisor.ps1 -EspUart -Zumo -PumpDriverVerified -SpraySeconds 3
 python Car/MSP430/tests/check_supervisor_logic.py
 python Car/MSP430/tests/check_ultrasonic.py
 python Car/Arduino_Uno/tests/check_zumo.py
 ```
 
 Commands run from the repo root and do not upload. The build produces ignored
-`Debug_wifi_zumo/robot_supervisor.out`, using TI compiler 21.6.3.LTS. CCS GUI
-requires `SUPERVISOR_ESP_UART` and `ZUMO_BASE=1`; the old IR-only sonar bypass is
+`Debug_wifi_zumo_pump/robot_supervisor.out`, using TI compiler 21.6.3.LTS. CCS GUI
+requires `SUPERVISOR_ESP_UART`, `ZUMO_BASE=1` and `PUMP_DRIVER_VERIFIED=1`; the old IR-only sonar bypass is
 rejected for Zumo. The shared protocol header remains outside this project in
 `Car/Arduino_Uno/msp_line_follow/robot_link.h`; retain the repository layout.
 
