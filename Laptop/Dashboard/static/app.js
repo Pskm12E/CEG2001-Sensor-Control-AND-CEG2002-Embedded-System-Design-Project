@@ -9,6 +9,64 @@ const timeFormat = new Intl.DateTimeFormat(undefined, {hour: "2-digit", minute: 
 const text = (id, value) => { if ($(id).textContent !== String(value)) $(id).textContent = value; };
 const message = (id, value) => { text(id, value || ""); $(id).hidden = !value; };
 const formatTime = (value) => timeFormat.format(new Date(value));
+const maxWaterReading = 4095;
+const waterKey = "plant-robot.water-calibration.v1";
+const waterButtons = document.querySelectorAll("[data-water-point]");
+const validWaterReading = (value) => Number.isInteger(value) && value >= 0 && value <= maxWaterReading;
+let waterCalibration = {};
+try {
+  const saved = JSON.parse(localStorage.getItem(waterKey));
+  if (validWaterReading(saved?.empty)) waterCalibration.empty = saved.empty;
+  if (validWaterReading(saved?.full)) waterCalibration.full = saved.full;
+} catch { /* The readings remain available if storage is blocked or unavailable. */ }
+
+function liveTelemetry() {
+  return serverAvailable && !paused && state?.connection?.connected && state.connection.fresh ? state.telemetry : null;
+}
+
+function renderWater(data) {
+  const raw = data?.water_raw;
+  const available = validWaterReading(raw);
+  const {empty, full} = waterCalibration;
+  const calibrated = validWaterReading(empty) && validWaterReading(full) && full > empty;
+  const level = available && calibrated ? Math.round(100 * Math.max(0, Math.min(1, (raw - empty) / (full - empty)))) : null;
+  text("water-raw", available ? `${raw} / ${maxWaterReading}` : "—");
+  text("water-level", level !== null ? `${level}%` : available ? "Needs calibration" : "—");
+  $("water-meter").hidden = level === null;
+  if (level !== null) $("water-meter").value = level;
+  text("water-points", `Empty ${empty ?? "—"} · Full ${full ?? "—"}`);
+  $("water-calibration").hidden = state?.mode === "hosted";
+  for (const button of waterButtons) button.disabled = !available || data.run !== 0 || data.pump !== 0;
+  $("water-reset").disabled = empty === undefined && full === undefined;
+
+  let pumpStatus = "Pump status unavailable", tone = "";
+  if (data?.driver_ready === 0) { pumpStatus = "Pump disabled"; tone = " warning"; }
+  else if (data?.pump === 1) { pumpStatus = "Pump commanded on"; tone = " good"; }
+  else if (data?.pump === 0) pumpStatus = "Pump off";
+  text("pump-status", pumpStatus);
+  $("pump-status").className = `badge${tone}`;
+}
+
+function saveWaterCalibration(calibration, feedback) {
+  waterCalibration = calibration;
+  try { localStorage.setItem(waterKey, JSON.stringify(calibration)); }
+  catch { feedback += " Browser storage is unavailable. This calibration lasts until reload."; }
+  renderWater(liveTelemetry());
+  text("water-calibration-message", feedback);
+}
+
+for (const button of waterButtons) button.addEventListener("click", () => {
+  const data = liveTelemetry();
+  if (!validWaterReading(data?.water_raw) || data.run !== 0 || data.pump !== 0) return;
+  const point = button.dataset.waterPoint;
+  const next = {...waterCalibration, [point]: data.water_raw};
+  if (next.full <= next.empty) {
+    text("water-calibration-message", "Full must read higher than empty. Check the probe and try again.");
+    return;
+  }
+  saveWaterCalibration(next, point === "empty" ? "Empty reading saved." : "Full reading saved.");
+});
+$("water-reset").addEventListener("click", () => saveWaterCalibration({}, "Calibration cleared."));
 
 async function api(path, body) {
   const controller = new AbortController();
@@ -63,7 +121,7 @@ function render() {
   text("reading-age", paused ? "Readings paused" : connection.last_seen ? `${fresh ? "Updated" : "Last reading"} ${formatTime(connection.last_seen)}` : "No reading yet");
   text("connection-message", hosted ? "Robot USB is available in the laptop dashboard." : connected ? `${connection.port} at 115200 baud. Pico relays status over private Wi-Fi.` : "Choose the desk Pico USB port. Close the Pico console before connecting.");
   message("connection-error", connection.error || "");
-  const data = fresh ? state.telemetry : null, links = serverAvailable && !paused ? state?.links || {} : {};
+  const data = liveTelemetry(), links = serverAvailable && !paused ? state?.links || {} : {};
   text("board-name", data?.board || "—");
   text("run-state", data ? (data.run ? "Running" : "Stopped") : "—");
   text("calibration", data ? ({NEEDED: "Needed", READY: "Ready", SAMPLING: "Sampling"}[data.calibration] || data.calibration) : "—");
@@ -73,7 +131,7 @@ function render() {
   const sensorName = (value) => value === "NC" ? "Not calibrated" : value;
   text("line-sensor-pins", data && data.base !== "ZUMO" ? "D4 left / D2 right" : "Zumo array");
   text("line-sensors", data ? (data.base === "ZUMO" ? "Black line on white" : `L: ${sensorName(data.left)} / R: ${sensorName(data.right)}`) : "Not linked");
-  renderEvents(); renderCameraState(); renderDetection(); controls();
+  renderWater(data); renderEvents(); renderCameraState(); renderDetection(); controls();
 }
 async function refreshState() {
   if (paused || pollBusy) return;
@@ -157,7 +215,7 @@ function detectionControls() {
 function renderDetection() {
   const detector = state?.detection;
   const action = state?.target_action;
-  const robot = serverAvailable && state?.connection?.fresh ? state?.telemetry : null;
+  const robot = liveTelemetry();
   const pumpDisabled = robot?.driver_ready === 0;
   text("target-mode", pumpDisabled ? "Pump disabled: target detection stops the robot. Spraying and automatic continuation are disabled." :
     robot?.driver_ready === 1 ? "Target cycle: stop, spray for 3 seconds, then continue." : "Waiting for pump status.");
@@ -171,7 +229,7 @@ function renderDetection() {
     $("camera-source").value !== "xiao" ? "Choose the XIAO camera for the blue-square test." :
     !detector?.enabled ? "Start detection to test the blue target." :
     robot && !robot.run && (action?.state === "DRIVER_DISABLED" || robot.job === 8) ? "Target stop complete. Pump disabled; robot remains stopped." :
-    action?.state === "SPRAYING" ? "Robot stopped. Spraying water." :
+    robot && action?.state === "SPRAYING" ? "Robot stopped. Pump commanded on." :
     action?.state === "SETTLING" || action?.state === "STOPPING" ? "Target confirmed. Stopping before spraying." :
     action?.state === "RESUMING" ? "Spray finished. Resuming line following." :
     action?.state === "COMPLETE" ? (state?.connection?.fresh && state?.telemetry?.run ? "Spray cycle finished. Following the line." : "Spray cycle finished.") :

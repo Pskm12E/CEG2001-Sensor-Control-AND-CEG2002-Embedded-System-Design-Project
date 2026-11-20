@@ -152,10 +152,13 @@ send PING and STATUS. Enabling blue-target detection permits bounded MSP target
 jobs; no unrestricted motion or direct pump command is exposed. The MSP430
 retains embedded robot authority.
 
-The Zumo button performs line calibration after each reset. A reported stopped
-state is supervisor status, not wheel-encoder feedback. P6.0 raw ADC reporting
-is implemented; water-level calibration, the full target-cycle trial, pest recognition
-and the dock remain pending.
+The Zumo button performs line calibration after each reset. The stopped reading
+comes from the supervisor. The **Water tank** panel shows the live P6.0 sensor
+reading (0–4095) and the MSP430 pump command. To see an estimated tank level,
+open **Calibrate water level** and record steady empty and full readings with the
+probe mounted in the tank and the robot stopped. The dashboard estimates the
+percentage between those readings and saves the calibration in this browser.
+The level is for monitoring. Water flow requires physical observation.
 
 Stale status is blanked until a fresh reply arrives. A temporary unavailable
 MSP430 response must not close the independent camera relay. This was fixed and

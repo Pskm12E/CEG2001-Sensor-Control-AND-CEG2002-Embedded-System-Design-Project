@@ -72,6 +72,25 @@
           <div><dt>UART errors</dt><dd id="uart-errors">—</dd></div>
           <div><dt>Dropped bytes</dt><dd id="rx-drops">—</dd></div>
         </dl>
+        <section class="water-panel" aria-labelledby="water-title">
+          <div class="section-heading"><h3 id="water-title">Water tank</h3><span id="pump-status" class="badge">Pump status unavailable</span></div>
+          <dl class="water-readings">
+            <div><dt>Estimated level</dt><dd id="water-level">—</dd></div>
+            <div><dt>Sensor reading</dt><dd id="water-raw">—</dd></div>
+          </dl>
+          <meter id="water-meter" min="0" max="100" value="0" aria-label="Estimated water level" hidden></meter>
+          <details id="water-calibration" hidden>
+            <summary>Calibrate water level</summary>
+            <p id="water-calibration-instructions" class="helper">Keep the probe mounted in the tank. Record a steady reading with the tank empty and another at your normal full level.</p>
+            <div class="button-row" aria-describedby="water-calibration-instructions">
+              <button type="button" data-water-point="empty" disabled>Record empty</button>
+              <button type="button" data-water-point="full" disabled>Record full</button>
+              <button type="button" id="water-reset" disabled>Reset calibration</button>
+            </div>
+            <p id="water-points" class="helper">Empty — · Full —</p>
+            <p id="water-calibration-message" class="helper" role="status"></p>
+          </details>
+        </section>
         <dl class="detail-readings">
           <div><dt>Main controller</dt><dd id="board-name">Waiting for connection</dd></div>
           <div><dt>Desk Pico USB</dt><dd id="pico-link">—</dd></div>
@@ -107,7 +126,6 @@
         <dl class="sensor-list">
           <div><dt>Line sensors <span id="line-sensor-pins">Zumo array</span></dt><dd id="line-sensors">Not linked</dd></div>
           <div><dt>Obstacle distance</dt><dd>Not linked</dd></div>
-          <div><dt>Tank level</dt><dd>Not linked</dd></div>
           <div><dt>Pico W <span>Desk Wi-Fi bridge</span></dt><dd id="pico-summary">Not linked</dd></div>
           <div><dt>Dock MSP430 <span>Second controller</span></dt><dd>Not linked</dd></div>
         </dl>
