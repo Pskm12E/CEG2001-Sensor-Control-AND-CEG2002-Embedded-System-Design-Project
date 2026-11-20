@@ -67,7 +67,10 @@ available for future measurements. It replaces the supervisor when installed.
 P6.0 is sampled as a raw 12-bit ADC value once per second (`WATER=0..4095`).
 The dashboard displays probe wetness using the measured dry and wet references.
 Saving empty and full readings with the probe mounted in the tank enables a
-tank-level estimate. The supervisor uses the ADC for telemetry only.
+tank-level estimate. With the OG7-compatible supervisor, two raw readings at
+15 or lower cancel an active spray job. During ordinary line following they
+request one second of straight reverse followed by a stop. Two readings at 30
+or higher clear the empty state so the operator can start another run.
 
 ## Sources and builds
 

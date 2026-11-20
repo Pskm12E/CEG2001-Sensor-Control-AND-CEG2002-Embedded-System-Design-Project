@@ -2,6 +2,18 @@
 
 CEG2001 Sensors and Control · CEG2002 Embedded System Design
 
+## Empty-tank reverse · OG7
+
+With the matching MSP430 supervisor and Uno OG7 firmware, two consecutive
+P6.0 readings of **15 or lower** while following the line trigger one slow,
+straight reverse for **one second**. The Zumo then parks. The front ultrasonic
+sensor covers the forward path only. For a first trial, leave space behind the tracks.
+
+If the tank goes empty during a spray job, the pump switches off and the Zumo
+stays parked. Two readings of **30 or higher** rearm the run after a refill.
+Tap the Zumo button to start again. The MSP samples once per second and uses
+raw ADC counts independently of the dashboard's percentage calibration.
+
 ## V2_Working · 20 November 2026
 
 The Zumo follows a black line. Its Arduino Uno runs **OG6**, which reads the
@@ -43,7 +55,7 @@ been measured. [Sonar policy](Car/MSP430/robot_supervisor/README.md#current-sona
 
 Calibration is held in RAM and must be repeated after an Uno reset. The original
 PD settings remain `kp=1`, `kd=0`, centre 2500 and `MAX_SPEED=150`, with a positive turn cap of 250 and reverse cap of 400. USB status is
-**9600 baud**, source firmware **OG6**.
+**9600 baud**, source firmware **OG7**.
 See [the complete Zumo wiring and operating guide](Car/Arduino_Uno/zumo_line_follow/README.md).
 
 ## Find the code

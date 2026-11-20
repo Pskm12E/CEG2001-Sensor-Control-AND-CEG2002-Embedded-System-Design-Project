@@ -1,5 +1,13 @@
 # Zumo black-line follower with MSP430 stopping
 
+## Empty-tank reverse
+
+OG7 accepts a reverse request from the MSP430 during an active line run.
+Both tracks run at −100 for one second, then stop. The Zumo button, an MSP
+STOP, or loss of the motion heartbeat can end the manoeuvre early. USB status
+reports `LAST=EMPTY_REVERSE` during the manoeuvre and `LAST=REVERSE_DONE` on
+completion. The paired supervisor reads the tank probe on P6.0.
+
 ## Flip alarm
 
 Uno OG6 reads gravity on the Zumo Shield's accelerometer. After about 0.4 seconds
@@ -116,7 +124,7 @@ Use **9600 baud and newline**. Commands are case-insensitive.
 | `ALARM OFF` / `ALARM ON` | Mute or enable the flip alarm and save the setting |
 | `STATUS` | Request motion, last event and flip alarm status |
 
-Periodic status identifies **`FW=OG6`**. `CAL` is calibration complete, `SWEEP`
+Periodic status identifies **`FW=OG7`**. `CAL` is calibration complete, `SWEEP`
 is calibration active, `RUN` is following, and `REQ` is a pending local request.
 `STEP=n/80` shows sweep progress. `UP` is seconds since reset. `LAST` retains
 the last motion event across stopped MSP STOP/HELLO exchanges; `REASON` can
@@ -150,7 +158,7 @@ python Car/Arduino_Uno/tests/check_zumo.py
 python Car/MSP430/tests/check_ultrasonic.py
 ```
 
-These commands compile and run host tests. Upload Uno **OG6** and the matching
+These commands compile and run host tests. Upload Uno **OG7** and the matching
 MSP430 supervisor to enable automatic resume. The Uno build uses Pololu
 **ZumoShield 2.1.0**, AVR core **1.8.8**, Wire and SoftwareSerial. In Arduino IDE,
 open the repository sketch `zumo_line_follow.ino`, select Arduino Uno, and keep

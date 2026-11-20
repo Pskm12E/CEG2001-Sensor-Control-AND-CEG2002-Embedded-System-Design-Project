@@ -173,6 +173,8 @@ static uint16_t TA2CCTL0,TA2CTL,TA2CCR0,TA2R,ticks;
 static uint8_t P1OUT,stopButton;
 static uint16_t ADC12IFG,ADC12MEM0,ADC12CTL0,ADC12CTL1,waterRaw,waterAt;
 #include "../../../MSP430/robot_supervisor/spray_job.h"
+#include "../../../MSP430/robot_supervisor/water_level.h"
+static WaterLevel tank;
 static SprayJob sprayJob;
 static uint16_t session=42,sequence,requestAt,lastPoll,lastLinkByte,badFrames,uartErrors,rxDrops;
 static uint8_t pending,linked,running,queued,peerFlags,peerResult,obstaclePaused;
@@ -196,6 +198,7 @@ static unsigned checks=0;
 static bool stopped() { return motors.left==0 && motors.right==0; }
 static void reset() {
     msp::sprayJob={}; msp::P1OUT=0; msp::stopButton=msp::obstaclePaused=0;
+    msp::tank={}; msp::ADC12IFG=msp::waterRaw=msp::waterAt=0;
     fakeMillis=0; robot=ZumoControl(); parser={}; motors=ZumoMotors();
     reflectanceSensors=ZumoReflectanceSensorArray();
     // The assignment copies internal pointers, so bind them to this instance.
@@ -234,7 +237,7 @@ static bool exchange() {
     for(uint8_t b:mspSerial.output) decoded=rlFeed(&decoder,b,&reply);
     CHECK(decoded==1); msp::response(&reply); return true;
 }
-static void step(uint32_t ms=20) { fakeMillis+=ms; sonar(40); exchange(); msp::serviceSpray(); }
+static void step(uint32_t ms=20) { fakeMillis+=ms; sonar(40); msp::serviceWater(); exchange(); msp::serviceSpray(); }
 static void stepWithoutEcho() {
     fakeMillis+=20; msp::ticks=uint16_t(fakeMillis/100u);
     msp::sonarPhase=msp::SONAR_DONE; msp::sonarPulseValid=0; msp::sonarWidth=0;
@@ -264,7 +267,65 @@ static void start() {
     CHECK(robot.following && msp::running);
     CHECK(motors.left==150 && motors.right==150);
 }
+static void waterSample(uint16_t raw) {
+    msp::ADC12MEM0=raw; msp::ADC12IFG=msp::BIT0; msp::serviceWater();
+}
 int main(int argc,char** argv) {
+    reset(); linkClear();
+    for(unsigned i=0;i<120;++i) step(); // No conversion yet, even though WATER reports zero.
+    CHECK(!msp::tank.empty && !robot.moving());
+    waterSample(0); waterSample(15);
+    CHECK(msp::tank.empty && !robot.moving() && !msp::queued);
+    calibrate(); releaseButton();
+    for(unsigned i=0;i<45;++i) step();
+    CHECK(!msp::running && stopped());
+    waterSample(35); waterSample(29); waterSample(30);
+    CHECK(msp::tank.empty);
+    waterSample(30); CHECK(!msp::tank.empty && stopped());
+    start();
+    waterSample(0); waterSample(16); waterSample(15); msp::serviceWater();
+    CHECK(!msp::tank.empty && robot.following);
+    waterSample(15); CHECK(msp::queued==RL_ZUMO_REVERSE);
+    msp::netCommand("NET 1 TARGET"); CHECK(!msp::sprayJob.pump && msp::sprayJob.phase==msp::SJ_IDLE);
+    CHECK(exchange() && robot.reversing && motors.left==-100 && motors.right==-100);
+    CHECK(!msp::zumoFollowing() && (msp::peerFlags&RL_ZUMO_REVERSING));
+    for(unsigned i=0;i<49;++i) step();
+    CHECK(robot.reversing);
+    step(); CHECK(!robot.moving() && stopped() && robot.lastEvent==ZE_REVERSE_DONE);
+    for(unsigned i=0;i<100;++i) { waterSample(0); step(); }
+    CHECK(!msp::running && msp::linked && stopped());
+    waterSample(45); waterSample(45); CHECK(stopped());
+    start(); waterSample(14); waterSample(15); exchange();
+    CHECK(robot.reversing);
+    button.pressed=true; loop(); CHECK(stopped() && !robot.moving());
+
+    reset(); linkClear(); calibrate(); start();
+    waterSample(0); waterSample(0); exchange(); sonar(4); exchange();
+    CHECK(stopped() && !robot.obstaclePaused && !robot.reversing);
+
+    reset(); linkClear(); calibrate(); start();
+    msp::netCommand("NET 1 TARGET"); exchange();
+    for(unsigned i=0;i<100 && !msp::sprayJob.pump;++i) step();
+    CHECK(msp::sprayJob.pump);
+    waterSample(0); waterSample(0); exchange();
+    CHECK(!msp::sprayJob.pump && !(msp::P1OUT&PUMP_GATE_MASK) && stopped());
+    CHECK(msp::sprayJob.phase==msp::SJ_ABORTED);
+
+    reset(); linkClear(); calibrate(); start();
+    sonar(4); msp::serviceLink(); CHECK(msp::pendingPacket.type==RL_ZUMO_PAUSE);
+    waterSample(0); waterSample(0); CHECK(msp::queued==RL_STOP);
+    waterSample(99); waterSample(99);
+    for(unsigned i=0;i<60;++i) step();
+    CHECK(stopped() && !msp::running && !msp::obstaclePaused);
+
+    // A late retry cannot extend the reverse. A missing heartbeat stops the tracks.
+    reset(); linkClear(); calibrate(); start(); waterSample(0); waterSample(0); exchange();
+    CHECK(robot.reversing);
+    uint32_t began=robot.reverseStarted;
+    fakeMillis+=200; auto retry=robot.handle(msp::pendingPacket,fakeMillis);
+    CHECK(retry.detail==RL_OK && robot.reverseStarted==began && robot.lastLease==began);
+    fakeMillis=began+ZumoControl::LEASE_MS; loop();
+    CHECK(stopped() && !robot.reversing && robot.reason==RL_LEASE_LOST);
     reset(); linkClear();
     auto samples=[](int16_t z,unsigned count) {
         measuredZ=z;
@@ -421,7 +482,7 @@ int main(int argc,char** argv) {
     CHECK(robot.reason==RL_OK && !robot.calibrated && robot.lastEvent==ZE_MSP_STOP);
     Serial.output.clear(); usbReportPart=1; reportUsb(); reportUsb(); reportUsb();
     std::string statusText(Serial.output.begin(),Serial.output.end());
-    CHECK(statusText.find("FW=OG6 CAL=0 SWEEP=0 RUN=0 REASON=0")!=std::string::npos);
+    CHECK(statusText.find("FW=OG7 CAL=0 SWEEP=0 RUN=0 REASON=0")!=std::string::npos);
     CHECK(statusText.find("FLIP ALARM=ON IMU=OK FLIPPED=0")!=std::string::npos);
     CHECK(statusText.find("LAST=MSP_STOP")!=std::string::npos && !usbReportPart);
     releaseButton();
@@ -536,7 +597,7 @@ cpp.write_text(prefix + "".join(function(name, result) for name, result in (
     ("stopRequested", "void"), ("serviceObstacle", "void"), ("userRequest", "void"),
     ("reasonName", "const char *"), ("status", "void"), ("sendRequest", "void"),
     ("response", "void"), ("serviceLink", "void"),
-    ("serviceSpray", "void"), ("netCommand", "uint8_t"),
+    ("serviceWater", "void"), ("serviceSpray", "void"), ("netCommand", "uint8_t"),
 )) + tests, encoding="utf-8")
 exe = BUILD / "zumo_tests.exe"
 telemetry_path = BUILD / "supervisor-status.txt"

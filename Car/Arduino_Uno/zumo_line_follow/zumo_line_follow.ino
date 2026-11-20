@@ -33,6 +33,7 @@ RlParser parser={};
 const int MAX_SPEED=150;
 const int TURN_MAX_SPEED=250;
 const int REVERSE_MAX_SPEED=400;
+const int EMPTY_TANK_SPEED=100;
 const float kp=1.0f, kd=0.0f;
 int lastError=0;
 uint8_t calibrationStep=0;
@@ -56,7 +57,7 @@ void reportUsb() {
     char line[64];
     int n;
     if(usbReportPart==1) {
-        n=snprintf(line,sizeof(line),"ZUMO FW=OG6 CAL=%u SWEEP=%u RUN=%u REASON=%u REQ=%u\n",
+        n=snprintf(line,sizeof(line),"ZUMO FW=OG7 CAL=%u SWEEP=%u RUN=%u REASON=%u REQ=%u\n",
             robot.calibrated,robot.calibrating,robot.following,robot.reason,robot.userRequest);
     } else if(usbReportPart==2) {
         const char *event="BOOT";
@@ -71,8 +72,10 @@ void reportUsb() {
         case ZE_LOCAL_STOP: event="LOCAL_STOP"; break;
         case ZE_SESSION_ERROR: event="SESSION_ERROR"; break;
         case ZE_OBSTACLE_PAUSE: event="OBSTACLE_PAUSE"; break;
+        case ZE_EMPTY_REVERSE: event="EMPTY_REVERSE"; break;
+        case ZE_REVERSE_DONE: event="REVERSE_DONE"; break;
         }
-        n=snprintf(line,sizeof(line),"ZUMO FW=OG6 STEP=%u/80 LAST=%s UP=%lu\n",
+        n=snprintf(line,sizeof(line),"ZUMO FW=OG7 STEP=%u/80 LAST=%s UP=%lu\n",
             calibrationStep,event,(unsigned long)(millis()/1000u));
     } else {
         n=snprintf(line,sizeof(line),"FLIP ALARM=%s IMU=%s FLIPPED=%u Z=%d\n",
@@ -150,6 +153,7 @@ void serviceLink() {
         else if(result>0 && !(p.type&RL_REPLY)) {
             bool wasCalibrating=robot.calibrating, wasFollowing=robot.following;
             RlPacket reply=robot.handle(p,millis());
+            if(wasFollowing && robot.reversing) motors.setSpeeds(0,0);
             applyStop(); // Apply STOP before sending the acknowledgement.
             if(robot.calibrating && !wasCalibrating) {
                 motors.setSpeeds(0,0); reflectanceSensors.resetCalibration();
@@ -168,7 +172,9 @@ void serviceMotion() {
     robot.tick(now); applyStop();
     // Do not start a sensor read while a received UART frame is incomplete.
     if(parser.used || mspSerial.available()) return;
-    if(robot.calibrating) {
+    if(robot.reversing) {
+        motors.setSpeeds(-EMPTY_TANK_SPEED,-EMPTY_TANK_SPEED);
+    } else if(robot.calibrating) {
         if(int32_t(now-nextCalibration)<0) return;
         if(calibrationStep>=CALIBRATION_STEPS) {
             motors.setSpeeds(0,0); robot.finishCalibration(); return;
@@ -205,7 +211,7 @@ void setup() {
     mspSerial.begin(SERIAL_BAUD);
     reflectanceSensors.init();
     flipAlarm.begin();
-    Serial.println(F("ZUMO FW=OG6 CAL+PD TURN=250 + FLIP ALARM"));
+    Serial.println(F("ZUMO FW=OG7 CAL+PD + FLIP ALARM + EMPTY TANK REVERSE"));
     Serial.println(F("USB 9600: C=sweep request, F=follow request, S=stop, STATUS."));
     wdt_enable(WDTO_1S);
 }

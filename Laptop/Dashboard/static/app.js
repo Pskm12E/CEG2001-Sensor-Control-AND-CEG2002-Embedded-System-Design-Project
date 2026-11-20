@@ -128,7 +128,8 @@ function render() {
   message("connection-error", connection.error || "");
   const data = liveTelemetry(), links = serverAvailable && !paused ? state?.links || {} : {};
   text("board-name", data?.board || "—");
-  text("run-state", data ? (data.run ? "Running" : "Stopped") : "—");
+  const reversing = data?.base === "ZUMO" && Boolean(data.flags & 2);
+  text("run-state", data ? (data.run ? (reversing ? "Reversing" : "Running") : "Stopped") : "—");
   text("calibration", data ? ({NEEDED: "Needed", READY: "Ready", SAMPLING: "Sampling"}[data.calibration] || data.calibration) : "—");
   text("uart-errors", data?.uart_errors ?? "—"); text("rx-drops", data?.rx_drops ?? "—");
   for (const key of ["pico", "wifi", "esp", "msp", "uno"]) text(`${key}-link`, links[key] || "—");

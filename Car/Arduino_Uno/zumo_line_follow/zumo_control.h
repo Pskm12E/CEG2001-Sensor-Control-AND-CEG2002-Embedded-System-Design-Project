@@ -6,24 +6,26 @@
 enum ZumoEvent {
     ZE_BOOT, ZE_CALIBRATING, ZE_CAL_DONE, ZE_FOLLOWING, ZE_MSP_STOP,
     ZE_MSP_RESYNC, ZE_HEARTBEAT_LOST, ZE_UART_ERROR, ZE_LOCAL_STOP, ZE_SESSION_ERROR,
-    ZE_OBSTACLE_PAUSE
+    ZE_OBSTACLE_PAUSE, ZE_EMPTY_REVERSE, ZE_REVERSE_DONE
 };
 
 class ZumoControl {
 public:
     static const uint32_t LEASE_MS=1000;
+    static const uint32_t EMPTY_TANK_REVERSE_MS=1000;
     bool calibrated=false, following=false, calibrating=false;
-    bool obstaclePaused=false;
+    bool obstaclePaused=false, reversing=false;
     uint8_t reason=RL_OK, userRequest=0;
     uint8_t lastEvent=ZE_BOOT; // Persists across stopped STOP/HELLO exchanges.
     uint16_t session=0, sequence=0;
-    uint32_t lastLease=0;
+    uint32_t lastLease=0, reverseStarted=0;
 
-    bool moving() const { return following || calibrating; }
+    bool moving() const { return following || calibrating || reversing; }
     uint8_t flags() const {
         // MOVING includes authorisation for the calibration sweep's initial wait.
         return (calibrated?RL_CAL:0) | (moving()?RL_MOVING:0) |
-            (calibrating?RL_CALIBRATING:0) | (reason>=RL_LEASE_LOST?RL_FAULT:0);
+            (calibrating?RL_CALIBRATING:0) | (reversing?RL_ZUMO_REVERSING:0) |
+            (reason>=RL_LEASE_LOST?RL_FAULT:0);
     }
     void stop(uint8_t why, bool invalidate=true) {
         if((moving() || obstaclePaused) && why!=RL_OK) {
@@ -33,11 +35,15 @@ public:
             else lastEvent=ZE_SESSION_ERROR;
         }
         if(calibrating) calibrated=false; // An interrupted sweep cannot be used.
-        following=calibrating=obstaclePaused=false; reason=why; userRequest=0;
+        following=calibrating=obstaclePaused=reversing=false; reason=why; userRequest=0;
         if(invalidate) { session=sequence=0; lastType=0; }
     }
     void tick(uint32_t now) {
         if(moving() && uint32_t(now-lastLease)>=LEASE_MS) stop(RL_LEASE_LOST);
+        if(reversing && uint32_t(now-reverseStarted)>=EMPTY_TANK_REVERSE_MS) {
+            stop(RL_OK,false);
+            lastEvent=ZE_REVERSE_DONE;
+        }
     }
     bool requestLocal(uint8_t op) {
         if(!session || moving() || userRequest) return false;
@@ -53,7 +59,7 @@ public:
     RlPacket handle(const RlPacket &p, uint32_t now) {
         tick(now); // A late KEEP cannot revive expired motion.
         uint8_t result=RL_OK;
-        if(p.arg || p.detail || p.type<RL_HELLO || p.type>RL_ZUMO_PAUSE) {
+        if(p.arg || p.detail || p.type<RL_HELLO || p.type>RL_ZUMO_REVERSE) {
             stop(RL_BAD_FRAME); result=RL_BAD_COMMAND;
         } else if(p.type==RL_STOP) {
             if(moving()) lastEvent=ZE_MSP_STOP;
@@ -72,6 +78,15 @@ public:
             sequence=p.seq; lastType=p.type;
             switch(p.type) {
             case RL_STATUS: result=reason; break;
+            case RL_ZUMO_REVERSE:
+                if(!following) result=RL_BAD_COMMAND;
+                else {
+                    following=false;
+                    reversing=true;
+                    lastLease=reverseStarted=now;
+                    lastEvent=ZE_EMPTY_REVERSE;
+                }
+                break;
             case RL_ZUMO_PAUSE:
                 // Only an active line run can pause. Preserve the session so
                 // a local STOP or reset invalidates any subsequent START.
@@ -91,7 +106,7 @@ public:
                 break;
             case RL_START:
                 userRequest=0;
-                if(calibrating) result=RL_CAL_BUSY;
+                if(calibrating || reversing) result=RL_CAL_BUSY;
                 else if(!calibrated) result=RL_NOT_CAL;
                 else if(!following) {
                     obstaclePaused=false; following=true; reason=RL_OK; lastLease=now; lastEvent=ZE_FOLLOWING;
