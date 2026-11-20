@@ -6,7 +6,8 @@ standalone LED diagnostic. The user confirmed two P1.6-controlled pump runs,
 each followed by automatic cutoff.
 
 Live status through Pico V3 and FireBeetle V2 reports `READY=1`, `PUMP=0`,
-`RUN=0`, Uno ready and zero communication errors. Uno OG4 remains installed.
+`RUN=0`, Uno ready and zero communication errors. The installed Uno OG5 and
+matching supervisor support ultrasonic pause and resume.
 The full physical target-to-spray-to-resume trial remains pending. See the
 [installation record](../../../Laptop/Artifacts/verification/pump-integration-2026-11-20.json).
 
@@ -41,7 +42,7 @@ on the wired MSP/Uno link, local stop controls and their power supplies.
 | Separate 4×AA pack + | Pump + |
 | Pump − | 2N7000 drain |
 | 2N7000 source | Common GND |
-| MSP430 P1.6 | MOSFET gate; add a series gate resistor, e.g. 100 Ω |
+| MSP430 P1.6, or P1.4 with `-PumpGateP14` | MOSFET gate; add a series gate resistor, e.g. 100 Ω |
 | MOSFET gate | Add 100 kΩ to source/common GND to hold it off during reset |
 | Pack − | Common GND |
 | 1N4001 striped/cathode end | Pump + |
@@ -106,6 +107,10 @@ upload firmware. Omitting `-PumpDriverVerified` builds the separate
 `Debug_wifi_zumo/` profile with `READY=0`. Target detection then stops the Zumo
 and reports `DRIVER_DISABLED`. The installed image uses `READY=1` and the
 three-second pump cutoff.
+
+If the gate wire is on P1.4, add `-PumpGateP14` to the supervisor or direct-link
+build command. The MSP430 output is in `Debug_wifi_zumo_pump_p14/`. The selected
+pin starts low and uses the same stopped-robot checks and timer cutoff.
 
 Software checks include the actual sketch/supervisor/sonar path, the bounded job,
 Pico command/HTTP dispatch and the detection-to-job callback. They do not measure

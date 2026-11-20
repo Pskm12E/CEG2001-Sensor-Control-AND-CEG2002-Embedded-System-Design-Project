@@ -8,7 +8,7 @@ LED test and is flashed/program-verified. Live status shows `READY=1`, `PUMP=0`,
 
 The confirmed-target sequence is stop, acknowledge, settle, spray for three
 seconds, turn the pump off and resume with a fresh matching camera continuation.
-The ultrasonic settings are **5 cm STOP / 7 cm clearance**. Uno OG4 uses straight
+The ultrasonic settings are **5 cm STOP / 7 cm clearance**. The installed Uno OG5 uses straight
 speed 150 and an outside-track turn limit of 250. See [the cycle/pump guide](../../MSP430/robot_supervisor/PUMP_SETUP.md).
 The full physical target-to-spray-to-resume trial remains pending.
 
@@ -109,7 +109,7 @@ Use **9600 baud and newline**. Commands are case-insensitive.
 | `S` / `STOP` | Stop locally |
 | `STATUS` | Request the two status lines |
 
-Periodic status identifies **`FW=OG3`**. `CAL` is calibration complete, `SWEEP`
+Periodic status identifies **`FW=OG5`**. `CAL` is calibration complete, `SWEEP`
 is calibration active, `RUN` is following, and `REQ` is a pending local request.
 `STEP=n/80` shows sweep progress. `UP` is seconds since reset. `LAST` retains
 the last motion event across stopped MSP STOP/HELLO exchanges; `REASON` can

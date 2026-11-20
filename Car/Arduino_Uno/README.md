@@ -1,9 +1,9 @@
 # Car Arduino Uno — Zumo line following
 
-**Current source is Uno OG5.** With the matching MSP430 supervisor, it pauses
+**Uno OG5 and the matching MSP430 supervisor are installed.** The robot pauses
 active line following at 5 cm or closer and resumes after two valid readings
 at 7 cm or farther. Press the Zumo button during a pause to cancel the run.
-Both boards need updated firmware for this behavior. Straight speed is 150
+Missing echoes keep an obstacle-paused run stopped. Straight speed is 150
 and the outside-track turn limit is 250. The installed three-second MSP spray
 profile and its checks are described in the [pump guide](../MSP430/robot_supervisor/PUMP_SETUP.md).
 

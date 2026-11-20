@@ -435,11 +435,12 @@ int main(int argc,char** argv) {
     for(unsigned i=0;i<100 && msp::sprayJob.phase!=msp::SJ_SPRAYING;++i) {
         step(); CHECK(stopped());
     }
-    CHECK(msp::sprayJob.pump && (msp::P1OUT&msp::BIT6));
+    CHECK(msp::sprayJob.pump && (msp::P1OUT&PUMP_GATE_MASK));
+    CHECK((msp::P1OUT&((1u<<4)|msp::BIT6))==PUMP_GATE_MASK);
     for(unsigned i=0;i<200 && msp::sprayJob.phase==msp::SJ_SPRAYING;++i) {
         step(); CHECK(stopped());
     }
-    CHECK(msp::sprayJob.phase==msp::SJ_RESUMING && !msp::sprayJob.pump && !(msp::P1OUT&msp::BIT6));
+    CHECK(msp::sprayJob.phase==msp::SJ_RESUMING && !msp::sprayJob.pump && !(msp::P1OUT&PUMP_GATE_MASK));
     CHECK(msp::netCommand("NET 124 RESUME 999") && msp::queued!=RL_START);
     CHECK(msp::netCommand("NET 125 RESUME 123") && msp::queued==RL_START);
     CHECK(exchange()); loop();
@@ -477,13 +478,15 @@ cpp.write_text(prefix + "".join(function(name, result) for name, result in (
     ("serviceSpray", "void"), ("netCommand", "uint8_t"),
 )) + tests, encoding="utf-8")
 exe = BUILD / "zumo_tests.exe"
-subprocess.run([
-    "C:/msys64/ucrt64/bin/g++.exe", "-std=c++17", "-Wall", "-Wextra", "-Werror",
-    "-Wno-unknown-pragmas", "-Wno-unused-function", "-Wno-unused-variable",
-    "-I" + str(BUILD), "-static", str(cpp), "-o", str(exe),
-], check=True)
 telemetry_path = BUILD / "supervisor-status.txt"
-subprocess.run([str(exe), str(telemetry_path)], check=True)
+for pin, definitions in (("P1.6", []), ("P1.4", ["-DPUMP_GATE_P14=1"])):
+    subprocess.run([
+        "C:/msys64/ucrt64/bin/g++.exe", "-std=c++17", "-Wall", "-Wextra", "-Werror",
+        "-Wno-unknown-pragmas", "-Wno-unused-function", "-Wno-unused-variable",
+        *definitions, "-I" + str(BUILD), "-static", str(cpp), "-o", str(exe),
+    ], check=True)
+    subprocess.run([str(exe), str(telemetry_path)], check=True)
+    print(f"PASS {pin} pump gate profile.")
 # Feed the actual emitted MSP record through the dashboard's production parser.
 # Only its pure parsing code is needed; no camera dependencies or ports are opened.
 dashboard = ast.parse((ROOT / "Laptop/Dashboard/desk_bridge.py").read_text(encoding="utf-8-sig"))

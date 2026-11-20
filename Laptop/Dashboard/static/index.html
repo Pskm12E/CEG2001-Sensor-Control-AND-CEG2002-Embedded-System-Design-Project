@@ -58,6 +58,25 @@
 
       <section class="controller-section" aria-labelledby="controller-title">
         <div class="section-heading"><h2 id="controller-title">Robot MSP430</h2><span id="connection-badge" class="badge">Loading…</span></div>
+        <section id="water-tank" class="water-panel" aria-labelledby="water-title">
+          <div class="section-heading"><h3 id="water-title">Water tank</h3><span id="pump-status" class="badge">Pump status unavailable</span></div>
+          <dl class="water-readings">
+            <div><dt id="water-level-label">Probe wetness</dt><dd id="water-level">—</dd></div>
+            <div><dt>Sensor reading</dt><dd id="water-raw">—</dd></div>
+          </dl>
+          <meter id="water-meter" min="0" max="100" value="0" aria-labelledby="water-level-label" hidden></meter>
+          <details id="water-calibration" hidden>
+            <summary>Calibrate water level</summary>
+            <p id="water-calibration-instructions" class="helper">Keep the probe mounted in the tank. Record a steady reading with the tank empty and another at your normal full level.</p>
+            <div class="button-row" aria-describedby="water-calibration-instructions">
+              <button type="button" data-water-point="empty" disabled>Record empty</button>
+              <button type="button" data-water-point="full" disabled>Record full</button>
+              <button type="button" id="water-reset" disabled>Reset calibration</button>
+            </div>
+            <p id="water-points" class="helper">Empty — · Full —</p>
+            <p id="water-calibration-message" class="helper" role="status"></p>
+          </details>
+        </section>
         <form id="connect-form" class="connection-form">
           <div class="field"><label for="port-select">Desk Pico USB port</label><select id="port-select" name="port" aria-describedby="connection-message connection-error" required><option value="">Loading ports…</option></select></div>
           <div class="button-row"><button id="connect" type="submit" disabled>Connect</button><button id="refresh-ports" type="button">Refresh ports</button><button id="disconnect" type="button" disabled>Disconnect</button></div>
@@ -72,25 +91,6 @@
           <div><dt>UART errors</dt><dd id="uart-errors">—</dd></div>
           <div><dt>Dropped bytes</dt><dd id="rx-drops">—</dd></div>
         </dl>
-        <section class="water-panel" aria-labelledby="water-title">
-          <div class="section-heading"><h3 id="water-title">Water tank</h3><span id="pump-status" class="badge">Pump status unavailable</span></div>
-          <dl class="water-readings">
-            <div><dt>Estimated level</dt><dd id="water-level">—</dd></div>
-            <div><dt>Sensor reading</dt><dd id="water-raw">—</dd></div>
-          </dl>
-          <meter id="water-meter" min="0" max="100" value="0" aria-label="Estimated water level" hidden></meter>
-          <details id="water-calibration" hidden>
-            <summary>Calibrate water level</summary>
-            <p id="water-calibration-instructions" class="helper">Keep the probe mounted in the tank. Record a steady reading with the tank empty and another at your normal full level.</p>
-            <div class="button-row" aria-describedby="water-calibration-instructions">
-              <button type="button" data-water-point="empty" disabled>Record empty</button>
-              <button type="button" data-water-point="full" disabled>Record full</button>
-              <button type="button" id="water-reset" disabled>Reset calibration</button>
-            </div>
-            <p id="water-points" class="helper">Empty — · Full —</p>
-            <p id="water-calibration-message" class="helper" role="status"></p>
-          </details>
-        </section>
         <dl class="detail-readings">
           <div><dt>Main controller</dt><dd id="board-name">Waiting for connection</dd></div>
           <div><dt>Desk Pico USB</dt><dd id="pico-link">—</dd></div>

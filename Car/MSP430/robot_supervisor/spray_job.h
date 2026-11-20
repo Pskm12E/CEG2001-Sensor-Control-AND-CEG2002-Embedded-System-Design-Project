@@ -8,6 +8,12 @@
 #ifndef PUMP_DRIVER_VERIFIED
 #define PUMP_DRIVER_VERIFIED 0
 #endif
+/* Port 1 gate output. Use the alternate build for a driver wired to P1.4. */
+#if defined(PUMP_GATE_P14) && PUMP_GATE_P14
+#define PUMP_GATE_MASK (1u << 4)
+#else
+#define PUMP_GATE_MASK (1u << 6)
+#endif
 #ifndef PUMP_SPRAY_TICKS
 #define PUMP_SPRAY_TICKS 30u
 #endif

@@ -153,8 +153,10 @@ jobs; no unrestricted motion or direct pump command is exposed. The MSP430
 retains embedded robot authority.
 
 The Zumo button performs line calibration after each reset. The stopped reading
-comes from the supervisor. The **Water tank** panel shows the live P6.0 sensor
-reading (0–4095) and the MSP430 pump command. To see an estimated tank level,
+comes from the supervisor. The **Water tank** panel under **Robot MSP430** shows
+the live P6.0 sensor reading (0–4095) and the pump command. Before tank
+calibration, **Probe wetness** scales the reading between the measured dry
+and wet reference values of 15 and 1208. To see an estimated tank level,
 open **Calibrate water level** and record steady empty and full readings with the
 probe mounted in the tank and the robot stopped. The dashboard estimates the
 percentage between those readings and saves the calibration in this browser.

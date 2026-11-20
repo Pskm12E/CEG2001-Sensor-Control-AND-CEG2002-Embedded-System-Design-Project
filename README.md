@@ -7,11 +7,14 @@ follows a black line on white using the six-sensor array and built-in motor
 driver. The MSP430 measures the HC-SR04 and sends obstacle STOP commands.
 The user confirmed the current driving setup is working on **17 November 2026**.
 
-## Integrated pump update — 20 November 2026
+## Working robot checkpoint — 20 November 2026
 
-The user confirmed two successful **three-second P1.6 pump runs**, each followed
-by automatic cutoff. The normal MSP430 supervisor has now replaced the LED test
-and is flashed/program-verified with its pump profile enabled.
+Git tag `robot-og5-p16-2026-11-20` records the Uno OG5 sketch, MSP430 supervisor,
+FireBeetle V2 gateway, Pico V3 relay, XIAO camera code and laptop dashboard.
+The operator confirmed that the pump works on **P1.6**. During an accepted
+spray, the MSP430 holds the gate high continuously for **three seconds**.
+The flashed Uno and MSP430 image hashes and the supervisor build options are
+in the [firmware record](Laptop/Artifacts/verification/obstacle-resume-installation-2026-11-20.json).
 
 The sequence is **blue target → Zumo STOP acknowledgement → 300 ms settling →
 three-second pump pulse → pump off → matching continuation → line following**.
@@ -19,7 +22,7 @@ The laptop supplies continuation from fresh camera observations. Manual STOP,
 an ultrasonic obstacle or a communication fault cancels the job with the pump off.
 
 Live checks through Pico V3 and FireBeetle V2 report `READY=1`, `PUMP=0`, `RUN=0`,
-the Uno link ready and zero UART/framing/drop errors. Uno OG4 remains installed
+the Uno link ready and zero UART/framing/drop errors. Uno OG5 is installed
 with straight speed 150 and outside-track turn speed up to 250. The ultrasonic
 setting remains **5 cm STOP / 7 cm clearance**. Calibrate the line array before
 following. MSP S2 remains a temporary debug STOP control.
@@ -36,9 +39,9 @@ gaps of 281–328 ms. See the
 
 ## Ultrasonic pause and resume
 
-The pause update requires the matching MSP430 supervisor and **Uno OG5**. The
-20 November pump installation above records the hardware state before this
-source update. Upload both updated firmwares to use automatic obstacle resume.
+The matching MSP430 supervisor and **Uno OG5** were flashed and verified on
+20 November. The pump uses P1.6 with a three-second cutoff.
+[Obstacle-resume installation record](Laptop/Artifacts/verification/obstacle-resume-installation-2026-11-20.json).
 
 | Setting | Current behavior |
 | --- | --- |

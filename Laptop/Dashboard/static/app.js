@@ -10,6 +10,8 @@ const text = (id, value) => { if ($(id).textContent !== String(value)) $(id).tex
 const message = (id, value) => { text(id, value || ""); $(id).hidden = !value; };
 const formatTime = (value) => timeFormat.format(new Date(value));
 const maxWaterReading = 4095;
+// Median P6.0 readings from this probe's dry and wet bench samples.
+const probeReference = {dry: 15, wet: 1208};
 const waterKey = "plant-robot.water-calibration.v1";
 const waterButtons = document.querySelectorAll("[data-water-point]");
 const validWaterReading = (value) => Number.isInteger(value) && value >= 0 && value <= maxWaterReading;
@@ -29,9 +31,12 @@ function renderWater(data) {
   const available = validWaterReading(raw);
   const {empty, full} = waterCalibration;
   const calibrated = validWaterReading(empty) && validWaterReading(full) && full > empty;
-  const level = available && calibrated ? Math.round(100 * Math.max(0, Math.min(1, (raw - empty) / (full - empty)))) : null;
+  const low = calibrated ? empty : probeReference.dry;
+  const high = calibrated ? full : probeReference.wet;
+  const level = available ? Math.round(100 * Math.max(0, Math.min(1, (raw - low) / (high - low)))) : null;
+  text("water-level-label", calibrated ? "Estimated tank level" : "Probe wetness");
   text("water-raw", available ? `${raw} / ${maxWaterReading}` : "—");
-  text("water-level", level !== null ? `${level}%` : available ? "Needs calibration" : "—");
+  text("water-level", level !== null ? `${level}%` : "—");
   $("water-meter").hidden = level === null;
   if (level !== null) $("water-meter").value = level;
   text("water-points", `Empty ${empty ?? "—"} · Full ${full ?? "—"}`);

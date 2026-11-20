@@ -16,7 +16,7 @@
 #include "spray_job.h"
 static SprayJob sprayJob;
 static uint16_t waterRaw,waterAt;
-static void pumpOff(void) { P1OUT&=~BIT6; sprayJob.pump=0; }
+static void pumpOff(void) { P1OUT&=~PUMP_GATE_MASK; sprayJob.pump=0; }
 static void cancelSpray(void) { pumpOff(); sprayCancel(&sprayJob); }
 #else
 #define cancelSpray() ((void)0)
@@ -101,7 +101,7 @@ static void init(void) {
 #ifdef ZUMO_BASE
     /* Set the output latch low before enabling the gate pin. External gate
      * pull-down is required to hold the pump off during reset/programming. */
-    P1SEL&=~BIT6; P1OUT&=~BIT6; P1DIR|=BIT6;
+    P1SEL&=~PUMP_GATE_MASK; P1OUT&=~PUMP_GATE_MASK; P1DIR|=PUMP_GATE_MASK;
     P6SEL|=BIT0; P6DIR&=~BIT0;
     ADC12CTL0=ADC12SHT0_2|ADC12ON;
     ADC12CTL1=ADC12SHP; ADC12MCTL0=ADC12INCH_0;
@@ -512,8 +512,8 @@ static void serviceSpray(void) {
     sprayTick(&sprayJob,ticks,ready,motionBlocked() || stopButton,PUMP_DRIVER_VERIFIED);
     __disable_interrupt();
     if(sprayJob.pump && PUMP_DRIVER_VERIFIED && !stopButton &&
-       (uint16_t)(ticks-sprayJob.since)<PUMP_SPRAY_TICKS) P1OUT|=BIT6;
-    else P1OUT&=~BIT6;
+       (uint16_t)(ticks-sprayJob.since)<PUMP_SPRAY_TICKS) P1OUT|=PUMP_GATE_MASK;
+    else P1OUT&=~PUMP_GATE_MASK;
     __enable_interrupt();
     /* One asynchronous 12-bit sample per second; raw data only until tank
      * wet/dry calibration defines a valid water-level policy. */

@@ -1,0 +1,38 @@
+{
+  "date": "2026-11-20",
+  "source_tag": "robot-og5-p16-2026-11-20",
+  "uno": {
+    "firmware": "OG5",
+    "local_flash_image": "Car/Arduino_Uno/build-installed-og5-2026-11-20/zumo_line_follow.ino.hex",
+    "hex_sha256": "c4076da817476d863fb3b51f320453964c355779802876fe7504aa65e9f23028",
+    "flash_bytes_verified": 14346
+  },
+  "msp430": {
+    "local_flash_image": "Car/MSP430/robot_supervisor/build-installed-pump-og5-p16-2026-11-20/robot_supervisor.out",
+    "out_sha256": "eed8422ed2caf60c93f44d7fb7c8e1c4f0baf2ddf821f8ebe8d067103d29fe90",
+    "build_options": "-EspUart -Zumo -PumpDriverVerified -SpraySeconds 3",
+    "program_verified": true,
+    "pump_pin": "P1.6",
+    "cutoff_ticks": 30,
+    "startup_ticks_after_6_2_seconds": 61
+  },
+  "obstacle_pause": {
+    "stop_cm": 5,
+    "release_cm": 7,
+    "consecutive_valid_clear_echoes": 2,
+    "resume_on_missing_echo": false,
+    "physical_track_test_performed": false
+  },
+  "live_status": {
+    "sampled_at": "2026-11-20T14:56:17.185+08:00",
+    "fresh_samples": 4,
+    "uno_link": "READY",
+    "line_calibration": "NEEDED",
+    "run": 0,
+    "job": 0,
+    "pump": 0,
+    "driver_ready": 1,
+    "uart_errors": 0,
+    "water_adc_samples": [11, 12, 15, 12]
+  }
+}
