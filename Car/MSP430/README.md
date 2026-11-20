@@ -1,20 +1,20 @@
 # Car MSP430 — main controller
 
-**Temporary bench mode, 18 November:** the standalone
-[S2 LED-only test](s2_led_test/README.md) is currently installed and running.
-Green LED2 indicates ready; MSP S2 requests six red LED1 flashes. P1.6 is disabled
+**Last verified installed program, 18 November:** the standalone
+[button LED-only test](s2_led_test/README.md) is currently installed in automatic mode.
+Green LED2 is ON; red LED1 is requested ON/OFF every second without a button. P1.6 is disabled
 while the LEDs are checked. The robot
 supervisor must be restored before driving; UART supervision and ultrasonic
 stopping are unavailable in this bench program. Keep motor power off.
 
-**18 November update — firmware versions installed:** 5 cm STOP / 7 cm clearance;
+**Normal firmware verified before the bench test, 18 November:** 5 cm STOP / 7 cm clearance;
 blue-target stop → 3-second spray → token-matched continuation. Uno OG4 raises
 the positive turn limit to 250 while straight speed stays 150. Pump gate P1.6,
 raw water ADC P6.0. The pump driver is disabled until its electrical rating is
-verified. Read [the current cycle/pump guide](robot_supervisor/PUMP_SETUP.md). MSP 5 cm / 7 cm pump-disabled firmware and Pico V3 are installed/verified.
+verified. Read [the current cycle/pump guide](robot_supervisor/PUMP_SETUP.md). MSP 5 cm / 7 cm pump-disabled firmware and Pico V3 were installed/verified.
 The user-installed Uno OG4 is confirmed by its serial banner. FireBeetle V2
 is flashed/hash-verified and identified over USB. The MSP UART idle-restart
-fix is installed; live robot links are verified while stopped, with zero UART
+fix was verified with live robot links while stopped, with zero UART
 errors. Calibration is needed. Pump remains disabled pending driver qualification;
 physical spraying is not ready. The earlier installed milestone is history below.
 
@@ -22,6 +22,22 @@ For a separate **P1.6 control-voltage check**, see
 [pump_voltage_test](pump_voltage_test/README.md). It uses MSP S2 for a 3-second
 GPIO pulse with the pump disconnected. Installing it temporarily replaces the
 supervisor; creating/building it does not change the running robot.
+
+## Coursework minimums in the normal robot firmware
+
+The `-EspUart -Zumo` supervisor meets the minimum requirements independently of
+the temporary S2 debug control.
+
+| Requirement | Functional implementation |
+| --- | --- |
+| Two timers | Timer_A0 for system timing and pump cutoff; Timer_A2 for ultrasonic timing |
+| Two interrupts | Five handlers cover USCI_A0, USCI_A1, TIMER0_A0, TIMER2_A0 and PORT2 |
+| One ADC | ADC12 channel A0 reads the water sensor on P6.0 |
+| One power-saving mode | LPM0 idle sleep with interrupt wakeup |
+
+Timer_A1 and the PORT1/TIMER1_A0 handlers also exist for S2 debugging. S2 is
+scheduled for later removal. The standalone LED diagnostic uses fixed delays
+and does not exercise these coursework features.
 
 ## Previous installed milestone — 17 November 2026
 

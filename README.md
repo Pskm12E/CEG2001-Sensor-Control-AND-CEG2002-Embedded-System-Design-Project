@@ -9,13 +9,14 @@ The user confirmed the current driving setup is working on **17 November 2026**.
 
 ## Source update — 18 November 2026
 
-**Temporary bench mode:** the MSP430 currently runs the separate
-[S2 LED-only test](Car/MSP430/s2_led_test/README.md), with pump and Zumo motor power
-off. Green LED2 indicates ready; **MSP S2** requests six red LED1 flashes.
+**Last verified installed MSP430 program, 18 November:** the separate
+[button LED-only test](Car/MSP430/s2_led_test/README.md), with pump and Zumo motor power
+off. The current diagnostic requests **automatic red blinking, one second ON and
+one second OFF**, with green LED2 ON. No button press is needed.
 **P1.6 is disabled**, so this version does not run the pump. Restore the robot supervisor before driving or using sonar STOP;
 the following integrated firmware settings describe the normal robot mode.
 
-Firmware installed; live communication verified: **blue target → stop → spray for 3 seconds →
+The previously installed normal robot firmware implements **blue target → stop → spray for 3 seconds →
 continue**, **5 cm ultrasonic STOP / 7 cm clearance**, and stronger turns.
 Uno OG4 keeps straight speed at 150 and allows the outside track up to 250;
 the original calibration sweep is unchanged. Pump wiring uses MSP P1.6 and
@@ -23,7 +24,7 @@ water ADC P6.0. **Pump output is disabled pending pump/driver qualification.**
 The pump is reported as approximately 5 V, but current/model is unknown;
 a separate battery does not qualify the 2N7000 for 3.3 V gate drive.
 See [the complete pump/cycle guide](Car/MSP430/robot_supervisor/PUMP_SETUP.md).
-**Installed:** MSP430 5 cm / 7 cm pump-disabled image, flash/program-verified;
+**Before the bench test:** MSP430 5 cm / 7 cm pump-disabled image, flash/program-verified;
 desk Pico V3, identity verified; Uno OG4, confirmed by the user’s serial
 screenshot; FireBeetle V2, flashed/hash-verified and USB-identified. Corrected
 the MSP UART idle-transmit restart bug and verified live Pico/Wi-Fi/ESP/MSP/Uno
@@ -72,7 +73,7 @@ PD settings remain `kp=1`, `kd=0`, centre 2500 and `MAX_SPEED=150`, with a posit
 **9600 baud**, source firmware **OG4**.
 See [the complete Zumo wiring and operating guide](Car/Arduino_Uno/zumo_line_follow/README.md).
 
-The current MSP image was flashed and program-verified; the user installed Uno
+The normal MSP image was flashed and program-verified before the bench test; the user installed Uno
 OG4, confirmed by its serial output. The full track, calibrated range accuracy and physical braking distance
 have not been independently measured.
 

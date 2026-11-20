@@ -1,5 +1,22 @@
 # Changelog
 
+## Button and automatic LED diagnostics — 2026-11-18
+
+- User confirmed red illumination during the repeated direct LED test, but
+  still did not see blinking after S2. Selected SW1/S1 (P2.1) for comparison.
+- Added `-Switch1` and `-Automatic` build options alongside the default S2 build.
+  Automatic mode requests red LED1 ON/OFF every second and keeps green LED2 ON.
+  The three configurations pass 3395 real-main assertions. P1.6 stays disabled.
+- Flashed and program-verified automatic mode after the SW1 comparison. Debugger
+  checks recorded red-output transitions, but the user saw no blinking in S2,
+  SW1 or automatic mode. The cause remains unresolved. The direct red LED test
+  was visible, so the halted P1IN read alone cannot establish GPIO failure.
+- S2 is a temporary debug control. The normal robot source meets the coursework
+  minimums independently with Timer_A0, Timer_A2, five interrupt handlers,
+  ADC12/A0 and LPM0. The installed LED diagnostic uses fixed delays.
+- A direct three-second pump test is pending wiring readiness. No automated
+  pump pulse has been issued and the robot supervisor remains to be restored.
+
 ## Isolated S2 LED test — 2026-11-18
 
 - At the user's request, isolated the button and LEDs before further pump work.

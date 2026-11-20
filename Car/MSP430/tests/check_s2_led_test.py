@@ -23,6 +23,7 @@ build.mkdir(parents=True,exist_ok=True)
 #define SELM__DCOCLKDIV 4u
 #define DCOFFG 1u
 inline volatile uint8_t P1SEL=0,P1OUT=0,P1DIR=0,P1REN=0,P1IN=0,P4SEL=0,P4OUT=0,P4DIR=0;
+inline volatile uint8_t P2SEL=0,P2OUT=0,P2DIR=0,P2REN=0,P2IN=0;
 inline volatile uint16_t WDTCTL=0,UCSCTL0=0,UCSCTL1=0,UCSCTL2=0,UCSCTL3=0,UCSCTL4=0,UCSCTL5=0,UCSCTL7=0;
 void on_delay(unsigned long cycles);
 #define __delay_cycles(n) on_delay(n)
@@ -51,14 +52,32 @@ void on_delay(unsigned long n) {
     bool red=P1OUT&BIT0;
     if(!edges.empty() ? red!=edges.back().second : red)
         edges.push_back({cycles,red});
-    if(cycles<300000) { CHECK(!(P4OUT&BIT7));CHECK(!red); }
+    if(cycles<300000) {
+#if !defined(AUTO_LED_TEST) || !AUTO_LED_TEST
+        CHECK(!(P4OUT&BIT7));CHECK(!red);
+#endif
+    }
     cycles+=n;
     if(cycles>11ull*1048576) throw End{};
-    if(pressed(double(cycles)/1048576)) P1IN&=~BIT1;
-    else P1IN|=BIT1;
+    double t=double(cycles)/1048576;
+#if defined(USE_S1_BUTTON) && USE_S1_BUTTON
+    if(pressed(t)) P2IN&=~BIT1; else P2IN|=BIT1;
+    if(t>=9.5 && t<9.8) P1IN&=~BIT1; else P1IN|=BIT1;
+#else
+    if(pressed(t)) P1IN&=~BIT1; else P1IN|=BIT1;
+    if(t>=9.5 && t<9.8) P2IN&=~BIT1; else P2IN|=BIT1;
+#endif
 }
 int main() {
     try { firmware_main(); } catch(End&) {}
+#if defined(AUTO_LED_TEST) && AUTO_LED_TEST
+    CHECK(s2Presses==0);CHECK(redEdges==11);CHECK(edges.size()==11);
+    CHECK(P4OUT&BIT7);
+    for(unsigned i=0;i<11;i++) {
+        CHECK(edges[i].second==(i%2==0));
+        if(i) CHECK(edges[i].first-edges[i-1].first==1048576);
+    }
+#else
     CHECK(s2Presses==2);CHECK(redEdges==24);CHECK(edges.size()==24);
     CHECK(!(P1OUT&BIT0));CHECK(P4OUT&BIT7);
     CHECK(edges[0].first>=1048576); // No startup-held activation.
@@ -69,9 +88,16 @@ int main() {
             if(i) CHECK(edges[group*12+i].first-edges[group*12+i-1].first==262144);
         }
     }
-    printf("PASS %u LED-only assertions: real main, debounce, six flashes per press, held input, ready indicator and P1.6 never driven.\n",checks);
+#endif
+    CHECK(!(P2DIR&BIT1));CHECK(P2REN&BIT1);
+#if defined(AUTO_LED_TEST) && AUTO_LED_TEST
+    printf("PASS %u automatic LED assertions: real main, one-second edges, button-independent, ready indicator and P1.6 never driven.\n",checks);
+#else
+    printf("PASS %u LED-only assertions: selected button only, real main, debounce, six flashes per press, held input, ready indicator and P1.6 never driven.\n",checks);
+#endif
 }
 ''',encoding='utf-8')
-subprocess.run(['C:/msys64/ucrt64/bin/g++.exe','-std=c++17','-Wall','-Wextra','-Werror','-static',
-                '-I'+str(build),str(source),'-o',str(exe)],check=True)
-subprocess.run([str(exe)],check=True)
+for defines in ([],['-DUSE_S1_BUTTON=1'],['-DAUTO_LED_TEST=1']):
+    subprocess.run(['C:/msys64/ucrt64/bin/g++.exe','-std=c++17','-Wall','-Wextra','-Werror','-static',
+                    *defines,'-I'+str(build),str(source),'-o',str(exe)],check=True)
+    subprocess.run([str(exe)],check=True)

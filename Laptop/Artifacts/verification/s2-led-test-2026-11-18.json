@@ -1,28 +1,55 @@
 {
   "date": "2026-11-18",
   "timezone": "Asia/Singapore",
-  "purpose": "Isolate MSP S2 and onboard LEDs before adding pump activation",
+  "purpose": "Compare S2, SW1 and automatic LED output while keeping the pump pin disabled",
   "source": "Car/MSP430/s2_led_test/main.c",
   "board_configured": "MSP-EXP430F5529LP",
-  "expected_behavior": "Green LED2 indicates ready. One debounced S2/P1.1 press produces six red LED1/P1.0 flashes over about three seconds, then OFF. Holding does not repeat.",
+  "expected_behavior": "Automatic mode requests red LED1/P1.0 ON for one second and OFF for one second continuously. Green LED2 remains ON. No button press is needed.",
   "pump_pin": "P1.6 input with pull-down; never driven HIGH",
   "validation": {
-    "real_main_software_assertions": 1664,
+    "real_main_software_assertions": 3395,
     "ti_compile_and_link_passed": true,
-    "image_sha256": "80ad84ec66a99151bc466890111b717c4c682fce0f78663844177e023b1941e7",
+    "image_sha256": "eb5e6c0de7265f274b68ee383534b7dacfb63f1100404c739bfff8fa06e26df0",
     "flash_program_verified": true,
     "left_running": true,
     "startup_P1OUT": 2,
     "startup_P1DIR": 1,
     "startup_P1REN": 66,
     "startup_P4OUT": 128,
-    "startup_P4DIR": 128
+    "startup_P4DIR": 128,
+    "assertions_per_button_configuration": 1666,
+    "automatic_configuration_assertions": 63,
+    "configurations_checked": [
+      "S2/P1.1",
+      "SW1/S1/P2.1",
+      "Automatic one-second LED transitions"
+    ],
+    "previous_s2_image_sha256": "80ad84ec66a99151bc466890111b717c4c682fce0f78663844177e023b1941e7",
+    "previous_sw1_image_sha256": "5bd906ec5f3c2300a470d8985c8ac65a4aa8d19f3e0472bf31a13589ef40f59c",
+    "automatic_debugger_edge_samples": [
+      1,
+      2,
+      3
+    ],
+    "automatic_debugger_P1OUT_samples": [
+      3,
+      2,
+      3
+    ],
+    "startup_P2OUT": 2,
+    "startup_P2DIR": 0,
+    "startup_P2REN": 2,
+    "startup_P2SEL": 0,
+    "software_checks_repeated_on": "2026-11-20",
+    "all_three_ti_builds_repeated_on": "2026-11-20"
   },
   "user_observation": {
     "green_ready_light_visible": true,
     "red_blink_after_s2": false,
     "green_turns_off_when_s3_pressed": true,
-    "note": "S3 is reset. A reset clears press/edge history, so zero counters after that reset cannot establish that S2 was ignored."
+    "note": "S3 is reset. A reset clears press/edge history, so zero counters after that reset cannot establish that S2 was ignored.",
+    "red_blink_after_sw1": false,
+    "red_blink_in_automatic_mode": false
   },
   "direct_red_led_check": {
     "duration_seconds": 30,
@@ -33,11 +60,16 @@
     "P1REN": 66,
     "P1IN_while_halted": 190,
     "P1OUT_after_off": 2,
-    "physical_red_visibility": "AWAITING_USER_REPORT",
-    "scope": "Debugger register write/read with CPU halted; this is not an analog pin-voltage measurement or proof of a damaged GPIO."
+    "physical_red_visibility": "USER_CONFIRMED_ON_DURING_REPEAT",
+    "scope": "Debugger register write/read with CPU halted; this is not an analog pin-voltage measurement or proof of a damaged GPIO.",
+    "fresh_program_start_before_repeat": true,
+    "retained_s2_press_count_before_repeat": 1,
+    "retained_red_edges_before_repeat": 12,
+    "interpretation": "User saw red illumination despite halted P1IN bit0 reading LOW. That halted read is not evidence that the physical output or LED was LOW or damaged."
   },
   "normal_supervisor_restored": false,
   "pump_activated_by_this_test": false,
   "visual_red_blink_verified": false,
-  "next_step": "Obtain physical LED observation and inspect the board/LED1 path before further firmware changes. After the LED-only check works, add the user's requested three-second pump-and-blink step."
+  "next_step": "The user requested a direct three-second pump test. Wiring readiness is pending and no automated pulse has been issued. Visible LED blinking remains unresolved.",
+  "current_mode": "Automatic; -Automatic build"
 }

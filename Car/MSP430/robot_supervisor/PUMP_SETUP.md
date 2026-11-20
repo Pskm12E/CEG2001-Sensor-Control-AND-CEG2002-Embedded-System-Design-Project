@@ -1,7 +1,7 @@
 # Target stop, water spray and continuation
 
 **Temporary bench mode, 18 November:** the MSP currently runs the separate
-[S2 LED-only test](../s2_led_test/README.md), with P1.6 disabled. The integrated supervisor
+[LED-only test](../s2_led_test/README.md), configured for automatic blinking with P1.6 disabled. The user saw no red blinking in this mode. The integrated supervisor
 described below must be restored before robot operation. Motors remain off and
 the pump disconnected for the voltage test.
 
