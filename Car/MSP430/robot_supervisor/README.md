@@ -1,26 +1,14 @@
 # MSP430 robot supervisor — Zumo
 
-**20 November update.** The MSP430 now runs the integrated three-second pump
-profile after two user-confirmed bench runs. P1.6 drives the MOSFET gate and
-P6.0 supplies raw water ADC readings. The normal supervisor has replaced the
-LED test and is flashed/program-verified. Live status shows `READY=1`, `PUMP=0`,
-`RUN=0`, all communication links ready and zero communication errors.
-
-The confirmed-target sequence is stop, acknowledge, settle, spray for three
-seconds, turn the pump off and resume with a fresh matching camera continuation.
-The ultrasonic settings are **5 cm STOP / 7 cm clearance**. The installed Uno OG5 uses straight
-speed 150 and an outside-track turn limit of 250. See [the cycle/pump guide](PUMP_SETUP.md).
-The full physical target-to-spray-to-resume trial remains pending.
-
-## Previous installed milestone — 17 November 2026
-
-The MSP430F5529 is the main controller. It grants calibration/following to the
-Uno and issues STOP for valid near obstacles, local S2 and communications faults.
-The user confirmed the current setup working on **17 November 2026**.
+The MSP430F5529 grants calibration and following to the Uno, measures obstacle
+range, samples the water probe on P6.0 and controls the three-second pump pulse
+on P1.6. Build the ESP-UART/Zumo profile with the pump driver enabled for
+`V2_Working`. [Build flags, wiring and spray sequence](PUMP_SETUP.md)
 
 ## Current sonar policy
 
-Automatic resume requires this MSP430 source and the matching Uno OG5 sketch.
+Automatic resume requires the pause acknowledgement introduced in Uno OG5
+and supported by the release's OG6 sketch.
 
 | Setting | Value |
 | --- | --- |
@@ -53,7 +41,7 @@ resume grant. A refused or timed-out pause falls back to a regular STOP.
 
 Use [the Zumo guide](../../Arduino_Uno/zumo_line_follow/README.md) for complete
 divider orientation and operation. The matching Uno source is **zumo_line_follow**,
-firmware **OG5** for the obstacle pause. The pump driver connects to P1.6.
+firmware **OG6**. The pump driver connects to P1.6.
 
 ```powershell
 ./Car/MSP430/build_robot_supervisor.ps1 -EspUart -Zumo -PumpDriverVerified -SpraySeconds 3

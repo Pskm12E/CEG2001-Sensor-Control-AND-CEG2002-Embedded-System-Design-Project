@@ -1,24 +1,29 @@
 # Zumo black-line follower with MSP430 stopping
 
-**20 November update.** The MSP430 now runs the integrated three-second pump
-profile after two user-confirmed bench runs. P1.6 drives the MOSFET gate and
-P6.0 supplies raw water ADC readings. The normal supervisor has replaced the
-LED test and is flashed/program-verified. Live status shows `READY=1`, `PUMP=0`,
-`RUN=0`, all communication links ready and zero communication errors.
+## Flip alarm
 
-The confirmed-target sequence is stop, acknowledge, settle, spray for three
-seconds, turn the pump off and resume with a fresh matching camera continuation.
-The ultrasonic settings are **5 cm STOP / 7 cm clearance**. The installed Uno OG5 uses straight
-speed 150 and an outside-track turn limit of 250. See [the cycle/pump guide](../../MSP430/robot_supervisor/PUMP_SETUP.md).
-The full physical target-to-spray-to-resume trial remains pending.
+Uno OG6 reads gravity on the Zumo Shield's accelerometer. After about 0.4 seconds
+upside down, it gives a short beep every 0.75 seconds. Returning the robot upright
+silences it. The alarm starts enabled on a new Uno.
 
-## Previous installed milestone — 17 November 2026
+With the robot parked, hold the **Zumo user button** for two seconds to toggle the
+alarm. Release it before making another selection. The Uno saves the setting
+across power cycles. A short tap still requests calibration or line following.
+During motion or an obstacle pause, pressing the button stops the run first.
 
-Current setup, **17 November 2026**: Uno + Zumo Shield control the six reflectance
-sensors and motors. MSP430F5529 measures the HC-SR04 and grants movement.
-The user confirmed the driving setup is working. Uno **OG3** is user-installed;
-the MSP no-echo update was flashed and program-verified. Source cleanup does not
-upload firmware or change the original follower settings.
+On Uno USB at 9600 baud, send `ALARM OFF` or `ALARM ON` with a newline.
+`STATUS` shows the setting, sensor connection, flipped flag and raw vertical
+acceleration. This robot measured about −15,700 counts sitting upright.
+If `FLIPPED=1` appears while inverted but the buzzer is silent, check the
+shield's buzzer jumper. The two pins marked **328P** connect BZ to Uno D3.
+[Pololu jumper guide](https://www.pololu.com/docs/0J57/3.c)
+
+## MSP430 spray and obstacle settings
+
+The MSP430 owns the ultrasonic pause and the target-triggered spray sequence.
+The Uno applies a stop to both tracks before acknowledging it. The MSP then
+waits about 300 ms before starting its three-second P1.6 pulse.
+[Pump wiring and job sequence](../../MSP430/robot_supervisor/PUMP_SETUP.md)
 
 ## Current stopping settings
 
@@ -95,8 +100,9 @@ See [Pololu's shield pin table](https://www.pololu.com/docs/0J57/5),
 [array connections](https://www.pololu.com/docs/0J57/2.c), and the
 [MSP430F5529 datasheet](https://www.ti.com/lit/ds/symlink/msp430f5529.pdf).
 
-The Uno plugs directly into the shield. **No L298N or separate two-IR wiring
-is used.** Water ADC logic is pending; **pump/MOSFET/driver are not connected**.
+The Uno plugs into the Zumo Shield, which carries the track driver and six
+line sensors. The MSP430 samples the water probe on P6.0 and drives the pump
+MOSFET gate on P1.6. The pump uses a separate four-AA supply.
 
 ## USB diagnostics
 
@@ -107,9 +113,10 @@ Use **9600 baud and newline**. Commands are case-insensitive.
 | `C` | Request a powered calibration from MSP |
 | `F` | Request following; requires calibration and MSP grant |
 | `S` / `STOP` | Stop locally |
-| `STATUS` | Request the two status lines |
+| `ALARM OFF` / `ALARM ON` | Mute or enable the flip alarm and save the setting |
+| `STATUS` | Request motion, last event and flip alarm status |
 
-Periodic status identifies **`FW=OG5`**. `CAL` is calibration complete, `SWEEP`
+Periodic status identifies **`FW=OG6`**. `CAL` is calibration complete, `SWEEP`
 is calibration active, `RUN` is following, and `REQ` is a pending local request.
 `STEP=n/80` shows sweep progress. `UP` is seconds since reset. `LAST` retains
 the last motion event across stopped MSP STOP/HELLO exchanges; `REASON` can
@@ -143,11 +150,11 @@ python Car/Arduino_Uno/tests/check_zumo.py
 python Car/MSP430/tests/check_ultrasonic.py
 ```
 
-These commands compile and run host tests. Upload Uno **OG5** and the matching
+These commands compile and run host tests. Upload Uno **OG6** and the matching
 MSP430 supervisor to enable automatic resume. The Uno build uses Pololu
 **ZumoShield 2.1.0**, AVR core **1.8.8**, Wire and SoftwareSerial. In Arduino IDE,
 open the repository sketch `zumo_line_follow.ino`, select Arduino Uno, and keep
-both headers beside it.
+its bundled headers beside it.
 
 Arduino copies the sketch into its build directory. Its bundled `robot_link.h`
 must remain byte-identical to `../msp_line_follow/robot_link.h`, used by MSP code;

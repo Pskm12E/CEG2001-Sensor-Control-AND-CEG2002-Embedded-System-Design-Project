@@ -3,15 +3,11 @@
 Open **http://127.0.0.1:8765** on the laptop. The robot MSP430 is the main
 embedded controller. The app runs locally; the laptop keeps its normal Wi-Fi.
 
-**20 November update.** The MSP430 pump profile is installed and enabled after
-two successful three-second bench runs. Confirmed blue targets request the
-bounded stop → spray → continuation cycle through Uno OG4, MSP supervisor,
-FireBeetle DIRECT_WIFI_V2 and Pico DESK_BRIDGE_V3.
-
-Live checks report all links ready, the robot stopped, pump off and zero
-communication errors. The full physical target-to-spray-to-resume trial remains
-pending. See [pump wiring and cycle behavior](../../Car/MSP430/robot_supervisor/PUMP_SETUP.md).
-The optional pump-disabled build continues to report `DRIVER_DISABLED`.
+In `V2_Working`, the desk Pico V3 relays a confirmed blue target through the
+FireBeetle V2 to the MSP430. The supervisor stops the Zumo OG6, switches the
+P1.6 pump gate on for three seconds, then waits for fresh camera confirmation
+before resuming. The dashboard shows the commanded pump state and the P6.0
+water reading. [Pump wiring and cycle behavior](../../Car/MSP430/robot_supervisor/PUMP_SETUP.md)
 
 ## Start the system
 

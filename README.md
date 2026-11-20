@@ -2,60 +2,32 @@
 
 CEG2001 Sensors and Control · CEG2002 Embedded System Design
 
-The **MSP430 is the main embedded controller**. An Arduino Uno + Zumo Shield
-follows a black line on white using the six-sensor array and built-in motor
-driver. The MSP430 measures the HC-SR04 and sends obstacle STOP commands.
-The user confirmed the current driving setup is working on **17 November 2026**.
+## V2_Working · 20 November 2026
 
-## Working robot checkpoint — 20 November 2026
+The Zumo follows a black line. Its Arduino Uno runs **OG6**, which reads the
+six line sensors and drives the tracks. The **MSP430F5529** grants motion,
+reads the ultrasonic and water sensors, and switches the pump. The operator
+confirmed that the pump worked after replacing a resistor in the pump circuit.
 
-Git tag `robot-og5-p16-2026-11-20` records the Uno OG5 sketch, MSP430 supervisor,
-FireBeetle V2 gateway, Pico V3 relay, XIAO camera code and laptop dashboard.
-The operator confirmed that the pump works on **P1.6**. During an accepted
-spray, the MSP430 holds the gate high continuously for **three seconds**.
-The flashed Uno and MSP430 image hashes and the supervisor build options are
-in the [firmware record](Laptop/Artifacts/verification/obstacle-resume-installation-2026-11-20.json).
+| Event | Robot behavior |
+| --- | --- |
+| Camera confirms a blue square while following | The Zumo stops and acknowledges. After about 300 ms, the MSP430 drives the MOSFET gate on **P1.6** for **3 seconds**. A fresh continuation for the same camera job allows line following to resume. |
+| Ultrasonic measures **5 cm or closer** while following | The Zumo pauses. Two consecutive valid readings of **7 cm or farther** allow it to resume. Missing echoes leave it paused. |
+| Near obstacle, manual stop or link failure during a spray job | The supervisor cancels the job and switches the pump off. Starting again requires a new local request. |
+| Zumo stays upside down | The shield buzzer beeps. Hold the parked Zumo's user button for **2 seconds** to toggle the alarm. The Uno remembers the setting. |
 
-The sequence is **blue target → Zumo STOP acknowledgement → 300 ms settling →
-three-second pump pulse → pump off → matching continuation → line following**.
-The laptop supplies continuation from fresh camera observations. Manual STOP,
-an ultrasonic obstacle or a communication fault cancels the job with the pump off.
-
-Live checks through Pico V3 and FireBeetle V2 report `READY=1`, `PUMP=0`, `RUN=0`,
-the Uno link ready and zero UART/framing/drop errors. Uno OG5 is installed
-with straight speed 150 and outside-track turn speed up to 250. The ultrasonic
-setting remains **5 cm STOP / 7 cm clearance**. Calibrate the line array before
-following. MSP S2 remains a temporary debug STOP control.
-
-The combined sequence passes software integration checks. The full physical
-target-to-spray-to-resume trial is still to be observed on the track. See the
-[pump/cycle guide](Car/MSP430/robot_supervisor/PUMP_SETUP.md) and
-[installation record](Laptop/Artifacts/verification/pump-integration-2026-11-20.json).
-
-The installed desk Pico video fix keeps completed frames while receiving the
-next JPEG. The 18 November live checks measured **12.9–13.3 fps**, with longest
-gaps of 281–328 ms. See the
-[video measurement record](Laptop/Artifacts/verification/video-stability-2026-11-18.json).
+The laptop dashboard shows live camera video and the **P6.0 water reading**.
+Its Water tank panel shows probe wetness until you save empty and full readings
+with the probe mounted in the tank. It then shows estimated tank level.
+The pump indicator shows the MSP430 gate command. [Dashboard guide](Laptop/Dashboard/README.md)
 
 ## Ultrasonic pause and resume
 
-The matching MSP430 supervisor and **Uno OG5** were flashed and verified on
-20 November. The pump uses P1.6 with a three-second cutoff.
-[Obstacle-resume installation record](Laptop/Artifacts/verification/obstacle-resume-installation-2026-11-20.json).
-
-| Setting | Current behavior |
-| --- | --- |
-| Obstacle detected during line following | The Zumo pauses at a valid measured range **5 cm or closer** |
-| Obstacle clears during the pause | The Zumo resumes after two consecutive valid readings **7 cm or farther** |
-| Missing / invalid / stale echo | Logged as a sensor fault after the timeout. Automatic resume waits for valid readings. |
-| Old near reading | Expires after about **300 ms** without a fresh valid reading |
-| Manual STOP, interrupted calibration, or link fault | A new local request is required |
-
-The sonar accepts valid echoes from 2–400 cm. The thresholds are configured
-distances. Physical braking distance remains unmeasured. With no echo, the
-robot can still start on a local request under the existing sonar policy.
-The firmware requires valid echoes to resume a paused run automatically.
-See the [MSP430 sonar policy](Car/MSP430/robot_supervisor/README.md#current-sonar-policy).
+The HC-SR04 accepts echoes from 2–400 cm. A previous near reading expires after
+about 300 ms without a valid echo. This permits a new local start in open
+space. An existing obstacle pause still requires two confirmed clear readings.
+The 5 cm setting is the sensor threshold. Physical braking distance has not
+been measured. [Sonar policy](Car/MSP430/robot_supervisor/README.md#current-sonar-policy)
 
 ## Calibrate and drive
 
@@ -71,17 +43,14 @@ See the [MSP430 sonar policy](Car/MSP430/robot_supervisor/README.md#current-sona
 
 Calibration is held in RAM and must be repeated after an Uno reset. The original
 PD settings remain `kp=1`, `kd=0`, centre 2500 and `MAX_SPEED=150`, with a positive turn cap of 250 and reverse cap of 400. USB status is
-**9600 baud**, source firmware **OG5**.
+**9600 baud**, source firmware **OG6**.
 See [the complete Zumo wiring and operating guide](Car/Arduino_Uno/zumo_line_follow/README.md).
-
-The obstacle pause and resume sequence passed host integration tests. The
-updated firmware awaits a physical track test.
 
 ## Find the code
 
 | Folder | Role |
 | --- | --- |
-| [Car/MSP430](Car/MSP430/README.md) | Main supervisor, sonar and movement permission; build with `-EspUart -Zumo` |
+| [Car/MSP430](Car/MSP430/README.md) | Main supervisor, sonar, pump cutoff and movement permission |
 | [Car/Arduino_Uno](Car/Arduino_Uno/README.md) | Active `zumo_line_follow` sketch; previous L298N sketches retained as history |
 | [Car/ESP32_Gateway](Car/ESP32_Gateway/README.md) | FireBeetle private Wi-Fi access point and MSP UART bridge |
 | [Car/XIAO_ESP32S3_Camera](Car/XIAO_ESP32S3_Camera/README.md) | Car-mounted wireless camera |
@@ -90,9 +59,8 @@ updated firmware awaits a physical track test.
 | [Laptop/Tools/Communication](Laptop/Tools/Communication/README.md) | Protocol, private network configuration, build helpers and checks |
 | [Docking_Station](Docking_Station/README.md) | Planned dock controller and peripherals |
 
-Water sensor P6.0 raw ADC reporting and the bounded target spray cycle are
-implemented and the pump profile is installed; wet/dry calibration and the full
-physical target-cycle trial are pending. Trained YOLO insect recognition and dock/refill control remain planned.
+The camera currently recognizes a blue practice target. Trained insect
+recognition and automatic docking/refill are planned.
 
 ## Laptop monitor
 
@@ -122,10 +90,6 @@ Car camera ── Wi-Fi ── FireBeetle AP ── Wi-Fi ── Desk Pico ─�
                            |
                      Arduino Uno ── Zumo Shield ── tracks
 ```
-
-The user confirmed target and ultrasonic stopping on 18 November, then confirmed
-P1.6-controlled pump operation twice on 20 November. The integrated pump profile
-is installed. A full physical target-to-spray-to-resume trial remains pending.
 
 Driving/calibration use the MSP/Uno link directly. Each board needs its own
 appropriate supply; common GND does not power the boards. Motors use the AA supply.
@@ -174,7 +138,5 @@ python Laptop/Tools/check_layout.py
 - [Folder migration](Laptop/Documentation/folder-organisation.md) and [hosted preview](Laptop/Deployment/README.md)
 
 Wi-Fi credentials, generated network headers, compiled firmware, board backups,
-private camera images and local session notes stay out of Git. Build output can
-embed passwords; build it locally. Historical reports retain their dated results,
-and third-party licences are preserved. Pushing this project branch does not
-change the separate hosted-preview branch.
+private camera images and local session notes stay out of Git. Build radio
+firmware locally with your private network settings.

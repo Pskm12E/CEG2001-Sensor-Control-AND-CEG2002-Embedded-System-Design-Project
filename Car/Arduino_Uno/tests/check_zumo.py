@@ -56,7 +56,21 @@ struct FakeSerial {
 };
 inline FakeSerial Serial;
 ''',
-    "Wire.h": "#pragma once\n#include <Arduino.h>\n",
+    "Wire.h": r'''
+#pragma once
+#include <Arduino.h>
+inline struct { void begin() {} void setWireTimeout(uint32_t,bool) {} } Wire;
+''',
+    "EEPROM.h": r'''
+#pragma once
+#include <Arduino.h>
+inline struct {
+    uint8_t value=0xff;
+    int length() { return 1024; }
+    uint8_t read(int i) { assert(i==1023); return value; }
+    void update(int i,uint8_t v) { assert(i==1023); value=v; }
+} EEPROM;
+''',
     "SoftwareSerial.h": r'''
 #pragma once
 #include <Arduino.h>
@@ -77,6 +91,22 @@ public:
 #pragma once
 #include <Arduino.h>
 #define ZUMO_BUTTON 12
+inline bool imuPresent=true, readFails=false;
+inline int16_t measuredZ=-15700;
+inline unsigned beeps=0, silences=0;
+struct ZumoIMU {
+    struct { int16_t z=0; } a;
+    bool init() { return imuPresent; }
+    void enableDefault() {}
+    uint8_t getLastError() { return readFails; }
+    void readAcc() { a.z=measuredZ; }
+};
+struct ZumoBuzzer {
+    void playFrequency(unsigned hz,unsigned duration,unsigned volume) {
+        assert(hz && duration==120 && volume); ++beeps;
+    }
+    void stopPlaying() { ++silences; }
+};
 class ZumoMotors {
 public:
     int left=0,right=0;
@@ -174,6 +204,8 @@ static void reset() {
     Serial=FakeSerial(); button.pressed=button.released=false;
     mspSerial.input.clear(); mspSerial.output.clear(); mspSerial.overflowed=false;
     mspSerial.beforeWrite=nullptr; usbUsed=0; usbDiscard=false; suppressButtonRelease=false;
+    timingButtonHold=false; flipAlarm=FlipAlarm();
+    imuPresent=true; readFails=false; measuredZ=-15700; beeps=silences=0;
     usbReportPart=0;
     lastByte=lastReport=nextCalibration=calibrationStep=0;
     msp::ticks=msp::sequence=msp::requestAt=msp::lastPoll=msp::lastLinkByte=0;
@@ -233,6 +265,34 @@ static void start() {
     CHECK(motors.left==150 && motors.right==150);
 }
 int main(int argc,char** argv) {
+    reset(); linkClear();
+    auto samples=[](int16_t z,unsigned count) {
+        measuredZ=z;
+        for(unsigned i=0;i<count;++i) { fakeMillis+=40; loop(); }
+    };
+    const int16_t tracksDown=-15700, tracksUp=16384;
+    samples(tracksDown,15); samples(0,15);
+    samples(tracksUp,9); samples(tracksDown,1);
+    CHECK(flipAlarm.enabled && flipAlarm.sensorReady && !flipAlarm.flipped && !beeps);
+    samples(tracksUp,11); CHECK(flipAlarm.flipped && beeps==1);
+    samples(tracksUp,19); CHECK(beeps==2);
+    samples(7000,5); samples(tracksDown,3); CHECK(flipAlarm.flipped);
+    samples(tracksDown,1); CHECK(!flipAlarm.flipped && silences==1);
+    samples(tracksUp,11); CHECK(flipAlarm.flipped);
+    button.pressed=true; loop(); samples(tracksUp,51);
+    CHECK(!flipAlarm.enabled && !flipAlarm.flipped && silences==2);
+    samples(tracksUp,55); button.pressed=false; releaseButton();
+    CHECK(!flipAlarm.enabled && !robot.userRequest && stopped());
+    reset(); samples(tracksUp,20); CHECK(!flipAlarm.enabled && !beeps);
+    Serial.send("alarm on\n"); loop(); samples(tracksUp,11);
+    CHECK(flipAlarm.flipped && beeps==1);
+    readFails=true; samples(tracksUp,1); CHECK(!flipAlarm.sensorReady && !flipAlarm.flipped);
+    imuPresent=false; readFails=false; samples(tracksUp,100); CHECK(beeps==1);
+    imuPresent=true; samples(tracksDown,65); CHECK(flipAlarm.sensorReady && !flipAlarm.flipped);
+    samples(tracksUp,11); Serial.send("alarm off\n"); loop();
+    CHECK(!flipAlarm.enabled && !flipAlarm.flipped);
+    button.pressed=true; loop(); samples(tracksDown,51); button.pressed=false; releaseButton();
+    CHECK(flipAlarm.enabled && !robot.userRequest);
     reset(); CHECK(mspSerial.rx==6 && mspSerial.tx==13 && mspSerial.baud==9600);
     CHECK(Serial.baud==9600);
     // MSP session is still required, but missing sonar is no longer a veto.
@@ -359,9 +419,10 @@ int main(int argc,char** argv) {
     CHECK(!robot.moving() && stopped());
     // Reproduce the screenshot: HELLO has cleared REASON, but sweep is aborted.
     CHECK(robot.reason==RL_OK && !robot.calibrated && robot.lastEvent==ZE_MSP_STOP);
-    Serial.output.clear(); usbReportPart=1; reportUsb(); reportUsb();
+    Serial.output.clear(); usbReportPart=1; reportUsb(); reportUsb(); reportUsb();
     std::string statusText(Serial.output.begin(),Serial.output.end());
-    CHECK(statusText.find("FW=OG5 CAL=0 SWEEP=0 RUN=0 REASON=0")!=std::string::npos);
+    CHECK(statusText.find("FW=OG6 CAL=0 SWEEP=0 RUN=0 REASON=0")!=std::string::npos);
+    CHECK(statusText.find("FLIP ALARM=ON IMU=OK FLIPPED=0")!=std::string::npos);
     CHECK(statusText.find("LAST=MSP_STOP")!=std::string::npos && !usbReportPart);
     releaseButton();
     for(unsigned i=0;i<80 && !robot.calibrating;++i) step();
@@ -415,10 +476,10 @@ int main(int argc,char** argv) {
     p={RL_STOP,9,1,0,0}; c.handle(p,1004);
     CHECK(c.lastEvent==ZE_MSP_RESYNC);
 
-    // Both diagnostic lines must fit a real Uno's 63-byte serial TX space.
+    // Each diagnostic line must fit a real Uno's 63-byte serial TX space.
     robot.reason=robot.userRequest=255; calibrationStep=255;
     robot.lastEvent=ZE_HEARTBEAT_LOST; fakeMillis=0xffffffffu;
-    Serial.output.clear(); usbReportPart=1; reportUsb(); reportUsb();
+    Serial.output.clear(); usbReportPart=1; reportUsb(); reportUsb(); reportUsb();
     CHECK(!usbReportPart);
     statusText.assign(Serial.output.begin(),Serial.output.end());
     size_t lineStart=0;

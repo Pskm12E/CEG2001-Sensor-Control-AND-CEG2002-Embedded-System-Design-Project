@@ -1,16 +1,10 @@
 # Car MSP430 — main controller
 
-**Installed and program-verified, 20 November 2026.** The normal ESP-UART/Zumo
-supervisor is running with the three-second P1.6 pump profile enabled. It replaces
-the standalone LED diagnostic. The user confirmed the pump running and stopping
-in two bench tests. Live Pico/ESP/MSP/Uno checks report `READY=1`, `PUMP=0`,
-`RUN=0`, Uno ready and zero communication errors.
-
-Confirmed target jobs stop the Zumo, wait for its acknowledgement and settling,
-spray for three seconds, turn the pump off and resume after a fresh matching
-camera continuation. Sonar remains **5 cm STOP / 7 cm clearance**. Raw water ADC
-uses P6.0. See [the cycle/pump guide](robot_supervisor/PUMP_SETUP.md).
-The full physical moving target-cycle trial remains pending.
+The `V2_Working` supervisor grants motion to the Uno OG6, stops the tracks for
+a confirmed target and drives the pump gate on **P1.6 for three seconds**.
+The HC-SR04 pauses line following at **5 cm**. Resume requires two consecutive
+valid readings of **7 cm or farther**. The P6.0 ADC reports water-probe
+readings to the dashboard. [Supervisor build and pump wiring](robot_supervisor/PUMP_SETUP.md)
 
 For a separate **P1.6 control-voltage check**, see
 [pump_voltage_test](pump_voltage_test/README.md). It uses MSP S2 for a 3-second

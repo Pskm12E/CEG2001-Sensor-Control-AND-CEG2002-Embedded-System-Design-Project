@@ -1,6 +1,6 @@
 # Board roles, connections and PC data path
 
-Updated 17 November 2026. Current driving uses Zumo Shield + Uno. The
+Updated 20 November 2026 for `V2_Working`. Driving uses the Zumo Shield and Uno. The
 [Zumo guide](../../../Car/Arduino_Uno/zumo_line_follow/README.md) is the source
 of truth for firmware, sensor wiring and operation. The 5 November image below
 shows the previous L298N base; use the current connection tables instead.
@@ -20,11 +20,11 @@ pin labels and the exact signal tables below when wiring.
 | Laptop | Desk | Runs the local dashboard at http://127.0.0.1:8765, displays live video and robot status. |
 | Raspberry Pi Pico W | Beside laptop | USB-to-Wi-Fi relay for video and status; no GPIO wires to the car. |
 | Original FireBeetle ESP32, DFR0478 | Car | Creates the private 2.4 GHz Wi-Fi network and bridges robot status over UART. |
-| MSP430 #1, MSP-EXP430F5529LP | Car | **Main robot controller**; supervises Uno, authorisation and communication timeouts. Job/spray logic remains pending. |
-| Arduino Uno R3 + Zumo Shield | Car | Six-sensor black-line following and built-in motor control. MSP is flashed for obstacle stopping; Uno awaits the user's matching upload. |
+| MSP430 #1, MSP-EXP430F5529LP | Car | Grants motion, monitors sonar and water, and controls the three-second spray cycle. |
+| Arduino Uno R3 + Zumo Shield | Car | OG6 reads the six line sensors, drives the tracks, acknowledges stops and sounds the optional flip alarm. |
 | XIAO ESP32-S3 Sense camera | Car | Sends continuous OV3660 camera video wirelessly through the existing ESP32 network. USB-C supplies power from a power bank. |
 | MSP430 #2 + Booster Board | Dock, planned | Local dock sensors and refill control. Pins, communication and firmware are not integrated. |
-| Spray pump and suitable driver | Car, planned | Future bounded spraying authorised by the main MSP430; hardware/pins pending. |
+| Water pump and 2N7000 | Car | A separate four-AA pack powers the pump. MSP430 P1.6 drives the MOSFET gate. |
 
 ## Communication and return paths
 
@@ -52,8 +52,8 @@ Laptop <== USB data + power ==> Desk Pico W
   main authority for robot actions.
 - The laptop can keep its usual internet connection; the Pico joins the private
   network. The laptop does not need USB data connections to the car boards.
-- The current dashboard performs read-only checks. Movement, calibration and
-  spray commands are not enabled through the app.
+- Enabling blue-target detection lets the dashboard request a spray job and
+  send the matching continuation. Calibration and the initial start use the Zumo button.
 
 See the [local dashboard guide](../../Dashboard/README.md) and
 [desk Pico setup](desk-pico-setup.md) for software and streaming details.
@@ -105,12 +105,12 @@ their junction. Nominal output is 2.5V for a 5V input. Do not wire the Uno's
 | HC-SR04 VCC / GND | 5V / common GND |
 | Water sensor S | MSP P6.0 / ADC A0 |
 | Water sensor V/+ and G/- | MSP 3.3V / common GND |
+| MSP P1.6 | 2N7000 gate, with a pull-down from gate to source |
 
 No external L298N or two separate IR sensors are used. The supplied Zumo code
 follows black on white; MSP stopping also covers its powered calibration sweep.
-Water ADC policy is pending; pump/MOSFET/driver are not connected. Firmware and
-host tests are verified in software, not on the new assembly. Reported controller
-state is not measured wheel motion.
+The dashboard displays the P6.0 reading and estimates tank level after empty/full
+calibration. [Pump circuit and flyback diode](../../../Car/MSP430/robot_supervisor/PUMP_SETUP.md#supplied-wiring)
 
 ## Power and mounting
 
@@ -135,11 +135,9 @@ See [camera evidence](../../Artifacts/verification/camera-live-stream-2026-11-05
 and [power-bank evidence](../../Artifacts/verification/camera-powerbank-wireless.json).
 These checks do not establish complete physical driving or autonomous spraying.
 
-Next: install both matching Zumo images, known-distance sonar checks, calibration
-and track/stopping tests, pest detection, sensor eligibility checks, bounded spray
-control, and second-MSP dock integration. Water ADC logic, nozzle and dock
-interfaces remain unfinished. Charging
-remains manual; wireless charging and spill sensing are not added requirements.
+The 20 November release includes target-triggered spraying, water telemetry and
+obstacle pause/resume. The operator reported that replacing a resistor restored
+pump operation. Dock integration and insect recognition remain planned.
 
 ## Historical illustration
 

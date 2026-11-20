@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "zumo_control.h"
+#include "flip_alarm.h"
 
 const uint8_t MSP_RX_PIN = 6;
 const uint8_t MSP_TX_PIN = 13;
@@ -18,11 +19,13 @@ const uint16_t CALIBRATION_START_DELAY_MS = 1000;
 const uint8_t CALIBRATION_INTERVAL_MS = 20;
 const uint8_t FRAME_TIMEOUT_MS = 100;
 const uint16_t REPORT_INTERVAL_MS = 1000;
+const uint16_t ALARM_BUTTON_HOLD_MS = 2000;
 const int LINE_CENTER = 2500;
 
 ZumoReflectanceSensorArray reflectanceSensors;
 ZumoMotors motors;
 Pushbutton button(ZUMO_BUTTON);
+FlipAlarm flipAlarm;
 SoftwareSerial mspSerial(MSP_RX_PIN, MSP_TX_PIN);
 ZumoControl robot;
 RlParser parser={};
@@ -35,10 +38,12 @@ int lastError=0;
 uint8_t calibrationStep=0;
 uint32_t nextCalibration=0, lastByte=0, lastReport=0;
 bool suppressButtonRelease=false;
+bool timingButtonHold=false;
+uint32_t buttonPressedAt=0;
 char usbLine[16];
 uint8_t usbUsed=0;
 bool usbDiscard=false;
-uint8_t usbReportPart=0; // 0 idle, 1 status, 2 persistent event; each fits USB TX.
+uint8_t usbReportPart=0; // 0 idle, 1 motion, 2 last event, 3 flip alarm.
 
 void disableEarlyWatchdog(void) __attribute__((naked,section(".init3"),used));
 void disableEarlyWatchdog(void) { MCUSR=0; wdt_disable(); }
@@ -51,9 +56,9 @@ void reportUsb() {
     char line[64];
     int n;
     if(usbReportPart==1) {
-        n=snprintf(line,sizeof(line),"ZUMO FW=OG5 CAL=%u SWEEP=%u RUN=%u REASON=%u REQ=%u\n",
+        n=snprintf(line,sizeof(line),"ZUMO FW=OG6 CAL=%u SWEEP=%u RUN=%u REASON=%u REQ=%u\n",
             robot.calibrated,robot.calibrating,robot.following,robot.reason,robot.userRequest);
-    } else {
+    } else if(usbReportPart==2) {
         const char *event="BOOT";
         switch(robot.lastEvent) {
         case ZE_CALIBRATING: event="SWEEP"; break;
@@ -67,12 +72,16 @@ void reportUsb() {
         case ZE_SESSION_ERROR: event="SESSION_ERROR"; break;
         case ZE_OBSTACLE_PAUSE: event="OBSTACLE_PAUSE"; break;
         }
-        n=snprintf(line,sizeof(line),"ZUMO FW=OG5 STEP=%u/80 LAST=%s UP=%lu\n",
+        n=snprintf(line,sizeof(line),"ZUMO FW=OG6 STEP=%u/80 LAST=%s UP=%lu\n",
             calibrationStep,event,(unsigned long)(millis()/1000u));
+    } else {
+        n=snprintf(line,sizeof(line),"FLIP ALARM=%s IMU=%s FLIPPED=%u Z=%d\n",
+            flipAlarm.enabled?"ON":"OFF",flipAlarm.enabled?(flipAlarm.sensorReady?"OK":"MISSING"):"IDLE",
+            flipAlarm.flipped,flipAlarm.z);
     }
     if(n>0 && n<int(sizeof(line)) && Serial.availableForWrite()>=n) {
         Serial.write((uint8_t*)line,n);
-        if(++usbReportPart>2) usbReportPart=0;
+        if(++usbReportPart>3) usbReportPart=0;
     }
 }
 
@@ -87,6 +96,8 @@ void readUsb() {
                 else if(!strcmp(usbLine,"C")) robot.requestLocal(RL_ZUMO_CALIBRATE);
                 else if(!strcmp(usbLine,"F")) robot.requestLocal(RL_START);
                 else if(!strcmp(usbLine,"STATUS")) usbReportPart=1;
+                else if(!strcmp(usbLine,"ALARM OFF")) flipAlarm.setEnabled(false);
+                else if(!strcmp(usbLine,"ALARM ON")) flipAlarm.setEnabled(true);
             }
             usbUsed=0; usbDiscard=false;
         } else if(c<32 || c>126 || usbUsed>=sizeof(usbLine)-1) {
@@ -100,12 +111,28 @@ void readUsb() {
 
 void serviceButton() {
     // Stop on press, consume its release so the same press cannot restart.
-    if(button.isPressed() && (robot.moving() || robot.obstaclePaused)) {
-        stopLocal(RL_LOCAL_STOP); suppressButtonRelease=true;
+    const bool pressed = button.isPressed();
+    if (pressed && (robot.moving() || robot.obstaclePaused)) {
+        stopLocal(RL_LOCAL_STOP);
+        suppressButtonRelease = true;
     }
-    if(button.getSingleDebouncedRelease()) {
-        if(suppressButtonRelease) suppressButtonRelease=false;
-        else robot.requestLocal(robot.calibrated?RL_START:RL_ZUMO_CALIBRATE);
+    // Only a parked hold toggles the alarm. Consume its release like a STOP
+    // so muting the buzzer cannot also request a powered calibration or start.
+    if (pressed && !suppressButtonRelease) {
+        if (!timingButtonHold) {
+            timingButtonHold = true;
+            buttonPressedAt = millis();
+        }
+        if (uint32_t(millis() - buttonPressedAt) >= ALARM_BUTTON_HOLD_MS) {
+            flipAlarm.setEnabled(!flipAlarm.enabled);
+            suppressButtonRelease = true;
+        }
+    } else {
+        timingButtonHold = false;
+    }
+    if (button.getSingleDebouncedRelease()) {
+        if (suppressButtonRelease) suppressButtonRelease = false;
+        else robot.requestLocal(robot.calibrated ? RL_START : RL_ZUMO_CALIBRATE);
     }
 }
 
@@ -177,7 +204,8 @@ void setup() {
     Serial.begin(SERIAL_BAUD);
     mspSerial.begin(SERIAL_BAUD);
     reflectanceSensors.init();
-    Serial.println(F("ZUMO FW=OG5 CAL+PD TURN=250 + MSP OBSTACLE PAUSE"));
+    flipAlarm.begin();
+    Serial.println(F("ZUMO FW=OG6 CAL+PD TURN=250 + FLIP ALARM"));
     Serial.println(F("USB 9600: C=sweep request, F=follow request, S=stop, STATUS."));
     wdt_enable(WDTO_1S);
 }
@@ -190,6 +218,7 @@ void loop() {
     serviceMotion();
     serviceLink();
     applyStop();
+    if(!parser.used && !mspSerial.available()) flipAlarm.service(millis());
     uint32_t now=millis();
     if(uint32_t(now-lastReport)>=REPORT_INTERVAL_MS) {
         lastReport=now;

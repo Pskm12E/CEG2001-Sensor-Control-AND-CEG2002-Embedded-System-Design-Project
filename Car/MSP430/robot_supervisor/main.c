@@ -169,6 +169,8 @@ static void serviceObstacle(void) {
     sonarService();
     if(!motionBlocked()) return;
 #ifdef ZUMO_BASE
+    /* A near echo cancels a spray job. Only an acknowledged obstacle pause
+     * during ordinary line following can resume after two clear echoes. */
     if(sprayActive(&sprayJob)) { stopRequested(); return; }
     if(queued==RL_ZUMO_PAUSE || (pending && pendingPacket.type==RL_ZUMO_PAUSE)) return;
 #endif
@@ -510,13 +512,18 @@ static void serviceSpray(void) {
     uint8_t ready=linked && !running && !queued && zumoStopped() &&
         (!pending || pendingPacket.type==RL_STATUS);
     sprayTick(&sprayJob,ticks,ready,motionBlocked() || stopButton,PUMP_DRIVER_VERIFIED);
+    /* Timer_A0 and S2 can cut power asynchronously. Recheck the pulse deadline
+     * with interrupts masked before writing the gate so a cutoff wins the race. */
     __disable_interrupt();
-    if(sprayJob.pump && PUMP_DRIVER_VERIFIED && !stopButton &&
-       (uint16_t)(ticks-sprayJob.since)<PUMP_SPRAY_TICKS) P1OUT|=PUMP_GATE_MASK;
-    else P1OUT&=~PUMP_GATE_MASK;
+    if (sprayJob.pump && PUMP_DRIVER_VERIFIED && !stopButton &&
+        (uint16_t)(ticks - sprayJob.since) < PUMP_SPRAY_TICKS) {
+        P1OUT |= PUMP_GATE_MASK;
+    } else {
+        P1OUT &= ~PUMP_GATE_MASK;
+    }
     __enable_interrupt();
-    /* One asynchronous 12-bit sample per second; raw data only until tank
-     * wet/dry calibration defines a valid water-level policy. */
+    /* Send the raw P6.0 reading once a second. The dashboard applies the
+     * empty/full tank calibration. This ADC reading does not gate the pump. */
     if(ADC12IFG&BIT0) { waterRaw=ADC12MEM0; ADC12IFG&=~BIT0; }
     if((uint16_t)(ticks-waterAt)>=10u && !(ADC12CTL1&ADC12BUSY)) {
         waterAt=ticks; ADC12CTL0|=ADC12SC;

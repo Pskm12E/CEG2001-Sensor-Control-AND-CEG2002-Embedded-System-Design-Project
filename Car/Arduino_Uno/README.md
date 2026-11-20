@@ -1,26 +1,16 @@
 # Car Arduino Uno — Zumo line following
 
-**Uno OG5 and the matching MSP430 supervisor are installed.** The robot pauses
-active line following at 5 cm or closer and resumes after two valid readings
-at 7 cm or farther. Press the Zumo button during a pause to cancel the run.
-Missing echoes keep an obstacle-paused run stopped. Straight speed is 150
-and the outside-track turn limit is 250. The installed three-second MSP spray
-profile and its checks are described in the [pump guide](../MSP430/robot_supervisor/PUMP_SETUP.md).
+**Uno OG6 adds a switchable flip alarm.** Hold the parked Zumo's user button for
+two seconds to turn it off or on. [Flip alarm controls](zumo_line_follow/README.md#flip-alarm)
 
-## Previous installed milestone — 17 November 2026
+The six-sensor array follows a black line. A short press requests calibration
+on startup and line following after calibration. Pressing during motion or an
+obstacle pause stops the run. Straight speed is 150 and the outside-track turn
+limit is 250.
 
-Use **[zumo_line_follow](zumo_line_follow/README.md)** for the current
-Uno + Zumo Shield robot. The user confirmed it working on 17 November 2026.
-It follows a black line on white using the built-in six-sensor array and driver.
-MSP430 grants movement and owns ultrasonic stopping.
-
-- First Zumo button press/release: original 80-step calibration. Second: follow.
-- PD settings are `kp=1`, `kd=0` and `MAX_SPEED=150`.
-- MSP UART: **D6 RX / D13 TX**, 9600 baud; D13 uses the specified 2.2 kΩ/2.2 kΩ
-  divider to MSP P3.4. Reserve D13 for TX.
-- MSP obstacle threshold: **2 cm**, clearance **4 cm**; missing echoes do not
-  stop/block motion. Clearing range never restarts it automatically.
-- Uno firmware **OG3** was installed by the user. Cleanup does not upload it.
+The MSP430 pauses the Zumo at 5 cm or closer. Resuming that run requires two
+consecutive valid readings of at least 7 cm. The Uno receives MSP commands on
+D6 and replies on D13 at 9600 baud. [Wiring and button sequence](zumo_line_follow/README.md)
 
 Compile and run host checks from the repository root:
 

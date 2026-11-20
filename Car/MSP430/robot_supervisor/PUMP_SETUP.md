@@ -1,15 +1,10 @@
 # Target stop, water spray and continuation
 
-**Installed and program-verified, 20 November 2026.** The normal ESP-UART/Zumo
-supervisor now runs with its three-second pump profile enabled. It replaces the
-standalone LED diagnostic. The user confirmed two P1.6-controlled pump runs,
-each followed by automatic cutoff.
-
-Live status through Pico V3 and FireBeetle V2 reports `READY=1`, `PUMP=0`,
-`RUN=0`, Uno ready and zero communication errors. The installed Uno OG5 and
-matching supervisor support ultrasonic pause and resume.
-The full physical target-to-spray-to-resume trial remains pending. See the
-[installation record](../../../Laptop/Artifacts/verification/pump-integration-2026-11-20.json).
+The `V2_Working` profile runs the ESP-UART/Zumo supervisor with the pump enabled.
+The MSP430 drives the 2N7000 gate on **P1.6** and limits each pulse to **three
+seconds**. The operator confirmed the pump worked after replacing a resistor.
+Two earlier bench runs also confirmed that the pump stopped at the end of a
+pulse. [Bench and installation record](../../../Laptop/Artifacts/verification/pump-integration-2026-11-20.json)
 
 ## Requested sequence
 
@@ -25,7 +20,7 @@ The full physical target-to-spray-to-resume trial remains pending. See the
 
 Manual STOP, an ultrasonic near obstacle, UART/link faults, refusal or lost
 calibration cancel the cycle with the pump off. They do not resume automatically.
-Outside a spray job, the updated MSP430 and Uno OG5 pause active line following
+Outside a spray job, the MSP430 and Uno OG6 pause active line following
 at **5 cm or closer** and resume after two consecutive valid readings at least
 **7 cm**. A spray job canceled by an obstacle requires a new local start.
 
@@ -70,13 +65,15 @@ standalone [P1.6 voltage-test program](../pump_voltage_test/README.md) remains
 available for future measurements. It replaces the supervisor when installed.
 
 P6.0 is sampled as a raw 12-bit ADC value once per second (`WATER=0..4095`).
-Wet/dry calibration is pending; no tank level or empty-tank protection is claimed.
+The dashboard displays probe wetness using the measured dry and wet references.
+Saving empty and full readings with the probe mounted in the tank enables a
+tank-level estimate. The supervisor uses the ADC for telemetry only.
 
 ## Sources and builds
 
 | Board | Required version / source |
 | --- | --- |
-| Uno | OG5 for obstacle pause and resume, [Zumo sketch](../../Arduino_Uno/zumo_line_follow/README.md) |
+| Uno | OG6 for line following, obstacle pause/resume and the flip alarm. [Zumo sketch](../../Arduino_Uno/zumo_line_follow/README.md) |
 | MSP430 | ESP-UART/Zumo build, [spray_job.h](spray_job.h) and [main.c](main.c) |
 | ESP32 | DIRECT_WIFI_V2, `robot_wifi_gateway` |
 | Desk Pico | DESK_BRIDGE_V3, `laptop_wifi_bridge` |

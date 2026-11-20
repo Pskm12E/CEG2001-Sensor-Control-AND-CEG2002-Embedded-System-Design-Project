@@ -1,5 +1,19 @@
 # Changelog
 
+## V2_Working · 20 November 2026
+
+- The operator confirmed that replacing a resistor in the pump circuit restored
+  pump operation. The release uses MSP430 P1.6 and the three-second cutoff.
+- Uno OG6 adds a persistent flip-alarm setting. Hold the parked Zumo button
+  for two seconds to toggle it. Short taps still calibrate and start following.
+- Camera jobs wait for a stop acknowledgement, settle, spray, and resume on
+  a matching continuation. An ultrasonic pause during line following resumes
+  after two clear readings of at least 7 cm. The stop threshold is 5 cm.
+- Clarified the alarm thresholds, button handling and interrupt-driven pump
+  cutoff in the source. The rebuilt OG6 flash image and MSP430 loadable
+  segments match the previously verified firmware. The dashboard reports P6.0
+  probe wetness or estimated water level after empty/full calibration.
+
 ## Ultrasonic pause and resume — 2026-11-20
 
 - The updated MSP430 and Uno OG5 pause active line following at 5 cm or closer
