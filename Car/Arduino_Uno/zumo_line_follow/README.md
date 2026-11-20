@@ -28,7 +28,9 @@ upload firmware or change the original follower settings.
 | Two valid readings ≥ **7 cm** | Clears the recent near inhibit |
 | No fresh valid reading for about **300 ms** | Expires the old near inhibit |
 | Missing / invalid echo, including startup | Diagnostic fault only; does not stop or block motion |
-| Range clears after a STOP | Stays stopped until another local request |
+| Two consecutive valid readings ≥ **7 cm** after a line-following pause | Resumes if the Uno session is still healthy |
+| Missing echo during a pause | Waits for valid clearance readings |
+| Manual STOP, interrupted calibration, or link fault | A new local request is required |
 
 The thresholds live in [obstacle_guard.h](../../MSP430/robot_supervisor/obstacle_guard.h).
 Only 2–400 cm measurements are accepted; readings below 2 cm are invalid.
@@ -46,8 +48,9 @@ active. No echo does not mean an obstacle-free path.
    original 80-step sweep at ±200, with 20 ms gaps and sensor sampling.
 3. Completion stops the motors and sets `CAL=1`. Re-centre if needed, then
    **press and release again** to request line following.
-4. Press during motion to stop locally; the same press's release is consumed.
-   MSP S2 also requests STOP. A new press/release requests a restart.
+4. Press during motion or an obstacle pause to stop locally. Release the
+   button, then press and release again to make a new request. MSP S2 also
+   requests STOP.
 
 An interrupted sweep leaves `CAL=0`, so the next request repeats calibration.
 An Uno reset clears calibration. Opening Serial Monitor can reset the Uno.
@@ -117,16 +120,17 @@ return to zero during resynchronisation.
 | `BOOT` | No accepted sweep/start since reset |
 | `SWEEP` / `CAL_DONE` / `FOLLOWING` | Sweep active / completed / following |
 | `MSP_STOP` | MSP interrupted motion; inspect MSP diagnostics for its cause |
+| `OBSTACLE_PAUSE` | MSP paused line following for a near ultrasonic reading |
 | `MSP_RESYNC` | A new MSP session interrupted motion |
 | `HEARTBEAT_LOST` | One-second Uno motion lease expired |
 | `UART_ERROR` | Corrupt/partial frame or receive overflow |
 | `LOCAL_STOP` | Button or USB STOP |
 | `SESSION_ERROR` | Session/sequence or other protocol failure |
 
-`MSP_STOP` alone does not identify an ultrasonic stop. The MSP distinguishes
-near-obstacle messages from link/manual STOP, and its `SONAR` diagnostics report
-`NO_ECHO_STOP=OFF`. The laptop dashboard is read-only; Wi-Fi cannot grant starts
-or calibration. Motion is never started automatically at boot or after a fault.
+`OBSTACLE_PAUSE` identifies a pause eligible for automatic resume. The MSP
+requires two consecutive valid clear readings and the same healthy Uno session.
+Its `SONAR` diagnostics report `NO_ECHO_STOP=OFF` for the no-echo policy during
+normal driving. The camera-based spray job has its own continuation rules.
 
 ## Build and verification
 
@@ -134,22 +138,23 @@ From the repository root:
 
 ```powershell
 ./Car/Arduino_Uno/build_zumo.ps1
-./Car/MSP430/build_robot_supervisor.ps1 -EspUart -Zumo
+./Car/MSP430/build_robot_supervisor.ps1 -EspUart -Zumo -PumpDriverVerified -SpraySeconds 3
 python Car/Arduino_Uno/tests/check_zumo.py
 python Car/MSP430/tests/check_ultrasonic.py
 ```
 
-These commands compile/test only. The Uno build uses Pololu **ZumoShield 2.1.0**,
-AVR core **1.8.8**, Wire and SoftwareSerial. Arduino IDE uploads remain manual:
-open `zumo_line_follow.ino`, select Arduino Uno, and keep both headers beside it.
-The [source ZIP](../../../Laptop/Artifacts/setup/zumo_line_follow_OG3.zip) contains
-the complete sketch folder and this guide.
+These commands compile and run host tests. Upload Uno **OG5** and the matching
+MSP430 supervisor to enable automatic resume. The Uno build uses Pololu
+**ZumoShield 2.1.0**, AVR core **1.8.8**, Wire and SoftwareSerial. In Arduino IDE,
+open the repository sketch `zumo_line_follow.ino`, select Arduino Uno, and keep
+both headers beside it.
 
 Arduino copies the sketch into its build directory. Its bundled `robot_link.h`
 must remain byte-identical to `../msp_line_follow/robot_link.h`, used by MSP code;
 both the builder and host test check this. The MSP output is
-`Car/MSP430/robot_supervisor/Debug_wifi_zumo/robot_supervisor.out`. CCS GUI builds
-must define `SUPERVISOR_ESP_UART` and `ZUMO_BASE=1`. The `IR_DRIVING_TEST` bypass
+`Car/MSP430/robot_supervisor/Debug_wifi_zumo_pump/robot_supervisor.out`. CCS GUI
+builds for this profile define `SUPERVISOR_ESP_UART`, `ZUMO_BASE=1` and
+`PUMP_DRIVER_VERIFIED=1`. The `IR_DRIVING_TEST` bypass
 is rejected for Zumo. Do not upload the previous L298N sketches.
 
 Host checks exercise the actual sketch, MSP scheduler, sonar adapter and bridge

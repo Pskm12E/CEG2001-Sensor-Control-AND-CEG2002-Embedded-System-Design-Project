@@ -5,13 +5,15 @@
 
 enum ZumoEvent {
     ZE_BOOT, ZE_CALIBRATING, ZE_CAL_DONE, ZE_FOLLOWING, ZE_MSP_STOP,
-    ZE_MSP_RESYNC, ZE_HEARTBEAT_LOST, ZE_UART_ERROR, ZE_LOCAL_STOP, ZE_SESSION_ERROR
+    ZE_MSP_RESYNC, ZE_HEARTBEAT_LOST, ZE_UART_ERROR, ZE_LOCAL_STOP, ZE_SESSION_ERROR,
+    ZE_OBSTACLE_PAUSE
 };
 
 class ZumoControl {
 public:
     static const uint32_t LEASE_MS=1000;
     bool calibrated=false, following=false, calibrating=false;
+    bool obstaclePaused=false;
     uint8_t reason=RL_OK, userRequest=0;
     uint8_t lastEvent=ZE_BOOT; // Persists across stopped STOP/HELLO exchanges.
     uint16_t session=0, sequence=0;
@@ -24,14 +26,14 @@ public:
             (calibrating?RL_CALIBRATING:0) | (reason>=RL_LEASE_LOST?RL_FAULT:0);
     }
     void stop(uint8_t why, bool invalidate=true) {
-        if(moving() && why!=RL_OK) {
+        if((moving() || obstaclePaused) && why!=RL_OK) {
             if(why==RL_LEASE_LOST) lastEvent=ZE_HEARTBEAT_LOST;
             else if(why==RL_BAD_FRAME) lastEvent=ZE_UART_ERROR;
             else if(why==RL_LOCAL_STOP) lastEvent=ZE_LOCAL_STOP;
             else lastEvent=ZE_SESSION_ERROR;
         }
         if(calibrating) calibrated=false; // An interrupted sweep cannot be used.
-        following=calibrating=false; reason=why; userRequest=0;
+        following=calibrating=obstaclePaused=false; reason=why; userRequest=0;
         if(invalidate) { session=sequence=0; lastType=0; }
     }
     void tick(uint32_t now) {
@@ -51,7 +53,7 @@ public:
     RlPacket handle(const RlPacket &p, uint32_t now) {
         tick(now); // A late KEEP cannot revive expired motion.
         uint8_t result=RL_OK;
-        if(p.arg || p.detail || p.type<RL_HELLO || p.type>RL_ZUMO_CALIBRATE) {
+        if(p.arg || p.detail || p.type<RL_HELLO || p.type>RL_ZUMO_PAUSE) {
             stop(RL_BAD_FRAME); result=RL_BAD_COMMAND;
         } else if(p.type==RL_STOP) {
             if(moving()) lastEvent=ZE_MSP_STOP;
@@ -70,11 +72,20 @@ public:
             sequence=p.seq; lastType=p.type;
             switch(p.type) {
             case RL_STATUS: result=reason; break;
+            case RL_ZUMO_PAUSE:
+                // Only an active line run can pause. Preserve the session so
+                // a local STOP or reset invalidates any subsequent START.
+                if(!following) result=RL_BAD_COMMAND;
+                else {
+                    stop(RL_OK,false);
+                    obstaclePaused=true; lastEvent=ZE_OBSTACLE_PAUSE;
+                }
+                break;
             case RL_ZUMO_CALIBRATE:
                 userRequest=0;
                 if(moving()) result=RL_CAL_BUSY;
                 else {
-                    calibrated=false; calibrating=true; reason=RL_OK; lastLease=now;
+                    obstaclePaused=false; calibrated=false; calibrating=true; reason=RL_OK; lastLease=now;
                     lastEvent=ZE_CALIBRATING;
                 }
                 break;
@@ -83,7 +94,7 @@ public:
                 if(calibrating) result=RL_CAL_BUSY;
                 else if(!calibrated) result=RL_NOT_CAL;
                 else if(!following) {
-                    following=true; reason=RL_OK; lastLease=now; lastEvent=ZE_FOLLOWING;
+                    obstaclePaused=false; following=true; reason=RL_OK; lastLease=now; lastEvent=ZE_FOLLOWING;
                 }
                 break;
             case RL_KEEP:

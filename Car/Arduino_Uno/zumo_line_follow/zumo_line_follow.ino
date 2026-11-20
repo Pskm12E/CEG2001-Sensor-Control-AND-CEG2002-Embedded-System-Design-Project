@@ -51,7 +51,7 @@ void reportUsb() {
     char line[64];
     int n;
     if(usbReportPart==1) {
-        n=snprintf(line,sizeof(line),"ZUMO FW=OG4 CAL=%u SWEEP=%u RUN=%u REASON=%u REQ=%u\n",
+        n=snprintf(line,sizeof(line),"ZUMO FW=OG5 CAL=%u SWEEP=%u RUN=%u REASON=%u REQ=%u\n",
             robot.calibrated,robot.calibrating,robot.following,robot.reason,robot.userRequest);
     } else {
         const char *event="BOOT";
@@ -65,8 +65,9 @@ void reportUsb() {
         case ZE_UART_ERROR: event="UART_ERROR"; break;
         case ZE_LOCAL_STOP: event="LOCAL_STOP"; break;
         case ZE_SESSION_ERROR: event="SESSION_ERROR"; break;
+        case ZE_OBSTACLE_PAUSE: event="OBSTACLE_PAUSE"; break;
         }
-        n=snprintf(line,sizeof(line),"ZUMO FW=OG4 STEP=%u/80 LAST=%s UP=%lu\n",
+        n=snprintf(line,sizeof(line),"ZUMO FW=OG5 STEP=%u/80 LAST=%s UP=%lu\n",
             calibrationStep,event,(unsigned long)(millis()/1000u));
     }
     if(n>0 && n<int(sizeof(line)) && Serial.availableForWrite()>=n) {
@@ -99,7 +100,7 @@ void readUsb() {
 
 void serviceButton() {
     // Stop on press, consume its release so the same press cannot restart.
-    if(button.isPressed() && robot.moving()) {
+    if(button.isPressed() && (robot.moving() || robot.obstaclePaused)) {
         stopLocal(RL_LOCAL_STOP); suppressButtonRelease=true;
     }
     if(button.getSingleDebouncedRelease()) {
@@ -176,7 +177,7 @@ void setup() {
     Serial.begin(SERIAL_BAUD);
     mspSerial.begin(SERIAL_BAUD);
     reflectanceSensors.init();
-    Serial.println(F("ZUMO FW=OG4 CAL+PD TURN=250 + MSP STOP"));
+    Serial.println(F("ZUMO FW=OG5 CAL+PD TURN=250 + MSP OBSTACLE PAUSE"));
     Serial.println(F("USB 9600: C=sweep request, F=follow request, S=stop, STATUS."));
     wdt_enable(WDTO_1S);
 }

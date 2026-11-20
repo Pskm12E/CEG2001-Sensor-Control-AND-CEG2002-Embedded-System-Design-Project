@@ -145,7 +145,7 @@ static uint16_t ADC12IFG,ADC12MEM0,ADC12CTL0,ADC12CTL1,waterRaw,waterAt;
 #include "../../../MSP430/robot_supervisor/spray_job.h"
 static SprayJob sprayJob;
 static uint16_t session=42,sequence,requestAt,lastPoll,lastLinkByte,badFrames,uartErrors,rxDrops;
-static uint8_t pending,linked,running,queued,peerFlags,peerResult;
+static uint8_t pending,linked,running,queued,peerFlags,peerResult,obstaclePaused;
 static RlPacket pendingPacket;
 static RlParser parser;
 static int linkRx;
@@ -165,7 +165,7 @@ static unsigned checks=0;
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"FAIL line %d: %s\n",__LINE__,#x); std::abort(); } ++checks; } while(0)
 static bool stopped() { return motors.left==0 && motors.right==0; }
 static void reset() {
-    msp::sprayJob={}; msp::P1OUT=0; msp::stopButton=0;
+    msp::sprayJob={}; msp::P1OUT=0; msp::stopButton=msp::obstaclePaused=0;
     fakeMillis=0; robot=ZumoControl(); parser={}; motors=ZumoMotors();
     reflectanceSensors=ZumoReflectanceSensorArray();
     // The assignment copies internal pointers, so bind them to this instance.
@@ -252,11 +252,12 @@ int main(int argc,char** argv) {
     CHECK(robot.following && msp::running);
     for(unsigned i=0;i<100;++i) stepWithoutEcho();
     CHECK(robot.following && msp::running && msp::obstacle.fault && !msp::motionBlocked());
-    // A real near echo still wins; later no-echo clearance cannot auto-restart.
-    sonar(2); CHECK(msp::queued==RL_STOP); exchange();
+    // A real near echo still pauses; missing echoes cannot confirm clearance.
+    sonar(2); CHECK(msp::queued==RL_ZUMO_PAUSE); exchange();
     CHECK(!robot.following && stopped());
     for(unsigned i=0;i<40;++i) stepWithoutEcho();
     CHECK(!msp::motionBlocked() && !robot.following && stopped());
+    CHECK(msp::obstaclePaused && robot.obstaclePaused);
 
     reset(); linkClear(); calibrate(); start();
     reflectanceSensors.position=5000; loop();
@@ -266,16 +267,57 @@ int main(int argc,char** argv) {
     reflectanceSensors.position=2575; loop();
     CHECK(motors.left==225 && motors.right==75); // More outer-track drive at ordinary bends.
     reflectanceSensors.position=2500;
-    // Real sonar policy -> MSP STOP frame -> actual sketch, motors off BEFORE ACK.
+    // Near echo pauses the real sketch, whose motors stop before acknowledging.
     sonar(10); CHECK(msp::running && msp::queued!=RL_STOP);
     sonar(6); CHECK(msp::running && msp::queued!=RL_STOP);
-    sonar(5); CHECK(!msp::running && msp::queued==RL_STOP);
+    sonar(5); CHECK(!msp::running && msp::queued==RL_ZUMO_PAUSE);
     bool stopAck=false;
+    const uint16_t pausedSession=robot.session;
     mspSerial.beforeWrite=[&]() { CHECK(stopped() && !robot.moving()); stopAck=true; };
     CHECK(exchange() && stopAck); mspSerial.beforeWrite=nullptr;
-    CHECK(!robot.following && robot.calibrated);
-    for(unsigned i=0;i<60;++i) step();
-    CHECK(!robot.following && !msp::running && stopped());
+    CHECK(msp::obstaclePaused && robot.obstaclePaused && robot.calibrated);
+    CHECK(robot.session==pausedSession && !robot.following);
+    for(unsigned i=0;i<5;++i) { fakeMillis+=100; sonar(5); exchange(); }
+    CHECK(stopped() && !msp::running && msp::obstaclePaused);
+    fakeMillis+=100; sonar(7); exchange();
+    CHECK(stopped() && msp::obstaclePaused);
+    fakeMillis+=100; sonar(6); exchange();
+    fakeMillis+=100; sonar(7); exchange();
+    CHECK(stopped() && msp::obstaclePaused);
+    fakeMillis+=100; sonar(7); CHECK(exchange());
+    CHECK(robot.following && msp::running && !stopped());
+    CHECK(!robot.obstaclePaused && !msp::obstaclePaused && robot.session==pausedSession);
+
+    // Pressing Zumo STOP while paused cancels the session and consumes release.
+    sonar(5); CHECK(exchange() && robot.obstaclePaused);
+    button.pressed=true; loop(); CHECK(stopped() && !robot.session);
+    button.pressed=false; releaseButton(); CHECK(!robot.userRequest);
+    for(unsigned i=0;i<25;++i) step();
+    CHECK(stopped() && !msp::running && !msp::obstaclePaused);
+    start();
+
+    // A manual MSP STOP also cancels the paused run.
+    sonar(5); CHECK(exchange() && msp::obstaclePaused);
+    CHECK(msp::netCommand("NET 10 STOP"));
+    for(unsigned i=0;i<25;++i) step();
+    CHECK(stopped() && !msp::running && !msp::obstaclePaused);
+    start();
+
+    // An older Uno's refused pause falls back to STOP and cannot grant resume.
+    sonar(5); msp::serviceLink(); CHECK(msp::pendingPacket.type==RL_ZUMO_PAUSE);
+    RlPacket refusal=msp::pendingPacket;
+    refusal.type|=RL_REPLY; refusal.arg=RL_CAL|RL_FAULT; refusal.detail=RL_BAD_COMMAND;
+    msp::response(&refusal); CHECK(msp::queued==RL_STOP);
+    for(unsigned i=0;i<25;++i) step();
+    CHECK(stopped() && !msp::running && !msp::obstaclePaused);
+    start();
+
+    // A lost pause frame also falls back to a session-independent STOP.
+    sonar(5); msp::serviceLink(); CHECK(msp::pendingPacket.type==RL_ZUMO_PAUSE);
+    CHECK(robot.following);
+    fakeMillis+=200; CHECK(exchange() && stopped());
+    for(unsigned i=0;i<25;++i) step();
+    CHECK(!robot.following && !msp::obstaclePaused);
     start();
 
     // A STOP arriving during readLine wins before the new motor output.
@@ -319,7 +361,7 @@ int main(int argc,char** argv) {
     CHECK(robot.reason==RL_OK && !robot.calibrated && robot.lastEvent==ZE_MSP_STOP);
     Serial.output.clear(); usbReportPart=1; reportUsb(); reportUsb();
     std::string statusText(Serial.output.begin(),Serial.output.end());
-    CHECK(statusText.find("FW=OG4 CAL=0 SWEEP=0 RUN=0 REASON=0")!=std::string::npos);
+    CHECK(statusText.find("FW=OG5 CAL=0 SWEEP=0 RUN=0 REASON=0")!=std::string::npos);
     CHECK(statusText.find("LAST=MSP_STOP")!=std::string::npos && !usbReportPart);
     releaseButton();
     for(unsigned i=0;i<80 && !robot.calibrating;++i) step();
@@ -410,6 +452,8 @@ int main(int argc,char** argv) {
     CHECK(stopped() && !msp::sprayJob.pump && msp::sprayJob.phase==msp::SJ_ABORTED);
     msp::netCommand("NET 127 RESUME 126");
     CHECK(msp::queued!=RL_START && !msp::sprayJob.pump);
+    for(unsigned i=0;i<25;++i) step();
+    CHECK(stopped() && !msp::obstaclePaused && !msp::sprayJob.pump);
 
     // Bridge accepts the preserved status prefix and new base identity.
     msp::output.clear(); msp::status();
@@ -426,6 +470,7 @@ int main(int argc,char** argv) {
 cpp = BUILD / "zumo_tests.cpp"
 cpp.write_text(prefix + "".join(function(name, result) for name, result in (
     ("pumpOff", "void"), ("cancelSpray", "void"),
+    ("zumoFollowing", "uint8_t"), ("zumoStopped", "uint8_t"),
     ("stopRequested", "void"), ("serviceObstacle", "void"), ("userRequest", "void"),
     ("reasonName", "const char *"), ("status", "void"), ("sendRequest", "void"),
     ("response", "void"), ("serviceLink", "void"),

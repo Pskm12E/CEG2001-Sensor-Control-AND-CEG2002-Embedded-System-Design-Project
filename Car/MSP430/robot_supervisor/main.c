@@ -1,7 +1,7 @@
 /* Robot MSP430F5529 supervisor. MSP is the authority for Uno line following.
  * UART0 P3.3/P3.4: Uno link; default UART1 P4.4/P4.5: USB console.
  * SUPERVISOR_ESP_UART: UART1 remapped P4.1 TX/P4.2 RX, status/STOP bridge.
- * HC-SR04 TRIG P3.2; divided ECHO P2.7. No unsolicited start/restart.
+ * HC-SR04 TRIG P3.2; divided ECHO P2.7. Zumo can resume an obstacle pause.
  * A completed target job requires its matching continuation before resuming.
  * IR_DRIVING_TEST=1 explicitly disables only the ultrasonic motion veto.
  * ZUMO_BASE=1: powered calibration/black-line Zumo follower, valid-near STOP.
@@ -38,6 +38,9 @@ static RlParser parser;
 static RlPacket pendingPacket;
 static uint16_t session=0x430u,sequence,requestAt,lastPoll,lastLinkByte;
 static uint8_t pending,linked,running,queued,peerFlags,peerResult;
+#ifdef ZUMO_BASE
+static uint8_t obstaclePaused; // Set only by an acknowledged Zumo pause.
+#endif
 static uint16_t badFrames;
 static char usbLine[48];
 static uint8_t usbUsed,usbDiscard;
@@ -147,18 +150,39 @@ static void init(void) {
     WDTCTL=WDTPW|WDTCNTCL|WDTSSEL__ACLK|WDTIS__32K;
 #endif
 }
+#ifdef ZUMO_BASE
+static uint8_t zumoFollowing(void) {
+    return (peerFlags&(RL_CAL|RL_MOVING|RL_CALIBRATING|RL_FAULT))==(RL_CAL|RL_MOVING);
+}
+static uint8_t zumoStopped(void) {
+    return (peerFlags&(RL_CAL|RL_MOVING|RL_CALIBRATING|RL_FAULT))==RL_CAL;
+}
+#endif
 static void stopRequested(void) {
+#ifdef ZUMO_BASE
+    obstaclePaused=0;
+#endif
     cancelSpray();
     running=0; P4OUT&=~BIT7; queued=RL_STOP;
 }
 static void serviceObstacle(void) {
     sonarService();
+    if(!motionBlocked()) return;
 #ifdef ZUMO_BASE
-    if(motionBlocked() && sprayActive(&sprayJob)) stopRequested();
+    if(sprayActive(&sprayJob)) { stopRequested(); return; }
+    if(queued==RL_ZUMO_PAUSE || (pending && pendingPacket.type==RL_ZUMO_PAUSE)) return;
 #endif
-    if(motionBlocked() && (running || queued==RL_START || queued==RL_ZUMO_CALIBRATE ||
+    if((running || queued==RL_START || queued==RL_ZUMO_CALIBRATE ||
        (pending && (pendingPacket.type==RL_START || pendingPacket.type==RL_ZUMO_CALIBRATE)) || (peerFlags&RL_MOVING)) &&
        queued!=RL_STOP && !(pending && pendingPacket.type==RL_STOP)) {
+#ifdef ZUMO_BASE
+        if(linked && running && zumoFollowing() && !queued && !stopButton &&
+           (!pending || pendingPacket.type==RL_KEEP)) {
+            running=0; P4OUT&=~BIT7; queued=RL_ZUMO_PAUSE;
+            print("ULTRASONIC OBSTACLE PAUSE REQUESTED\r\n");
+            return;
+        }
+#endif
         stopRequested(); print("ULTRASONIC NEAR-OBSTACLE STOP REQUESTED\r\n");
     }
 }
@@ -262,8 +286,7 @@ static uint8_t netCommand(const char *line) {
     else if(!strcmp(p,"STOP")) { stopRequested(); print("STOP REQUESTED\r\n"); }
 #ifdef ZUMO_BASE
     else if(!strcmp(p,"TARGET")) {
-        uint8_t eligible=linked && running && (peerFlags&RL_CAL) &&
-            (peerFlags&RL_MOVING) && !(peerFlags&(RL_CALIBRATING|RL_FAULT)) &&
+        uint8_t eligible=linked && running && zumoFollowing() &&
             !motionBlocked() && !stopButton && queued!=RL_STOP;
         if(sprayBegin(&sprayJob,ticks,id,eligible)) {
             /* Deliberate job STOP; all other stopRequested paths cancel it. */
@@ -279,7 +302,7 @@ static uint8_t netCommand(const char *line) {
             else jobId=jobId*10u+d;
         }
         if(good && !*token && !motionBlocked() && !stopButton && linked && !running && !queued &&
-           (peerFlags&RL_CAL) && !(peerFlags&(RL_MOVING|RL_CALIBRATING|RL_FAULT)) &&
+           zumoStopped() &&
            sprayAllowResume(&sprayJob,jobId,1)) {
             queued=RL_START; print("RESUME ACCEPTED\r\n");
         } else print("RESUME REFUSED\r\n");
@@ -295,11 +318,12 @@ static void help(void) {
 #ifdef ZUMO_BASE
     print("C: request Zumo powered calibration; F: follow BLACK line; S: stop.\r\n");
     print("Zumo button: calibrate, then start. STATUS/SONAR: readings.\r\n");
+    print("Obstacle pause resumes after two valid clear readings.\r\n");
 #else
     print("W: both IR over WHITE; B: both over BLACK; wait for calibration.\r\n");
     print("F: follow WHITE road inside BLACK borders; S: stop; C: clear; STATUS/SONAR: readings.\r\n");
 #endif
-    print("H/LINK: resynchronise stopped; S2: stop. No automatic restart.\r\n");
+    print("H/LINK: resynchronise stopped; S2: stop.\r\n");
     print("FLAGS: CAL=1 LBLACK=2 RBLACK=4 FOLLOW=8 FAULT=16 LSTABLE=32 RSTABLE=64 CALIBRATING=128\r\n");
 }
 #endif
@@ -360,7 +384,15 @@ static void readUsb(void) {
 }
 static void sendRequest(uint8_t op) {
     uint8_t b[RL_SIZE],i;
-    if((op==RL_START || op==RL_ZUMO_CALIBRATE) && motionBlocked()) { stopRequested(); return; }
+    if((op==RL_START || op==RL_ZUMO_CALIBRATE) &&
+       (motionBlocked()
+#ifdef ZUMO_BASE
+        || stopButton
+#endif
+       )) { stopRequested(); return; }
+#ifdef ZUMO_BASE
+    if(op!=RL_STATUS) obstaclePaused=0;
+#endif
     if(op==RL_HELLO) {
         session=(uint16_t)(session+0x101u+ticks); if(!session) session=1;
         sequence=0; running=linked=0; P4OUT&=~BIT7;
@@ -372,8 +404,8 @@ static void sendRequest(uint8_t op) {
     pendingPacket.arg=pendingPacket.detail=0;
     rlEncode(&pendingPacket,b); pending=1; requestAt=lastPoll=ticks;
     for(i=0;i<RL_SIZE;++i) if(!put(1,b[i])) {
-        cancelSpray();
-        pending=linked=running=0; P4OUT&=~BIT7; queued=RL_STOP;
+        stopRequested();
+        pending=linked=0;
         print("LINK TRANSMIT FAILED; STOPPING\r\n"); return;
     }
 }
@@ -386,6 +418,17 @@ static void response(const RlPacket *p) {
        p->session!=pendingPacket.session || p->seq!=pendingPacket.seq) return;
     pending=0; peerFlags=p->arg; peerResult=p->detail;
 #ifdef ZUMO_BASE
+    if(op==RL_ZUMO_PAUSE) {
+        if(queued==RL_STOP) return;
+        if(p->detail==RL_OK && zumoStopped()) obstaclePaused=1;
+        else stopRequested();
+        return;
+    }
+    if((queued==RL_ZUMO_PAUSE && (p->detail!=RL_OK || !zumoFollowing())) ||
+       (obstaclePaused && (p->detail!=RL_OK || !zumoStopped()))) {
+        stopRequested();
+        return;
+    }
     if(op==RL_STOP) sprayStopAck(&sprayJob,ticks,p->detail==RL_OK && !(p->arg&RL_MOVING));
 #endif
     if(op==RL_HELLO) linked=(p->detail==RL_OK);
@@ -429,18 +472,31 @@ static void serviceLink(void) {
         if(result<0) { ++badFrames; stopRequested(); }
         else if(result>0) response(&p);
     }
-    if(pending && (uint16_t)(ticks-requestAt)>=5u) {
-        cancelSpray();
-        op=pendingPacket.type; pending=linked=running=0; P4OUT&=~BIT7;
-        queued=(op==RL_STOP)?RL_HELLO:RL_STOP;
+    if(pending && (uint16_t)(ticks-requestAt)>=(pendingPacket.type==RL_ZUMO_PAUSE?2u:5u)) {
+        stopRequested();
+        pending=linked=0;
+        if(pendingPacket.type==RL_STOP) queued=RL_HELLO;
         print("LINK TIMEOUT; STOPPING; F REQUIRED AFTER RECOVERY\r\n");
     }
+#ifdef ZUMO_BASE
+    // A pause uses the current session. If a KEEP stalls, fall back to a
+    // session-independent STOP instead of skipping a sequence number.
+    if(pending && queued==RL_ZUMO_PAUSE && (uint16_t)(ticks-requestAt)>=1u)
+        stopRequested();
+#endif
     /* Stop gets the next free slot, or preempts a silent request after 100ms.
      * A STOP is valid without a negotiated session; replies remain correlated. */
     if(pending && queued==RL_STOP && pendingPacket.type!=RL_STOP &&
        (uint16_t)(ticks-requestAt)>=1u) pending=0;
     if(pending) return;
     if(queued) { op=queued; queued=0; sendRequest(op); }
+#ifdef ZUMO_BASE
+    else if(obstaclePaused && linked && !stopButton && !motionBlocked() &&
+            obstacle.valid && obstacle.clearCount>=2u) {
+        print("ULTRASONIC PATH CLEAR; RESUMING LINE FOLLOWING\r\n");
+        sendRequest(RL_START);
+    }
+#endif
     else if(!linked && (uint16_t)(ticks-lastPoll)>=10u) sendRequest(RL_HELLO);
     else if(linked && (uint16_t)(ticks-lastPoll)>=(running?2u:3u))
         sendRequest(running?RL_KEEP:RL_STATUS);
@@ -450,11 +506,9 @@ static void serviceLink(void) {
 #endif
 #ifdef ZUMO_BASE
 static void serviceSpray(void) {
-    uint8_t ready=linked && !running && !pending && !queued &&
-        (peerFlags&RL_CAL) && !(peerFlags&(RL_MOVING|RL_CALIBRATING|RL_FAULT));
     /* A healthy pending STATUS does not invalidate a stopped grant. */
-    if(linked && !running && !queued && pending && pendingPacket.type==RL_STATUS)
-        ready=(peerFlags&RL_CAL) && !(peerFlags&(RL_MOVING|RL_CALIBRATING|RL_FAULT));
+    uint8_t ready=linked && !running && !queued && zumoStopped() &&
+        (!pending || pendingPacket.type==RL_STATUS);
     sprayTick(&sprayJob,ticks,ready,motionBlocked() || stopButton,PUMP_DRIVER_VERIFIED);
     __disable_interrupt();
     if(sprayJob.pump && PUMP_DRIVER_VERIFIED && !stopButton &&

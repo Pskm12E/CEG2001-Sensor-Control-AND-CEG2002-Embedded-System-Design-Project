@@ -20,19 +20,23 @@ The user confirmed the current setup working on **17 November 2026**.
 
 ## Current sonar policy
 
+Automatic resume requires this MSP430 source and the matching Uno OG5 sketch.
+
 | Setting | Value |
 | --- | --- |
-| Valid near STOP trigger | **≤5 cm** |
-| Clear recent near inhibit | **Two readings ≥7 cm** |
+| Valid near stop trigger | **≤5 cm**. Active line following pauses. A powered calibration stops. |
+| Resume from an acknowledged pause | **Two consecutive valid readings ≥7 cm**, with the same healthy Uno session |
 | Expire old near data | **3 × 100 ms ticks** without a fresh valid reading |
-| Missing / invalid / stale echo, including startup | Diagnostic fault only; motion allowed with MSP grant |
-| Automatic start/restart | Disabled |
+| Missing / invalid / stale echo | Motion with a local grant is allowed after old near data expires. A paused run waits for valid clearance. |
+| Manual stop, link fault, interrupted calibration, or aborted spray | A new local request is required |
 
 The policy is in [obstacle_guard.h](obstacle_guard.h); measurement/Timer_A2/Port2
 handling is in [ultrasonic_hcsr04.h](ultrasonic_hcsr04.h). Accepted range is
 2–400 cm. A disconnected/failed sonar cannot stop motion under this policy.
 The 5 cm setting is a configured trigger. Physical braking distance remains unmeasured.
 The Uno still enforces its 1000 ms grant lease and local/frame/session stops.
+The pause keeps the Uno session open so a local stop or reboot invalidates the
+resume grant. A refused or timed-out pause falls back to a regular STOP.
 
 ## Pins and matching firmware
 
@@ -49,7 +53,7 @@ The Uno still enforces its 1000 ms grant lease and local/frame/session stops.
 
 Use [the Zumo guide](../../Arduino_Uno/zumo_line_follow/README.md) for complete
 divider orientation and operation. The matching Uno source is **zumo_line_follow**,
-firmware **OG4**. The pump driver connects to P1.6.
+firmware **OG5** for the obstacle pause. The pump driver connects to P1.6.
 
 ```powershell
 ./Car/MSP430/build_robot_supervisor.ps1 -EspUart -Zumo -PumpDriverVerified -SpraySeconds 3
@@ -73,9 +77,10 @@ the default USB-console build's serial walkthrough to work on this configuration
 `valid=0/fault=1` after the timeout. Link and console UART errors are counted separately.
 
 Console replies use [console_tx.h](console_tx.h) so long status output does not
-block obstacle service. STOP is applied before Uno acknowledgement; clear range
-only removes an inhibit and does not issue START. A Zumo button release requests
-calibration or following through the framed link; the MSP authorises it.
+block obstacle service. The Uno applies the pause before acknowledging it. The
+MSP can then issue one START after confirmed clearance. A Zumo button press
+during the pause cancels it. When stopped normally, a button release requests
+calibration or following through the framed link.
 
 The no-echo update was flashed/program-verified on 17 November. Clean stopped
 readback showed about 23 seconds without an echo, `inhibit=0`, Uno link ready

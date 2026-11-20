@@ -51,9 +51,10 @@ and `PUMP_DRIVER_VERIFIED=1` for the installed pump profile.
 The supervisor owns movement grants, HC-SR04 range and STOP/timeout handling.
 **Current STOP trigger, updated 18 November, is a valid range ≤5 cm.** Two readings ≥7 cm clear
 a recent near inhibit. Missing/invalid/stale echoes do not block movement;
-old near data expires after about 300 ms. Manual and communication STOP remain,
-and no clearance/fault recovery automatically restarts the car. These are
-configured thresholds, not measured physical braking distances.
+old near data expires after about 300 ms. With the matching Uno OG5 firmware,
+line following resumes from an acknowledged obstacle pause after two consecutive
+valid readings at least 7 cm away. Manual and communication stops cancel the
+pause. These thresholds are configurable. Physical braking distance is unmeasured.
 
 Use [the supervisor guide](robot_supervisor/README.md) for sources/diagnostics
 and [the Zumo guide](../Arduino_Uno/zumo_line_follow/README.md) for full wiring

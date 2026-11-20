@@ -34,22 +34,25 @@ next JPEG. The 18 November live checks measured **12.9–13.3 fps**, with longes
 gaps of 281–328 ms. See the
 [video measurement record](Laptop/Artifacts/verification/video-stability-2026-11-18.json).
 
-## Source stopping settings
+## Ultrasonic pause and resume
+
+The pause update requires the matching MSP430 supervisor and **Uno OG5**. The
+20 November pump installation above records the hardware state before this
+source update. Upload both updated firmwares to use automatic obstacle resume.
 
 | Setting | Current behavior |
 | --- | --- |
-| Obstacle STOP | Valid measured range **5 cm or closer** |
-| Clear a recent near inhibit | Two valid readings **7 cm or farther** |
-| Missing / invalid / stale echo | Does **not** stop or block calibration or driving, including startup |
+| Obstacle detected during line following | The Zumo pauses at a valid measured range **5 cm or closer** |
+| Obstacle clears during the pause | The Zumo resumes after two consecutive valid readings **7 cm or farther** |
+| Missing / invalid / stale echo | Logged as a sensor fault after the timeout. Automatic resume waits for valid readings. |
 | Old near reading | Expires after about **300 ms** without a fresh valid reading |
-| Obstacle/manual/fault STOP | Manual request required; clearing range never restarts the car |
+| Manual STOP, interrupted calibration, or link fault | A new local request is required |
 
-These are the current configured thresholds in
-[obstacle_guard.h](Car/MSP430/robot_supervisor/obstacle_guard.h), not a measured
-physical braking distance. The accepted measurement range is 2–400 cm; readings
-below that range are invalid. A disconnected or failed sonar therefore also
-cannot stop motion under the requested no-echo policy. Local/manual STOP,
-UART/session faults and the Uno's one-second communication lease remain active.
+The sonar accepts valid echoes from 2–400 cm. The thresholds are configured
+distances. Physical braking distance remains unmeasured. With no echo, the
+robot can still start on a local request under the existing sonar policy.
+The firmware requires valid echoes to resume a paused run automatically.
+See the [MSP430 sonar policy](Car/MSP430/robot_supervisor/README.md#current-sonar-policy).
 
 ## Calibrate and drive
 
@@ -59,17 +62,17 @@ UART/session faults and the Uno's one-second communication lease remain active.
    once**. It requests permission, waits one second, then performs the original
    80-step rotating calibration at ±200. Completion leaves it stopped, `CAL=1`.
 3. Re-centre on the line if needed, then **press and release again** to follow it.
-4. Press the Zumo button during motion to stop; MSP S2 also requests STOP.
+4. Press the Zumo button during motion or an obstacle pause to stop. MSP S2
+   also requests STOP.
    After an interrupted calibration, repeat the sweep before starting.
 
 Calibration is held in RAM and must be repeated after an Uno reset. The original
 PD settings remain `kp=1`, `kd=0`, centre 2500 and `MAX_SPEED=150`, with a positive turn cap of 250 and reverse cap of 400. USB status is
-**9600 baud**, source firmware **OG4**.
+**9600 baud**, source firmware **OG5**.
 See [the complete Zumo wiring and operating guide](Car/Arduino_Uno/zumo_line_follow/README.md).
 
-The normal MSP image was flashed and program-verified before the bench test; the user installed Uno
-OG4, confirmed by its serial output. The full track, calibrated range accuracy and physical braking distance
-have not been independently measured.
+The obstacle pause and resume sequence passed host integration tests. The
+updated firmware awaits a physical track test.
 
 ## Find the code
 

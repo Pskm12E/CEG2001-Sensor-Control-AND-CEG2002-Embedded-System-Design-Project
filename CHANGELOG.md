@@ -1,5 +1,15 @@
 # Changelog
 
+## Ultrasonic pause and resume — 2026-11-20
+
+- The updated MSP430 and Uno OG5 pause active line following at 5 cm or closer
+  and resume after two consecutive valid readings at 7 cm or farther.
+- Missing echoes leave a paused run waiting for clearance. Manual stop, link
+  failure, interrupted calibration and an aborted spray require a new request.
+- The pause keeps the Uno session active. A refused or timed-out pause falls
+  back to STOP. The regression tests exercise this behavior through the Uno
+  sketch and MSP430 scheduler.
+
 ## Integrated three-second pump profile — 2026-11-20
 
 - User confirmed the P1.6-driven pump running and automatically stopping in two

@@ -24,8 +24,9 @@ The full physical target-to-spray-to-resume trial remains pending. See the
 
 Manual STOP, an ultrasonic near obstacle, UART/link faults, refusal or lost
 calibration cancel the cycle with the pump off. They do not resume automatically.
-The current sonar trigger is **5 cm**, with two readings at least **7 cm**
-clearing a recent near inhibit. Missing echoes retain the requested no-STOP policy.
+Outside a spray job, the updated MSP430 and Uno OG5 pause active line following
+at **5 cm or closer** and resume after two consecutive valid readings at least
+**7 cm**. A spray job canceled by an obstacle requires a new local start.
 
 One continuously visible target triggers one cycle. The laptop requires about
 one second of fresh frames without a target before rearming. This is blue-shape
@@ -74,7 +75,7 @@ Wet/dry calibration is pending; no tank level or empty-tank protection is claime
 
 | Board | Required version / source |
 | --- | --- |
-| Uno | OG4, [Zumo sketch](../../Arduino_Uno/zumo_line_follow/README.md) |
+| Uno | OG5 for obstacle pause and resume, [Zumo sketch](../../Arduino_Uno/zumo_line_follow/README.md) |
 | MSP430 | ESP-UART/Zumo build, [spray_job.h](spray_job.h) and [main.c](main.c) |
 | ESP32 | DIRECT_WIFI_V2, `robot_wifi_gateway` |
 | Desk Pico | DESK_BRIDGE_V3, `laptop_wifi_bridge` |

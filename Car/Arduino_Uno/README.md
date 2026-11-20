@@ -1,15 +1,11 @@
 # Car Arduino Uno — Zumo line following
 
-**18 November update — firmware versions installed:** 5 cm STOP / 7 cm clearance;
-blue-target stop → 3-second spray → token-matched continuation. Uno OG4 raises
-the positive turn limit to 250 while straight speed stays 150. Pump gate P1.6,
-raw water ADC P6.0. The pump driver is disabled until its electrical rating is
-verified. Read [the current cycle/pump guide](../MSP430/robot_supervisor/PUMP_SETUP.md). MSP 5 cm / 7 cm pump-disabled firmware and Pico V3 are installed/verified.
-The user-installed Uno OG4 is confirmed by its serial banner. FireBeetle V2
-is flashed/hash-verified and identified over USB. The MSP UART idle-restart
-fix is installed; live robot links are verified while stopped, with zero UART
-errors. Calibration is needed. Pump remains disabled pending driver qualification;
-physical spraying is not ready. The earlier installed milestone is history below.
+**Current source is Uno OG5.** With the matching MSP430 supervisor, it pauses
+active line following at 5 cm or closer and resumes after two valid readings
+at 7 cm or farther. Press the Zumo button during a pause to cancel the run.
+Both boards need updated firmware for this behavior. Straight speed is 150
+and the outside-track turn limit is 250. The installed three-second MSP spray
+profile and its checks are described in the [pump guide](../MSP430/robot_supervisor/PUMP_SETUP.md).
 
 ## Previous installed milestone — 17 November 2026
 
@@ -19,7 +15,7 @@ It follows a black line on white using the built-in six-sensor array and driver.
 MSP430 grants movement and owns ultrasonic stopping.
 
 - First Zumo button press/release: original 80-step calibration. Second: follow.
-- Current PD: `kp=1`, `kd=0`, `MAX_SPEED=150`, original upper-only clamps.
+- PD settings are `kp=1`, `kd=0` and `MAX_SPEED=150`.
 - MSP UART: **D6 RX / D13 TX**, 9600 baud; D13 uses the specified 2.2 kΩ/2.2 kΩ
   divider to MSP P3.4. Reserve D13 for TX.
 - MSP obstacle threshold: **2 cm**, clearance **4 cm**; missing echoes do not
