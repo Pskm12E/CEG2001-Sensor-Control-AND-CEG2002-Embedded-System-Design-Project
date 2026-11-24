@@ -13,7 +13,7 @@ water reading. [Pump wiring and cycle behavior](../../Car/MSP430/robot_superviso
 
 1. Power the car's FireBeetle ESP32, robot MSP430, Uno and XIAO camera.
    The camera can use **USB-C power from the power bank**.
-2. Connect only the **desk Pico W** to laptop USB for dashboard data
+2. Connect the **desk Pico W** to laptop USB for dashboard data
    (currently COM11). Keep the existing ESP32/MSP430/Uno UART wiring.
 3. Double-click **[Start Robot.cmd](../../Start%20Robot.cmd)** at the project root
    (or the existing **Start Dashboard.cmd** in this folder).
@@ -22,6 +22,20 @@ water reading. [Pump wiring and cycle behavior](../../Car/MSP430/robot_superviso
    this stream automatically. Keep the terminal open if it started the server;
    **Ctrl+C** closes that server. A reused server keeps running independently.
 5. For the blue-square practice target, select **Start detection**.
+
+Double-clicking **Start Robot.cmd** also offers to share the live camera and readings.
+Press **Y**, then copy the HTTPS address printed after **Public view-only link**. The launcher
+waits until the public address opens from the laptop and answers for this session. This can
+take a few minutes on a Wi-Fi network that caches DNS. Anyone with the link can watch from another
+Wi-Fi network or mobile data. Press Enter at the prompt for a local session.
+
+To start sharing from a command line, run `".\Start Robot.cmd" --share` in CMD from the project
+root. Keep the laptop awake and the terminal open. Ctrl+C ends that session's link.
+Each new sharing session gets a new address. The viewer uses the local robot camera feed
+and blanks stale readings. Visitors can pause their own view, save the displayed camera
+frame and refresh the readings. On another Windows laptop, install `cloudflared` on PATH for
+public sharing. The optional viewer tank calibration lives in
+`%LOCALAPPDATA%\PlantRobotShare\tank.json` as raw ADC counts, e.g. `{"empty":1836,"full":2281}`.
 
 The launcher waits up to 30 seconds for hardware. Missing/busy USB ports or an
 offline camera produce **SETUP INCOMPLETE** rather than a false ready message.
@@ -46,6 +60,10 @@ From CMD in the project root:
 `--pico-port` is needed when more than one supported Pico is attached; Uno and
 MSP430 ports are excluded. `--dashboard-only` leaves hardware disconnected.
 `--no-camera` connects only Pico telemetry; `--no-browser` skips opening a tab.
+For [coordinated docking](../../Docking_Station/README.md), also plug in the
+station MSP430 and supply its application UART using `--dock-port COM13`
+(replace COM13 with the station's port). The launcher checks for a clear
+dock and car acknowledgement. Dock events appear in the dashboard event log.
 Use `--wait 60` for slower board startup, or `--http-port 8766` if another app
 occupies port 8765. Closing another app's serial console can free a busy Pico.
 
@@ -64,7 +82,7 @@ Main MSP430 <--- UART ---> FireBeetle ----+
   |
 Arduino Uno -- Zumo Shield tracks / six-sensor array
 
-Second MSP430 + Booster: separate future dock controller
+Second MSP430 + Booster -- USB -- Laptop (station Hall sensor and refill pump)
 ```
 
 The XIAO and desk Pico join the **existing** FireBeetle private 2.4 GHz network.

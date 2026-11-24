@@ -23,7 +23,7 @@ pin labels and the exact signal tables below when wiring.
 | MSP430 #1, MSP-EXP430F5529LP | Car | Grants motion, monitors sonar and water, and controls the three-second spray cycle. |
 | Arduino Uno R3 + Zumo Shield | Car | OG6 reads the six line sensors, drives the tracks, acknowledges stops and sounds the optional flip alarm. |
 | XIAO ESP32-S3 Sense camera | Car | Sends continuous OV3660 camera video wirelessly through the existing ESP32 network. USB-C supplies power from a power bank. |
-| MSP430 #2 + Booster Board | Dock, planned | Local dock sensors and refill control. Pins, communication and firmware are not integrated. |
+| MSP430 #2 + Booster Board | Dock | P2.4 senses the magnet, P3.2 monitors the station reservoir and P1.4 controls the refill pump. [Dock project](../../../Docking_Station/README.md) |
 | Water pump and 2N7000 | Car | A separate four-AA pack powers the pump. MSP430 P1.6 drives the MOSFET gate. |
 
 ## Communication and return paths
@@ -137,7 +137,9 @@ These checks do not establish complete physical driving or autonomous spraying.
 
 The 20 November release includes target-triggered spraying, water telemetry and
 obstacle pause/resume. The operator reported that replacing a resistor restored
-pump operation. Dock integration and insect recognition remain planned.
+pump operation. The [dock firmware](../../../Docking_Station/README.md) now
+handles local magnetic arrival and timed refill. The laptop relays magnetic arrival and refill completion between
+the station USB port and the existing desk Pico wireless link.
 
 ## Historical illustration
 

@@ -54,7 +54,7 @@ static uint32_t nowMs() { return clockNow; }
 static bool wifiUp() { return wifi; }
 static bool espUp(uint32_t) { return true; }
 static bool mspUp(uint32_t) { return true; }
-enum class Reply { None,Ping,State,Msp,Stop,Target,Resume };
+enum class Reply { None,Ping,State,Msp,Stop,Target,Resume,Dock,Depart,Approach };
 static Reply wanted=Reply::None;
 static uint32_t resumeToken;
 static desk::HttpResponse response;
@@ -95,6 +95,15 @@ int main() {
     CHECK(!beginRequest(Reply::Resume,99) && resumeToken==42);
     connected(nullptr,connection,ERR_OK); CHECK(sent.find("POST /api/resume?job_id=42 ")==0);
     accepted(18); CHECK(output.find("ROBOT RESUME SENT ID=18")!=std::string::npos);
+    command("ROBOT APPROACH"); CHECK(wanted==Reply::Approach);
+    connected(nullptr,connection,ERR_OK); CHECK(sent.find("POST /api/approach ")==0);
+    command("ROBOT DOCK 4294967295"); CHECK(wanted==Reply::Dock);
+    connected(nullptr,connection,ERR_OK); CHECK(sent.find("POST /api/dock?job_id=4294967295 ")==0);
+    accepted(19);
+    command("ROBOT DEPART 4294967295"); CHECK(wanted==Reply::Depart);
+    connected(nullptr,connection,ERR_OK); CHECK(sent.find("POST /api/depart?job_id=4294967295 ")==0);
+    accepted(20);
+    command("ROBOT DEPART 4294967296"); CHECK(!connection && wanted==Reply::None);
     command("ROBOT TARGET"); CHECK(wanted==Reply::Target);
     failed=done=true; output.clear(); finishRequest();
     CHECK(output=="ROBOT TARGET ERROR NOT_CONFIRMED_NO_REPLAY\n");

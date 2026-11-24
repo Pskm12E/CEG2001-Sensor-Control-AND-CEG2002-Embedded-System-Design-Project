@@ -4,7 +4,7 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 # Server Manager checks out sources with umask 077; assign them to the runtime user.
-COPY --chown=1000:1000 server.py desk_bridge.py camera_usb.py camera_radio.py blue_detector.py ./
+COPY --chown=1000:1000 server.py desk_bridge.py dock_relay.py camera_usb.py camera_radio.py blue_detector.py ./
 COPY --chown=1000:1000 static ./static
 USER 1000:1000
 EXPOSE 8765

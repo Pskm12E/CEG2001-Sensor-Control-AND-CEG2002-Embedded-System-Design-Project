@@ -48,11 +48,12 @@ String stateJson() {
     json+="}"; return json;
 }
 bool request(direct::Op op,bool fromUsb=false,uint32_t jobToken=0) {
-    const bool action=op==direct::Op::Stop || op==direct::Op::Target || op==direct::Op::Resume;
+    const bool action=op!=direct::Op::Ping && op!=direct::Op::Status;
     if(action && !fresh()) return false;
     if(pendingId) {
         if(!action || pendingOp==direct::Op::Stop ||
-           ((pendingOp==direct::Op::Target || pendingOp==direct::Op::Resume) && op!=direct::Op::Stop)) return false;
+           (pendingOp!=direct::Op::Ping && pendingOp!=direct::Op::Status &&
+            op!=direct::Op::Stop && op!=direct::Op::Dock)) return false;
         // A bounded job/STOP preempts telemetry polling, never another action.
         pendingId=0; pendingOp=direct::Op::None; usbRequest=false;
     }
@@ -61,8 +62,8 @@ bool request(direct::Op op,bool fromUsb=false,uint32_t jobToken=0) {
     sentAt=lastAttempt=millis();
     if(op==direct::Op::Stop) { stopId=pendingId; strcpy(stopState,"SENT_OUTCOME_UNKNOWN"); }
     if(op==direct::Op::Target) { targetId=pendingId; strcpy(targetState,"SENT_OUTCOME_UNKNOWN"); }
-    if(op==direct::Op::Resume)
-        supervisor.printf("NET %lu RESUME %lu\n",static_cast<unsigned long>(pendingId),static_cast<unsigned long>(jobToken));
+    if(op==direct::Op::Resume || op==direct::Op::Dock || op==direct::Op::Depart)
+        supervisor.printf("NET %lu %s %lu\n",static_cast<unsigned long>(pendingId),direct::name(op),static_cast<unsigned long>(jobToken));
     else supervisor.printf("NET %lu %s\n",static_cast<unsigned long>(pendingId),direct::name(op));
     return true;
 }
@@ -119,7 +120,11 @@ void setup() {
         if(!request(direct::Op::Target)) { http.send(503,"application/json","{\"error\":\"MSP unavailable or busy; nothing queued\"}"); return; }
         http.send(202,"application/json",String("{\"request_id\":")+String(targetId)+",\"state\":\"SENT_OUTCOME_UNKNOWN\"}");
     });
-    http.on("/api/resume",HTTP_POST,[]() {
+    http.on("/api/approach",HTTP_POST,[]() {
+        if(!request(direct::Op::Approach)) { http.send(503,"application/json","{}"); return; }
+        http.send(202,"application/json",String("{\"request_id\":")+String(pendingId)+",\"state\":\"SENT_OUTCOME_UNKNOWN\"}");
+    });
+    auto visitCommand=[](direct::Op op) {
         const String token=http.arg("job_id"); uint32_t id=0; const char *p=token.c_str();
         bool good=*p>='1' && *p<='9';
         while(*p && good) {
@@ -127,11 +132,14 @@ void setup() {
             if(d>9 || id>429496729u || (id==429496729u && d>5u)) good=false;
             else id=id*10u+d;
         }
-        if(!good || *p || !request(direct::Op::Resume,false,id)) {
+        if(!good || *p || !request(op,false,id)) {
             http.send(503,"application/json","{\"error\":\"Invalid job, MSP unavailable or busy; nothing queued\"}"); return;
         }
         http.send(202,"application/json",String("{\"request_id\":")+String(pendingId)+",\"state\":\"SENT_OUTCOME_UNKNOWN\"}");
-    });
+    };
+    http.on("/api/resume",HTTP_POST,[visitCommand]() { visitCommand(direct::Op::Resume); });
+    http.on("/api/dock",HTTP_POST,[visitCommand]() { visitCommand(direct::Op::Dock); });
+    http.on("/api/depart",HTTP_POST,[visitCommand]() { visitCommand(direct::Op::Depart); });
     http.onNotFound([]() { http.send(404,"application/json","{\"error\":\"Unsupported route or method\"}"); });
     http.begin();
     Serial.println("ESP32 DIRECT_WIFI_V2; MSP main; status/STOP/target jobs.");

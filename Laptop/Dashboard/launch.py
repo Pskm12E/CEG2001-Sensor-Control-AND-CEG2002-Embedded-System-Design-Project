@@ -11,6 +11,8 @@ from urllib.error import HTTPError, URLError
 from urllib.request import ProxyHandler, Request, build_opener
 import webbrowser
 
+from live_view.share import share_dashboard
+
 ROOT = Path(__file__).resolve().parent
 
 
@@ -157,6 +159,7 @@ def close_owned_server(client, child):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pico-port", help="Choose a specific desk Pico, for example COM11")
+    parser.add_argument("--dock-port", help="Coordinate refills over the station MSP430 application UART COM port")
     parser.add_argument("--http-port", type=int, choices=range(1, 65536), default=8765, metavar="PORT")
     parser.add_argument("--wait", type=int, choices=range(1, 61), default=30, metavar="SECONDS",
                         help="Hardware startup budget, 1-60 seconds (default 30)")
@@ -164,25 +167,57 @@ def main(argv=None):
     parser.add_argument("--no-camera", action="store_true", help="Connect the Pico for telemetry only")
     parser.add_argument("--dashboard-only", action="store_true", help="Open the dashboard without connecting hardware")
     parser.add_argument("--no-browser", action="store_true", help="Do not open another browser tab")
+    sharing = parser.add_mutually_exclusive_group()
+    sharing.add_argument("--share", action="store_true", help="Print a public view-only link for the live camera and readings")
+    sharing.add_argument("--ask-share", action="store_true", help="Offer a public link after local setup")
     args = parser.parse_args(argv)
     if args.detect and (args.no_camera or args.dashboard_only):
         parser.error("--detect requires automatic camera startup")
+    if args.dock_port and args.dashboard_only:
+        parser.error("--dock-port requires the desk Pico connection")
     client = LocalDashboard(args.http_port)
     child = None
     result = 0
     try:
         child = ensure_server(client, args.http_port)
         client.local_state()
-        print(f"\nDashboard: {client.url}", flush=True)
+        print(f"\nLocal dashboard: {client.url}", flush=True)
         if not args.no_browser and not webbrowser.open(client.url):
             print("Open the dashboard URL above in your browser.", flush=True)
         if not args.dashboard_only:
             try:
                 configure_hardware(client, pico_port=args.pico_port, wait=args.wait,
                                    camera=not args.no_camera, detect=args.detect)
+                if args.dock_port:
+                    client.request("/api/dock/connect", {"port": args.dock_port})
+                    deadline = time.monotonic() + 10
+                    while time.monotonic() < deadline:
+                        state = client.local_state()
+                        phase = state.get("dock", {}).get("phase")
+                        if (phase == "CLEAR" and state["connection"]["fresh"] and
+                                (state.get("telemetry") or {}).get("dock_clear")):
+                            break
+                        if phase == "DISCONNECTED":
+                            raise LaunchError("Dock USB heartbeat unavailable. Check the station port and firmware.")
+                        time.sleep(.2)
+                    else:
+                        raise LaunchError("Dock path unconfirmed. Remove the magnet and check the station, Pico and robot firmware and connections.")
+                    print(f"Dock ready on {args.dock_port}. Keep both USB cables connected.", flush=True)
             except LaunchError as exc:
                 result = 2
                 print(f"\nSETUP INCOMPLETE: {exc}\nFix the connection and rerun this file, or use the dashboard buttons.", flush=True)
+        public = args.share
+        if args.ask_share and sys.stdin.isatty():
+            try:
+                public = input("\nShare live camera and readings with anyone who has the link? [y/N] ").strip().lower() in {"y", "yes"}
+            except EOFError:
+                public = False
+        if public:
+            try:
+                share_dashboard(args.http_port, child)
+            except OSError as exc:
+                result = 2
+                print(f"Public sharing unavailable: {exc}", flush=True)
         if child is not None:
             print("\nKeep this window open. Press Ctrl+C to close this dashboard server.", flush=True)
             code = child.wait()

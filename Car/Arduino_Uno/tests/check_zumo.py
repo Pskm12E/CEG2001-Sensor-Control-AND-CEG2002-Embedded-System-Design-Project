@@ -65,10 +65,18 @@ inline struct { void begin() {} void setWireTimeout(uint32_t,bool) {} } Wire;
 #pragma once
 #include <Arduino.h>
 inline struct {
-    uint8_t value=0xff;
-    int length() { return 1024; }
-    uint8_t read(int i) { assert(i==1023); return value; }
-    void update(int i,uint8_t v) { assert(i==1023); value=v; }
+    uint8_t values[1024];
+    int length() { return sizeof(values); }
+    uint8_t read(int i) { assert(i>=0 && i<length()); return values[i]; }
+    void update(int i,uint8_t v) { assert(i>=0 && i<length()); values[i]=v; }
+    template<typename T> void put(int i, const T& value) {
+        const auto* bytes=reinterpret_cast<const uint8_t*>(&value);
+        for(size_t n=0;n<sizeof(T);++n) update(i+n,bytes[n]);
+    }
+    template<typename T> void get(int i,T& value) {
+        auto* bytes=reinterpret_cast<uint8_t*>(&value);
+        for(size_t n=0;n<sizeof(T);++n) bytes[n]=read(i+n);
+    }
 } EEPROM;
 ''',
     "SoftwareSerial.h": r'''
@@ -122,9 +130,10 @@ public:
 class ZumoReflectanceSensorArray {
 public:
     unsigned int lows[6]={},highs[6]={};
-    unsigned int* calibratedMinimumOn=lows;
-    unsigned int* calibratedMaximumOn=highs;
+    unsigned int* calibratedMinimumOn=nullptr;
+    unsigned int* calibratedMaximumOn=nullptr;
     bool badContrast=false;
+    unsigned offset=0;
     unsigned samples=0;
     int position=2500;
     std::function<void()> onRead;
@@ -132,7 +141,10 @@ public:
     void resetCalibration() { samples=0; }
     void calibrate() {
         ++samples; fakeMillis+=20;
-        for(int i=0;i<6;++i) { lows[i]=100; highs[i]=badContrast?100:900; }
+        calibratedMinimumOn=lows; calibratedMaximumOn=highs;
+        for(int i=0;i<6;++i) {
+            lows[i]=100+offset+i; highs[i]=badContrast?lows[i]:900+offset+2*i;
+        }
     }
     int readLine(unsigned int* values) {
         for(int i=0;i<6;++i) values[i]=(i==2)?1000:0;
@@ -171,10 +183,15 @@ enum { BIT0=1,BIT2=4,BIT6=64,BIT7=128,TASSEL__SMCLK=512,MC__CONTINUOUS=32,TACLR=
 static uint8_t P3SEL,P3REN,P3OUT,P3DIR,P2SEL,P2DIR,P2OUT,P2REN,P2IE,P2IES,P2IFG,P2IN,P4OUT;
 static uint16_t TA2CCTL0,TA2CTL,TA2CCR0,TA2R,ticks;
 static uint8_t P1OUT,stopButton;
-static uint16_t ADC12IFG,ADC12MEM0,ADC12CTL0,ADC12CTL1,waterRaw,waterAt;
+static uint16_t ADC12IFG,ADC12MEM0,ADC12CTL0,ADC12CTL1,waterRaw,waterAt,lastWaterSample;
 #include "../../../MSP430/robot_supervisor/spray_job.h"
 #include "../../../MSP430/robot_supervisor/water_level.h"
 static WaterLevel tank;
+static uint32_t dockVisit;
+static uint8_t dockStopAck,dockReleaseDelay;
+static uint16_t dockCancelAt;
+static uint16_t dockClearAt;
+static uint8_t dockClear,dockMode;
 static SprayJob sprayJob;
 static uint16_t session=42,sequence,requestAt,lastPoll,lastLinkByte,badFrames,uartErrors,rxDrops;
 static uint8_t pending,linked,running,queued,peerFlags,peerResult,obstaclePaused;
@@ -196,14 +213,15 @@ tests = r'''
 static unsigned checks=0;
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"FAIL line %d: %s\n",__LINE__,#x); std::abort(); } ++checks; } while(0)
 static bool stopped() { return motors.left==0 && motors.right==0; }
-static void reset() {
+static void reset(bool keepLineCalibration=false) {
+    // Independent scenarios start with no line profile; flip settings survive.
+    if(!keepLineCalibration) memset(EEPROM.values,0xff,EEPROM.length()-2);
+    msp::dockVisit=msp::dockStopAck=msp::dockReleaseDelay=msp::dockCancelAt=0;
+    msp::dockClearAt=msp::dockMode=msp::dockClear=0;
     msp::sprayJob={}; msp::P1OUT=0; msp::stopButton=msp::obstaclePaused=0;
-    msp::tank={}; msp::ADC12IFG=msp::waterRaw=msp::waterAt=0;
+    msp::tank={}; msp::ADC12IFG=msp::waterRaw=msp::waterAt=msp::lastWaterSample=0;
     fakeMillis=0; robot=ZumoControl(); parser={}; motors=ZumoMotors();
     reflectanceSensors=ZumoReflectanceSensorArray();
-    // The assignment copies internal pointers, so bind them to this instance.
-    reflectanceSensors.calibratedMinimumOn=reflectanceSensors.lows;
-    reflectanceSensors.calibratedMaximumOn=reflectanceSensors.highs;
     Serial=FakeSerial(); button.pressed=button.released=false;
     mspSerial.input.clear(); mspSerial.output.clear(); mspSerial.overflowed=false;
     mspSerial.beforeWrite=nullptr; usbUsed=0; usbDiscard=false; suppressButtonRelease=false;
@@ -265,43 +283,123 @@ static void start() {
     releaseButton(); CHECK(robot.userRequest==RL_USER_START && stopped());
     for(unsigned i=0;i<40 && !robot.following;++i) step();
     CHECK(robot.following && msp::running);
-    CHECK(motors.left==150 && motors.right==150);
+    CHECK(motors.left==90 && motors.right==90);
 }
 static void waterSample(uint16_t raw) {
     msp::ADC12MEM0=raw; msp::ADC12IFG=msp::BIT0; msp::serviceWater();
 }
 int main(int argc,char** argv) {
+    memset(EEPROM.values,0xff,EEPROM.length());
+    reset(); linkClear(); reflectanceSensors.offset=125; calibrate();
+    reset(true); linkClear();
+    CHECK(robot.calibrated && robot.lastEvent==ZE_CAL_RESTORED && (msp::peerFlags&RL_CAL));
+    for(int i=0;i<6;++i) {
+        CHECK(reflectanceSensors.calibratedMinimumOn[i]==225u+i);
+        CHECK(reflectanceSensors.calibratedMaximumOn[i]==1025u+2*i);
+    }
+    for(unsigned i=0;i<40;++i) step();
+    CHECK(!robot.moving() && !msp::running && stopped()); start();
+    // A power cut partway through the replacement EEPROM record leaves the
+    // active selector pointing at the previous six ranges.
+    EEPROM.update(LineCalibration::address(LineCalibration::slotB),0x42);
+    reset(true); linkClear(); Serial.send("C\n"); loop();
+    for(unsigned i=0;i<100 && calibrationStep<2;++i) step();
+    CHECK(robot.calibrating && calibrationStep>=2);
+    reset(true); linkClear();
+    CHECK(robot.calibrated && reflectanceSensors.lows[0]==225);
+    // A full replacement sweep writes the alternate slot and survives reboot.
+    reflectanceSensors.offset=70; Serial.send("C\n"); loop();
+    for(unsigned i=0;i<300 && robot.lastEvent!=ZE_CAL_DONE;++i) step();
+    CHECK(robot.lastEvent==ZE_CAL_DONE); reset(true);
+    CHECK(robot.calibrated && reflectanceSensors.lows[0]==170);
+    // Bad contrast cannot overwrite a usable profile. Corruption requires a sweep.
+    reflectanceSensors.badContrast=true; reflectanceSensors.calibrate();
+    CHECK(!LineCalibration::save(reflectanceSensors)); reset(true);
+    CHECK(robot.calibrated && reflectanceSensors.lows[0]==170);
+    EEPROM.values[LineCalibration::address(EEPROM.read(0))]^=1;
+    reset(true); linkClear(); CHECK(!robot.calibrated && stopped());
+    releaseButton(); CHECK(robot.userRequest==RL_USER_ZUMO_CALIBRATE);
+
+    reset(); linkClear(); calibrate();
+    msp::queued=RL_CLEAR; CHECK(exchange() && !robot.calibrated && stopped());
+    reset(true); CHECK(!robot.calibrated && stopped());
+    reset(); linkClear(); calibrate(); start();
+    waterSample(456); waterSample(499); exchange(); CHECK(robot.reversing);
+    msp::netCommand("NET 101 DOCK 4294967295");
+    CHECK(msp::queued==RL_STOP && !msp::dockStopAck && !msp::sprayJob.pump);
+    msp::netCommand("NET 102 DEPART 4294967295"); CHECK(msp::queued==RL_STOP);
+    for(unsigned i=0;i<40;++i) step();
+    CHECK(stopped() && msp::dockVisit==4294967295u && msp::dockStopAck && msp::linked);
+    msp::netCommand("NET 103 DEPART 4294967295"); CHECK(!msp::queued);
+    waterSample(501); waterSample(501);
+    msp::netCommand("NET 104 DEPART 1337"); CHECK(!msp::queued && stopped());
+    msp::netCommand("NET 105 DOCK 4294967295"); CHECK(msp::dockStopAck && stopped());
+    msp::netCommand("NET 106 DEPART 4294967295"); CHECK(msp::queued==RL_START);
+    exchange(); CHECK(robot.following && !msp::dockVisit);
+    msp::netCommand("NET 107 DEPART 4294967295"); CHECK(!msp::queued);
+
+    waterSample(3); waterSample(3); exchange();
+    msp::netCommand("NET 110 DOCK 77");
+    for(unsigned i=0;i<40;++i) step();
+    CHECK(msp::dockStopAck && stopped());
+    msp::netCommand("NET 111 STOP"); exchange();
+    waterSample(600); waterSample(600);
+    msp::netCommand("NET 112 DEPART 77"); CHECK(msp::queued!=RL_START);
+    for(unsigned i=0;i<60;++i) step();
+    CHECK(!robot.moving() && !msp::dockStopAck);
+    reset(); linkClear(); calibrate(); start();
+    msp::netCommand("NET 20 APPROACH");
+    waterSample(100); waterSample(100); exchange(); CHECK(robot.reversing);
+    for(unsigned i=0;i<240;++i) {
+        if(i%50==0) waterSample(100);
+        step();
+    }
+    CHECK(!robot.moving() && !msp::dockClear && stopped());
     reset(); linkClear();
     for(unsigned i=0;i<120;++i) step(); // No conversion yet, even though WATER reports zero.
     CHECK(!msp::tank.empty && !robot.moving());
-    waterSample(0); waterSample(15);
+    waterSample(456); waterSample(499);
     CHECK(msp::tank.empty && !robot.moving() && !msp::queued);
     calibrate(); releaseButton();
     for(unsigned i=0;i<45;++i) step();
     CHECK(!msp::running && stopped());
-    waterSample(35); waterSample(29); waterSample(30);
+    waterSample(501); waterSample(500); waterSample(501);
     CHECK(msp::tank.empty);
-    waterSample(30); CHECK(!msp::tank.empty && stopped());
+    waterSample(501); CHECK(!msp::tank.empty && stopped());
     start();
-    waterSample(0); waterSample(16); waterSample(15); msp::serviceWater();
+    waterSample(500); waterSample(500);
     CHECK(!msp::tank.empty && robot.following);
-    waterSample(15); CHECK(msp::queued==RL_ZUMO_REVERSE);
+    waterSample(499); waterSample(500); waterSample(456); msp::serviceWater();
+    CHECK(!msp::tank.empty && robot.following);
+    waterSample(499); CHECK(msp::queued==RL_ZUMO_REVERSE);
     msp::netCommand("NET 1 TARGET"); CHECK(!msp::sprayJob.pump && msp::sprayJob.phase==msp::SJ_IDLE);
     CHECK(exchange() && robot.reversing && motors.left==-100 && motors.right==-100);
     CHECK(!msp::zumoFollowing() && (msp::peerFlags&RL_ZUMO_REVERSING));
-    for(unsigned i=0;i<49;++i) step();
-    CHECK(robot.reversing);
-    step(); CHECK(!robot.moving() && stopped() && robot.lastEvent==ZE_REVERSE_DONE);
-    for(unsigned i=0;i<100;++i) { waterSample(0); step(); }
-    CHECK(!msp::running && msp::linked && stopped());
-    waterSample(45); waterSample(45); CHECK(stopped());
-    start(); waterSample(14); waterSample(15); exchange();
+    for(unsigned i=0;i<1500;++i) {
+        if(i%50==0) waterSample(456);
+        step();
+        CHECK(msp::running && robot.reversing && motors.left==-100 && motors.right==-100);
+    }
+    waterSample(501); waterSample(500); waterSample(501);
+    for(unsigned i=0;i<20;++i) step();
+    CHECK(msp::tank.empty && robot.reversing);
+    waterSample(501);
+    for(unsigned i=0;i<30;++i) step();
+    CHECK(msp::running && msp::linked && motors.left==90 && motors.right==90);
+    CHECK(!msp::tank.empty && robot.following && !robot.reversing);
+    waterSample(14); waterSample(15); exchange();
     CHECK(robot.reversing);
     button.pressed=true; loop(); CHECK(stopped() && !robot.moving());
+    waterSample(501); waterSample(501);
+    for(unsigned i=0;i<70;++i) step();
+    CHECK(!robot.moving() && !msp::running && stopped());
 
     reset(); linkClear(); calibrate(); start();
     waterSample(0); waterSample(0); exchange(); sonar(4); exchange();
     CHECK(stopped() && !robot.obstaclePaused && !robot.reversing);
+    waterSample(501); waterSample(501);
+    for(unsigned i=0;i<60;++i) step();
+    CHECK(!robot.moving() && stopped());
 
     reset(); linkClear(); calibrate(); start();
     msp::netCommand("NET 1 TARGET"); exchange();
@@ -314,23 +412,68 @@ int main(int argc,char** argv) {
     reset(); linkClear(); calibrate(); start();
     sonar(4); msp::serviceLink(); CHECK(msp::pendingPacket.type==RL_ZUMO_PAUSE);
     waterSample(0); waterSample(0); CHECK(msp::queued==RL_STOP);
-    waterSample(99); waterSample(99);
+    waterSample(515); waterSample(515);
     for(unsigned i=0;i<60;++i) step();
     CHECK(stopped() && !msp::running && !msp::obstaclePaused);
 
     // A late retry cannot extend the reverse. A missing heartbeat stops the tracks.
     reset(); linkClear(); calibrate(); start(); waterSample(0); waterSample(0); exchange();
     CHECK(robot.reversing);
-    uint32_t began=robot.reverseStarted;
+    uint32_t began=robot.lastReverseGrant;
     fakeMillis+=200; auto retry=robot.handle(msp::pendingPacket,fakeMillis);
-    CHECK(retry.detail==RL_OK && robot.reverseStarted==began && robot.lastLease==began);
+    CHECK(retry.detail==RL_OK && robot.lastReverseGrant==began && robot.lastLease==began);
     fakeMillis=began+ZumoControl::LEASE_MS; loop();
     CHECK(stopped() && !robot.reversing && robot.reason==RL_LEASE_LOST);
+    // Legacy MSP heartbeats can keep the link alive but cannot renew reverse.
+    reset(); linkClear(); calibrate(); start(); waterSample(0); waterSample(0); exchange();
+    RlPacket keep=msp::pendingPacket; keep.type=RL_KEEP;
+    for(unsigned i=0;i<5;++i) {
+        fakeMillis+=200; ++keep.seq; robot.handle(keep,fakeMillis); loop();
+    }
+    CHECK(stopped() && robot.lastEvent==ZE_REVERSE_DONE);
+    // A healthy UART alone must not maintain reverse after the ADC stalls.
+    reset(); linkClear(); calibrate(); start(); waterSample(0); waterSample(0); exchange();
+    for(unsigned i=0;i<180;++i) step();
+    CHECK(msp::tank.empty && !msp::running && stopped());
+    waterSample(0); waterSample(0); step(); CHECK(!robot.moving());
     reset(); linkClear();
     auto samples=[](int16_t z,unsigned count) {
         measuredZ=z;
         for(unsigned i=0;i<count;++i) { fakeMillis+=40; loop(); }
     };
+    // Reproduce the reported behavior with positive Z when the tracks are down.
+    // A reboot on its side or upside down must never teach a new reference.
+    EEPROM.update(EEPROM.length()-2,0xff); reset(); linkClear();
+    samples(16000,20);
+    CHECK(!flipAlarm.flipped && !beeps);
+    measuredZ=16000; calibrate();
+    CHECK(!flipAlarm.flipped && !beeps);
+    samples(0,15); samples(16000,15);
+    CHECK(!flipAlarm.flipped && !beeps);
+    reset(); samples(-16000,15);
+    CHECK(flipAlarm.flipped && beeps==1);
+    samples(0,5); CHECK(!flipAlarm.flipped);
+    samples(16000,15); CHECK(!flipAlarm.flipped && beeps==1);
+    samples(-32768,12); CHECK(flipAlarm.flipped && beeps==2);
+    // A sideways calibration cannot overwrite the previously learned sign.
+    reset(); linkClear(); measuredZ=0; calibrate(); samples(-16000,12);
+    CHECK(flipAlarm.flipped && beeps==1);
+    // Neither unstable readings before the sweep nor steady readings once
+    // the tracks move can replace the reference.
+    reset(); linkClear(); releaseButton();
+    for(unsigned i=0; i<40 && !robot.calibrating; ++i) step();
+    CHECK(robot.calibrating);
+    for(unsigned i=0; i<250 && robot.calibrating; ++i) {
+        measuredZ = (calibrationStep > 0 || i % 12 < 6) ? -15700 : 16000;
+        step();
+    }
+    CHECK(robot.calibrated && flipAlarm.uprightSign==1);
+    // Relearn an opposite mounting while muted. Re-enabling after a reset
+    // must use the new reference and preserve the existing mute preference.
+    reset(); linkClear(); Serial.send("alarm off\n"); loop();
+    measuredZ=-15700; calibrate(); reset(); linkClear();
+    CHECK(flipAlarm.uprightSign==-1 && !flipAlarm.enabled);
+    Serial.send("alarm on\n"); loop();
     const int16_t tracksDown=-15700, tracksUp=16384;
     samples(tracksDown,15); samples(0,15);
     samples(tracksUp,9); samples(tracksDown,1);
@@ -386,7 +529,7 @@ int main(int argc,char** argv) {
     reflectanceSensors.position=0; loop();
     CHECK(motors.left==-400 && motors.right==250);
     reflectanceSensors.position=2575; loop();
-    CHECK(motors.left==225 && motors.right==75); // More outer-track drive at ordinary bends.
+    CHECK(motors.left==165 && motors.right==15); // More outer-track drive at ordinary bends.
     reflectanceSensors.position=2500;
     // Near echo pauses the real sketch, whose motors stop before acknowledging.
     sonar(10); CHECK(msp::running && msp::queued!=RL_STOP);
@@ -482,7 +625,7 @@ int main(int argc,char** argv) {
     CHECK(robot.reason==RL_OK && !robot.calibrated && robot.lastEvent==ZE_MSP_STOP);
     Serial.output.clear(); usbReportPart=1; reportUsb(); reportUsb(); reportUsb();
     std::string statusText(Serial.output.begin(),Serial.output.end());
-    CHECK(statusText.find("FW=OG7 CAL=0 SWEEP=0 RUN=0 REASON=0")!=std::string::npos);
+    CHECK(statusText.find("FW=OG9 CAL=0 SWEEP=0 RUN=0 REASON=0")!=std::string::npos);
     CHECK(statusText.find("FLIP ALARM=ON IMU=OK FLIPPED=0")!=std::string::npos);
     CHECK(statusText.find("LAST=MSP_STOP")!=std::string::npos && !usbReportPart);
     releaseButton();
@@ -595,7 +738,7 @@ cpp.write_text(prefix + "".join(function(name, result) for name, result in (
     ("pumpOff", "void"), ("cancelSpray", "void"),
     ("zumoFollowing", "uint8_t"), ("zumoStopped", "uint8_t"),
     ("stopRequested", "void"), ("serviceObstacle", "void"), ("userRequest", "void"),
-    ("reasonName", "const char *"), ("status", "void"), ("sendRequest", "void"),
+    ("reasonName", "const char *"), ("parseToken", "uint32_t"), ("printId", "void"), ("status", "void"), ("sendRequest", "void"),
     ("response", "void"), ("serviceLink", "void"),
     ("serviceWater", "void"), ("serviceSpray", "void"), ("netCommand", "uint8_t"),
 )) + tests, encoding="utf-8")

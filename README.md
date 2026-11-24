@@ -2,15 +2,23 @@
 
 CEG2001 Sensors and Control · CEG2002 Embedded System Design
 
-## Empty-tank reverse · OG7
+## Low-water reverse · OG9
 
-With the matching MSP430 supervisor and Uno OG7 firmware, two consecutive
-P6.0 readings of **15 or lower** while following the line trigger one slow,
-straight reverse for **one second**. The Zumo then parks. The front ultrasonic
-sensor covers the forward path only. For a first trial, leave space behind the tracks.
+With the matching MSP430 supervisor and Uno OG9 firmware, two consecutive
+P6.0 readings **below 500** during line following switch both tracks to slow,
+continuous reverse. Two consecutive readings **above 500**
+while reversing switch it back to forward line following. Exactly 500 keeps
+the current direction. Press the Zumo button
+to stop it at any time. The ultrasonic sensor faces forward, so keep the path
+behind the tracks clear.
+
+For [laptop-connected docking](Docking_Station/README.md), connect both the
+station MSP430 and the desk Pico by USB. The dock magnet stops a reversing
+Zumo through the laptop relay. The refill begins after a confirmed stop.
+Forward travel resumes after normal pump cutoff and two car readings above 500.
 
 If the tank goes empty during a spray job, the pump switches off and the Zumo
-stays parked. Two readings of **30 or higher** rearm the run after a refill.
+stays parked. Refilling a parked robot enables a new line-following run.
 Tap the Zumo button to start again. The MSP samples once per second and uses
 raw ADC counts independently of the dashboard's percentage calibration.
 
@@ -45,17 +53,21 @@ been measured. [Sonar policy](Car/MSP430/robot_supervisor/README.md#current-sona
 
 1. Power the MSP430 and Uno, enable the Zumo motor supply, and put the array over
    the black line with room to rotate across both black and white.
-2. After the MSP/Uno link is ready, **press and release the Zumo user button
-   once**. It requests permission, waits one second, then performs the original
-   80-step rotating calibration at ±200. Completion leaves it stopped, `CAL=1`.
+2. **First use:** once the MSP/Uno link is ready, tap the Zumo user button. It
+   waits one second, performs an 80-step rotating sweep at ±200, then
+   stops and saves the six sensors' black and white limits to EEPROM.
 3. Re-centre on the line if needed, then **press and release again** to follow it.
 4. Press the Zumo button during motion or an obstacle pause to stop. MSP S2
    also requests STOP.
    After an interrupted calibration, repeat the sweep before starting.
 
-Calibration is held in RAM and must be repeated after an Uno reset. The original
-PD settings remain `kp=1`, `kd=0`, centre 2500 and `MAX_SPEED=150`, with a positive turn cap of 250 and reverse cap of 400. USB status is
-**9600 baud**, source firmware **OG7**.
+On later power-ups the Uno restores its saved calibration and stays parked.
+Place it on the line and tap the button once to start. If the track or lighting
+changes, send `C` to the parked Uno in Serial Monitor (9600 baud, newline) to
+run a fresh sweep and save its readings. The Uno
+cruises at 90/400 on a centred line to give the camera more time to confirm a blue square.
+Steering uses `kp=1`, `kd=0` and centre 2500, with turn limits of +250 and −400. USB status is
+**9600 baud**, source firmware **OG9**.
 See [the complete Zumo wiring and operating guide](Car/Arduino_Uno/zumo_line_follow/README.md).
 
 ## Find the code
@@ -69,10 +81,10 @@ See [the complete Zumo wiring and operating guide](Car/Arduino_Uno/zumo_line_fol
 | [Laptop/Dashboard](Laptop/Dashboard/README.md) | Local monitor and OpenCV blue-square practice detector |
 | [Laptop/Pico_W](Laptop/Pico_W/README.md) | Desk USB/Wi-Fi video and status relay |
 | [Laptop/Tools/Communication](Laptop/Tools/Communication/README.md) | Protocol, private network configuration, build helpers and checks |
-| [Docking_Station](Docking_Station/README.md) | Planned dock controller and peripherals |
+| [Docking_Station](Docking_Station/README.md) | Station MSP430 firmware, magnetic arrival sensor and timed refill |
 
 The camera currently recognizes a blue practice target. Trained insect
-recognition and automatic docking/refill are planned.
+recognition is planned.
 
 ## Laptop monitor
 

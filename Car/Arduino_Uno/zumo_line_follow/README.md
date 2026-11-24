@@ -2,17 +2,31 @@
 
 ## Empty-tank reverse
 
-OG7 accepts a reverse request from the MSP430 during an active line run.
-Both tracks run at −100 for one second, then stop. The Zumo button, an MSP
-STOP, or loss of the motion heartbeat can end the manoeuvre early. USB status
-reports `LAST=EMPTY_REVERSE` during the manoeuvre and `LAST=REVERSE_DONE` on
-completion. The paired supervisor reads the tank probe on P6.0.
+During an active line run, two consecutive P6.0 readings below 500 switch
+OG9 to straight reverse. Both tracks run at −100 while the MSP430 renews the
+reverse command. Two consecutive readings above 500
+return a reversing robot to forward line following. Exactly 500 keeps the
+current direction.
+The Zumo button, MSP STOP, a front obstacle, or loss of the drive link can
+also stop it. Keep the path behind the robot clear. A manual stop requires a
+new local start even if the probe subsequently gets wet.
+
+USB status reports `LAST=EMPTY_REVERSE` during reverse. The Uno stops if it
+goes one second without a fresh reverse grant. The supervisor stops renewing
+grants if the water ADC goes three seconds without a completed conversion.
 
 ## Flip alarm
 
-Uno OG6 reads gravity on the Zumo Shield's accelerometer. After about 0.4 seconds
-upside down, it gives a short beep every 0.75 seconds. Returning the robot upright
-silences it. The alarm starts enabled on a new Uno.
+The Uno uses the Zumo Shield's accelerometer to detect a flip. On the first
+line calibration after installing this firmware, place the car flat on its
+tracks before tapping the Zumo button. During the one-second pause before
+the tracks spin, the Uno learns which direction is upright. It saves that
+direction across power cycles. Later line calibrations can update it if the
+sensor mounting changes. Turning the robot over at power-up cannot change it.
+
+The alarm starts enabled and waits quietly for a valid upright reference.
+About 0.4 seconds upside down triggers a short beep every 0.75 seconds.
+Placing the robot on its side or back on its tracks silences it.
 
 With the robot parked, hold the **Zumo user button** for two seconds to toggle the
 alarm. Release it before making another selection. The Uno saves the setting
@@ -20,8 +34,10 @@ across power cycles. A short tap still requests calibration or line following.
 During motion or an obstacle pause, pressing the button stops the run first.
 
 On Uno USB at 9600 baud, send `ALARM OFF` or `ALARM ON` with a newline.
-`STATUS` shows the setting, sensor connection, flipped flag and raw vertical
-acceleration. This robot measured about −15,700 counts sitting upright.
+`STATUS` shows the setting, sensor connection, flipped flag, raw vertical
+acceleration (`Z`) and saved upright direction (`UP_Z`). A value of
+`UP_Z=0` means the reference is still needed. Repeat the calibration with
+the robot flat and still. A learned reference reads `UP_Z=1` or `UP_Z=-1`.
 If `FLIPPED=1` appears while inverted but the buzzer is silent, check the
 shield's buzzer jumper. The two pins marked **328P** connect BZ to Uno D3.
 [Pololu jumper guide](https://www.pololu.com/docs/0J57/3.c)
@@ -56,22 +72,27 @@ active. No echo does not mean an obstacle-free path.
 
 1. Power both controllers and the Zumo motor supply. Put the array over the
    black line on white with room for the sweep to cross both colours.
-2. Once the MSP/Uno link is ready, **press and release once** to request
+2. On first use, once the MSP/Uno link is ready, **press and release once** to request
    calibration. Following the MSP grant, it waits one second and runs the
    original 80-step sweep at ±200, with 20 ms gaps and sensor sampling.
-3. Completion stops the motors and sets `CAL=1`. Re-centre if needed, then
+3. Completion stops the motors and sets `CAL=1`. The Uno saves each sensor's
+   minimum and maximum to EEPROM when all six saw a range. Re-centre if needed, then
    **press and release again** to request line following.
 4. Press during motion or an obstacle pause to stop locally. Release the
    button, then press and release again to make a new request. MSP S2 also
    requests STOP.
 
-An interrupted sweep leaves `CAL=0`, so the next request repeats calibration.
-An Uno reset clears calibration. Opening Serial Monitor can reset the Uno.
-USB connection itself does not deliberately request a second calibration.
+On later power-ups the Uno restores the saved readings and starts parked with
+`CAL=1` and `LAST=CAL_RESTORED`. Put it on the line and tap once to drive.
+To replace the readings for a new track or different lighting, send `C` to
+the parked Uno using Serial Monitor at 9600 baud with newline. A successful
+save prints `Line calibration saved.` An interrupted sweep leaves the previous
+EEPROM record intact. A missing or invalid record makes the first tap request a sweep.
 
-The original algorithm is preserved: `readLine(sensors)`, centre **2500**,
-`kp=1`, `kd=0`, `MAX_SPEED=150`, and **upper-only** speed clamps; negative motor
-commands remain possible. Sweep direction changes at the original step ranges.
+On a centred line, both tracks run at `FOLLOW_SPEED=90` (out of 400) to give
+the camera more time to confirm a blue square. Steering uses `readLine(sensors)`
+with centre **2500**, `kp=1` and `kd=0`. On sharp turns the outside track can
+reach +250 and the inside track can reach −400. Sweep direction changes at the original step ranges.
 A completed 80-step sweep is accepted without an added contrast-rejection gate.
 Expose the array to real black and white for useful calibration. The sweep is
 serviced in steps so MSP STOP/lease checks continue during it.
@@ -124,7 +145,7 @@ Use **9600 baud and newline**. Commands are case-insensitive.
 | `ALARM OFF` / `ALARM ON` | Mute or enable the flip alarm and save the setting |
 | `STATUS` | Request motion, last event and flip alarm status |
 
-Periodic status identifies **`FW=OG7`**. `CAL` is calibration complete, `SWEEP`
+Periodic status identifies **`FW=OG9`**. `CAL` is calibration complete, `SWEEP`
 is calibration active, `RUN` is following, and `REQ` is a pending local request.
 `STEP=n/80` shows sweep progress. `UP` is seconds since reset. `LAST` retains
 the last motion event across stopped MSP STOP/HELLO exchanges; `REASON` can
@@ -133,6 +154,7 @@ return to zero during resynchronisation.
 | `LAST` | Meaning |
 | --- | --- |
 | `BOOT` | No accepted sweep/start since reset |
+| `CAL_RESTORED` | Loaded the six saved line-sensor ranges at startup. Tracks are parked. |
 | `SWEEP` / `CAL_DONE` / `FOLLOWING` | Sweep active / completed / following |
 | `MSP_STOP` | MSP interrupted motion; inspect MSP diagnostics for its cause |
 | `OBSTACLE_PAUSE` | MSP paused line following for a near ultrasonic reading |
@@ -158,7 +180,7 @@ python Car/Arduino_Uno/tests/check_zumo.py
 python Car/MSP430/tests/check_ultrasonic.py
 ```
 
-These commands compile and run host tests. Upload Uno **OG7** and the matching
+These commands compile and run host tests. Upload Uno **OG9** and the matching
 MSP430 supervisor to enable automatic resume. The Uno build uses Pololu
 **ZumoShield 2.1.0**, AVR core **1.8.8**, Wire and SoftwareSerial. In Arduino IDE,
 open the repository sketch `zumo_line_follow.ino`, select Arduino Uno, and keep

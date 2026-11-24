@@ -4,11 +4,12 @@
 #include <string.h>
 
 namespace direct {
-enum class Op { None, Ping, Status, Stop, Target, Resume };
+enum class Op { None, Ping, Status, Stop, Target, Resume, Dock, Depart, Approach };
 inline const char *name(Op op) {
     switch(op) { case Op::Ping:return "PING"; case Op::Status:return "STATUS";
         case Op::Stop:return "STOP"; case Op::Target:return "TARGET";
-        case Op::Resume:return "RESUME"; default:return ""; }
+        case Op::Resume:return "RESUME"; case Op::Dock:return "DOCK";
+        case Op::Depart:return "DEPART"; case Op::Approach:return "APPROACH"; default:return ""; }
 }
 inline bool frame(const char *line,uint32_t &id,const char *&payload) {
     if(strncmp(line,"NET ",4)) return false;
@@ -36,6 +37,9 @@ inline bool matches(Op op,const char *p) {
     if(op==Op::Status) return status(p);
     if(op==Op::Target) return !strcmp(p,"TARGET ACCEPTED") || !strcmp(p,"TARGET REFUSED");
     if(op==Op::Resume) return !strcmp(p,"RESUME ACCEPTED") || !strcmp(p,"RESUME REFUSED");
+    if(op==Op::Dock) return !strcmp(p,"DOCK ACCEPTED") || !strcmp(p,"DOCK REFUSED");
+    if(op==Op::Depart) return !strcmp(p,"DEPART ACCEPTED") || !strcmp(p,"DEPART REFUSED");
+    if(op==Op::Approach) return !strcmp(p,"APPROACH RECEIVED");
     return op==Op::Stop && !strcmp(p,"STOP REQUESTED");
 }
 }

@@ -9,6 +9,7 @@ import time
 
 from camera_usb import serial, list_ports
 from camera_radio import RadioCamera, UsbMultiplexer
+from dock_relay import DockRelay
 
 ALLOWED_COMMANDS = frozenset({"PING", "STATUS"})
 STATUS_PATTERN = re.compile(
@@ -23,7 +24,8 @@ ZUMO_STATUS_PATTERN = re.compile(
     r"CAL=(NEEDED|SAMPLING|READY) BASE=ZUMO LINE=BLACK LED2=(ON|OFF) "
     r"FLAGS=(\d{1,3}) RESULT=(\d{1,3}) PENDING=(\d{1,3}) "
     r"UART_ERRORS=(\d{1,10}) RX_DROPS=(\d{1,10}) BAD_FRAMES=(\d{1,10})"
-    r"(?: JOB=(\d) JOB_ID=(\d{1,10}) PUMP=([01]) READY=([01]) WATER=(\d{1,4}))? BRIDGE=ESP_UART_V1"
+    r"(?: JOB=(\d) JOB_ID=(\d{1,10}) PUMP=([01]) READY=([01]) WATER=(\d{1,4})"
+    r"(?: DOCK=(\d{1,10}) WET=([01]) DCLEAR=([01]))?)? BRIDGE=ESP_UART_V1"
 )
 PICO_PATTERN = re.compile(
     r"STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V2 LED=ON "
@@ -62,12 +64,17 @@ def parse_status(line):
         keys = ("uno_link", "run", "calibration", "led2", "flags", "result",
                 "pending", "uart_errors", "rx_drops", "bad_frames")
         result = dict(zip(keys, match.groups()[:10]), base="ZUMO", line="BLACK", left=None, right=None)
-        job = match.groups()[10:]
+        job = match.groups()[10:15]
         if job and job[0] is not None:
             values = list(map(int, job))
             if values[0] > 8 or values[1] > 4294967295 or values[4] > 4095:
                 return None
             result.update(zip(("job", "job_id", "pump", "driver_ready", "water_raw"), values))
+            visit, wet, clear = match.groups()[15:]
+            if visit is not None:
+                if int(visit) > 0xffffffff:
+                    return None
+                result.update(dock_visit=int(visit), wet=int(wet), dock_clear=int(clear))
     for key in ("run", "flags", "result", "pending", "uart_errors", "rx_drops", "bad_frames"):
         result[key] = int(result[key])
     if any(result[k] > 255 for k in ("flags", "result", "pending")):
@@ -110,6 +117,10 @@ class Bridge:
         self.worker = None
         self.stop = threading.Event()
         self.pending = queue.Queue(maxsize=8)
+        self.dock = DockRelay(self)
+        self.dock_pending = None
+        self.dock_stop_sent = threading.Event()
+        self.dock_stop_sent.set()
         self.video=RadioCamera(self)
         self.usb=UsbMultiplexer(self.video.publish,self.video.reject)
         self.event("info", "Hosted preview. Robot hardware is not linked." if hosted else
@@ -140,6 +151,7 @@ class Bridge:
                     "target_action": dict(self.target_action),
                     "connection": {"connected": self.connected, "port": self.port, "baud": 115200,
                                    "error": error, "fresh": fresh, "last_seen": self.last_seen},
+                    "dock": {"port": self.dock.port, "phase": self.dock.phase},
                     "links": links, "telemetry": dict(self.telemetry) if self.telemetry else None,
                     "events": list(self.events)}
 
@@ -188,6 +200,9 @@ class Bridge:
 
     def disconnect(self):
         with self.lifecycle:
+            self.dock.close()
+            if self.worker and self.worker.is_alive():
+                self.dock_stop_sent.wait(timeout=1)
             was_connected = self.connected
             if self.worker and self.worker.is_alive() and self.action_command == "ROBOT STOP":
                 deadline = time.monotonic()+2
@@ -201,6 +216,7 @@ class Bridge:
                     raise RuntimeError("The USB connection is closing. Try again.")
             with self.lock:
                 self.connected = False
+                self.dock_pending = None
                 self.target_supported = False
                 self.error = None
             if was_connected:
@@ -366,6 +382,33 @@ class Bridge:
         try:self.pending.put_nowait(command)
         except queue.Full as exc:raise RuntimeError('Pico checks are pending. Try again shortly.') from exc
 
+    def dock_command(self, command):
+        with self.lock:
+            if not self.connected or self.hosted or not self.identity:
+                return
+            if self.dock_pending and self.dock_pending[0] == "ROBOT STOP":
+                return
+            if command == "ROBOT STOP":
+                self.dock_stop_sent.clear()
+            self.dock_pending = (command, time.monotonic())
+
+    def _send_dock(self, device):
+        with self.lock:
+            request, self.dock_pending = self.dock_pending, None
+        if not request:
+            return
+        command, created = request
+        if command != "ROBOT STOP" and time.monotonic()-created > .75:
+            return
+        prefix = " ".join(command.split()[:2]) + " "
+        try:
+            reply = self._exchange(device, command, prefix, 1)
+            if " SENT ID=" not in reply:
+                self.event("error", reply)
+        finally:
+            if command == "ROBOT STOP":
+                self.dock_stop_sent.set()
+
     def _poll_input(self,device):
         data=device.read(max(1,min(device.in_waiting,8192)))
         if data:self.usb.feed(data)
@@ -375,8 +418,13 @@ class Bridge:
         device.write((command+'\n').encode('ascii'))
         deadline=time.monotonic()+timeout
         while not self.stop.is_set() and time.monotonic()<deadline:
-            is_action = command.startswith(("ROBOT TARGET", "ROBOT STOP", "ROBOT RESUME "))
-            if self.action_pending.is_set() and command != self.action_command:
+            is_action = command.startswith(("ROBOT TARGET", "ROBOT STOP", "ROBOT RESUME ", "ROBOT DOCK ", "ROBOT DEPART ", "ROBOT APPROACH"))
+            dock_request = self.dock_pending
+            if dock_request and (not is_action or
+                    (dock_request[0].startswith(("ROBOT DOCK ", "ROBOT STOP")) and
+                     command != "ROBOT STOP" and command != dock_request[0])):
+                raise ActionPriority()
+            if self.action_pending.is_set() and command != self.action_command and not command.startswith(("ROBOT DOCK ", "ROBOT STOP")):
                 raise ActionPriority()
             while self.usb.lines:
                 line=self.usb.lines.popleft()
@@ -400,6 +448,8 @@ class Bridge:
             self.event("board", reply)
             while not self.stop.is_set():
                 try:
+                    if self.dock_pending:
+                        self._send_dock(device)
                     if self.action_pending.is_set():
                         self._send_target(device)
                     try:
@@ -426,7 +476,7 @@ class Bridge:
                         self.last_seen_monotonic = None
                 idle_until=time.monotonic()+.5
                 while not self.stop.is_set() and time.monotonic()<idle_until:
-                    if self.action_pending.is_set():break
+                    if self.action_pending.is_set() or self.dock_pending:break
                     self._poll_input(device)
                     while self.usb.lines:self._receive(self.usb.lines.popleft())
         except (serial.SerialException, OSError, RuntimeError, UnicodeError) as exc:

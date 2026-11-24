@@ -9,6 +9,7 @@
 #include <string.h>
 #include "zumo_control.h"
 #include "flip_alarm.h"
+#include "line_calibration.h"
 
 const uint8_t MSP_RX_PIN = 6;
 const uint8_t MSP_TX_PIN = 13;
@@ -30,7 +31,7 @@ SoftwareSerial mspSerial(MSP_RX_PIN, MSP_TX_PIN);
 ZumoControl robot;
 RlParser parser={};
 
-const int MAX_SPEED=150;
+const int FOLLOW_SPEED=90;
 const int TURN_MAX_SPEED=250;
 const int REVERSE_MAX_SPEED=400;
 const int EMPTY_TANK_SPEED=100;
@@ -57,13 +58,14 @@ void reportUsb() {
     char line[64];
     int n;
     if(usbReportPart==1) {
-        n=snprintf(line,sizeof(line),"ZUMO FW=OG7 CAL=%u SWEEP=%u RUN=%u REASON=%u REQ=%u\n",
+        n=snprintf(line,sizeof(line),"ZUMO FW=OG9 CAL=%u SWEEP=%u RUN=%u REASON=%u REQ=%u\n",
             robot.calibrated,robot.calibrating,robot.following,robot.reason,robot.userRequest);
     } else if(usbReportPart==2) {
         const char *event="BOOT";
         switch(robot.lastEvent) {
         case ZE_CALIBRATING: event="SWEEP"; break;
         case ZE_CAL_DONE: event="CAL_DONE"; break;
+        case ZE_CAL_RESTORED: event="CAL_RESTORED"; break;
         case ZE_FOLLOWING: event="FOLLOWING"; break;
         case ZE_MSP_STOP: event="MSP_STOP"; break;
         case ZE_MSP_RESYNC: event="MSP_RESYNC"; break;
@@ -75,12 +77,12 @@ void reportUsb() {
         case ZE_EMPTY_REVERSE: event="EMPTY_REVERSE"; break;
         case ZE_REVERSE_DONE: event="REVERSE_DONE"; break;
         }
-        n=snprintf(line,sizeof(line),"ZUMO FW=OG7 STEP=%u/80 LAST=%s UP=%lu\n",
+        n=snprintf(line,sizeof(line),"ZUMO FW=OG9 STEP=%u/80 LAST=%s UP=%lu\n",
             calibrationStep,event,(unsigned long)(millis()/1000u));
     } else {
-        n=snprintf(line,sizeof(line),"FLIP ALARM=%s IMU=%s FLIPPED=%u Z=%d\n",
+        n=snprintf(line,sizeof(line),"FLIP ALARM=%s IMU=%s FLIPPED=%u Z=%d UP_Z=%d\n",
             flipAlarm.enabled?"ON":"OFF",flipAlarm.enabled?(flipAlarm.sensorReady?"OK":"MISSING"):"IDLE",
-            flipAlarm.flipped,flipAlarm.z);
+            flipAlarm.flipped,flipAlarm.z,flipAlarm.uprightSign);
     }
     if(n>0 && n<int(sizeof(line)) && Serial.availableForWrite()>=n) {
         Serial.write((uint8_t*)line,n);
@@ -151,10 +153,12 @@ void serviceLink() {
         int result=rlFeed(&parser,(uint8_t)mspSerial.read(),&p);
         if(result<0) stopLocal(RL_BAD_FRAME);
         else if(result>0 && !(p.type&RL_REPLY)) {
-            bool wasCalibrating=robot.calibrating, wasFollowing=robot.following;
+            bool wasCalibrating=robot.calibrating, wasFollowing=robot.following, wasReversing=robot.reversing;
             RlPacket reply=robot.handle(p,millis());
-            if(wasFollowing && robot.reversing) motors.setSpeeds(0,0);
+            if((wasFollowing && robot.reversing) || (wasReversing && robot.following))
+                motors.setSpeeds(0,0);
             applyStop(); // Apply STOP before sending the acknowledgement.
+            if(p.type==RL_CLEAR && reply.detail==RL_OK) LineCalibration::clear();
             if(robot.calibrating && !wasCalibrating) {
                 motors.setSpeeds(0,0); reflectanceSensors.resetCalibration();
                 calibrationStep=0; nextCalibration=millis()+CALIBRATION_START_DELAY_MS;
@@ -177,7 +181,13 @@ void serviceMotion() {
     } else if(robot.calibrating) {
         if(int32_t(now-nextCalibration)<0) return;
         if(calibrationStep>=CALIBRATION_STEPS) {
-            motors.setSpeeds(0,0); robot.finishCalibration(); return;
+            motors.setSpeeds(0,0);
+            robot.finishCalibration();
+            if (LineCalibration::save(reflectanceSensors))
+                Serial.println(F("Line calibration saved."));
+            else
+                Serial.println(F("Sweep not saved. Check all six sensors cross black and white."));
+            return;
         }
         uint8_t i=calibrationStep;
         if((i>10 && i<=30) || (i>50 && i<=70))
@@ -194,9 +204,9 @@ void serviceMotion() {
         int error=read_position-LINE_CENTER;
         int speedDiff=kp*error+kd*(error-lastError);
         lastError=error;
-        // Keep straight speed at 150; allow the outside track more drive in turns.
-        int m1Speed=MAX_SPEED+speedDiff;
-        int m2Speed=MAX_SPEED-speedDiff;
+        // Cruise slowly past camera targets. Give the outside track extra drive in turns.
+        int m1Speed=FOLLOW_SPEED+speedDiff;
+        int m2Speed=FOLLOW_SPEED-speedDiff;
         if(m1Speed>TURN_MAX_SPEED) m1Speed=TURN_MAX_SPEED;
         if(m2Speed>TURN_MAX_SPEED) m2Speed=TURN_MAX_SPEED;
         if(m1Speed<-REVERSE_MAX_SPEED) m1Speed=-REVERSE_MAX_SPEED;
@@ -210,8 +220,10 @@ void setup() {
     Serial.begin(SERIAL_BAUD);
     mspSerial.begin(SERIAL_BAUD);
     reflectanceSensors.init();
+    robot.calibrated = LineCalibration::restore(reflectanceSensors);
+    if (robot.calibrated) robot.lastEvent = ZE_CAL_RESTORED;
     flipAlarm.begin();
-    Serial.println(F("ZUMO FW=OG7 CAL+PD + FLIP ALARM + EMPTY TANK REVERSE"));
+    Serial.println(F("ZUMO FW=OG9 SAVED LINE CAL + PD + FLIP ALARM + CONTINUOUS LOW-WATER REVERSE"));
     Serial.println(F("USB 9600: C=sweep request, F=follow request, S=stop, STATUS."));
     wdt_enable(WDTO_1S);
 }
@@ -224,7 +236,8 @@ void loop() {
     serviceMotion();
     serviceLink();
     applyStop();
-    if(!parser.used && !mspSerial.available()) flipAlarm.service(millis());
+    if(!parser.used && !mspSerial.available())
+        flipAlarm.service(millis(), robot.calibrating && calibrationStep == 0);
     uint32_t now=millis();
     if(uint32_t(now-lastReport)>=REPORT_INTERVAL_MS) {
         lastReport=now;

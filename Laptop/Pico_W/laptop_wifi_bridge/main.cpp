@@ -15,11 +15,18 @@ static tcp_pcb *connection=nullptr;
 static desk::HttpResponse response;
 static desk::State remote;
 static bench::Line<64> usbLine;
-enum class Reply { None, Ping, State, Msp, Stop, Target, Resume };
+enum class Reply { None, Ping, State, Msp, Stop, Target, Resume, Dock, Depart, Approach };
 static Reply wanted=Reply::None;
 static uint32_t resumeToken=0;
-static bool action(Reply r) { return r==Reply::Stop || r==Reply::Target || r==Reply::Resume; }
-static const char *actionName(Reply r) { return r==Reply::Stop?"STOP":r==Reply::Target?"TARGET":"RESUME"; }
+static bool action(Reply r) { return r>=Reply::Stop; }
+static const char *actionName(Reply r) {
+    switch(r) {
+    case Reply::Stop:return "STOP"; case Reply::Target:return "TARGET";
+    case Reply::Dock:return "DOCK"; case Reply::Depart:return "DEPART";
+    case Reply::Approach:return "APPROACH";
+    default:return "RESUME";
+    }
+}
 static bool done=false,failed=false,haveState=false;
 static uint32_t started=0,lastAttempt=0,lastGood=0,lastWifi=0,lastRenew=0;
 static bool attempted=false,wifiAttempted=false;
@@ -123,9 +130,11 @@ static err_t connected(void *,tcp_pcb *pcb,err_t error) {
     if(error!=ERR_OK) { failed=done=true; return ERR_OK; }
     char resumeRequest[160];
     snprintf(resumeRequest,sizeof(resumeRequest),
-        "POST /api/resume?job_id=%lu HTTP/1.0\r\nHost: 192.168.4.1\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
-        static_cast<unsigned long>(resumeToken));
-    const char *request=wanted==Reply::Resume?resumeRequest:wanted==Reply::Target?
+        "POST /api/%s?job_id=%lu HTTP/1.0\r\nHost: 192.168.4.1\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
+        wanted==Reply::Dock?"dock":wanted==Reply::Depart?"depart":"resume",static_cast<unsigned long>(resumeToken));
+    const char *request=wanted==Reply::Approach?
+        "POST /api/approach HTTP/1.0\r\nHost: 192.168.4.1\r\nContent-Length: 0\r\nConnection: close\r\n\r\n":
+        (wanted==Reply::Resume || wanted==Reply::Dock || wanted==Reply::Depart)?resumeRequest:wanted==Reply::Target?
         "POST /api/target HTTP/1.0\r\nHost: 192.168.4.1\r\nContent-Length: 0\r\nConnection: close\r\n\r\n":wanted==Reply::Stop?
         "POST /api/stop HTTP/1.0\r\nHost: 192.168.4.1\r\nContent-Length: 0\r\nConnection: close\r\n\r\n":
         "GET /api/state HTTP/1.0\r\nHost: 192.168.4.1\r\nConnection: close\r\n\r\n";
@@ -136,7 +145,7 @@ static err_t connected(void *,tcp_pcb *pcb,err_t error) {
 static bool beginRequest(Reply reply,uint32_t jobToken=0) {
     if(!wifiUp()) return false;
     if(action(reply) && connection) {
-        if(wanted==Reply::Stop || (action(wanted) && reply!=Reply::Stop)) return false;
+        if(wanted==Reply::Stop || (action(wanted) && reply!=Reply::Stop && reply!=Reply::Dock)) return false;
         // Discard a read rather than queue a STOP behind an eight-second timeout.
         closeConnection(); wanted=Reply::None;
     }
@@ -148,7 +157,7 @@ static bool beginRequest(Reply reply,uint32_t jobToken=0) {
     connection=tcp_new_ip_type(IPADDR_TYPE_V4);
     if(!connection) return false;
     wanted=reply; response.reset(); failed=done=false; fault="NONE"; tcpError=0;
-    if(reply==Reply::Resume) resumeToken=jobToken;
+    resumeToken=jobToken;
     started=lastAttempt=nowMs(); attempted=true;
     tcp_recv(connection,received); tcp_err(connection,networkError);
     ip_addr_t address; ipaddr_aton("192.168.4.1",&address);
@@ -219,7 +228,13 @@ static void command(const char *line) {
         else if(!strcmp(line,"ROBOT STATE") || !strcmp(line,"STATE")) op=Reply::State;
         else if(!strcmp(line,"ROBOT MSP STATUS") || !strcmp(line,"MSP STATUS")) op=Reply::Msp;
         else if(!strcmp(line,"ROBOT STOP")) op=Reply::Stop;
+        else if(!strcmp(line,"ROBOT APPROACH")) op=Reply::Approach;
         else if(!strcmp(line,"ROBOT TARGET")) op=Reply::Target;
+        else if(!strncmp(line,"ROBOT DOCK ",11) || !strncmp(line,"ROBOT DEPART ",13)) {
+            const bool arrival=line[7]=='O';
+            if(desk::number(line+(arrival?11:13),jobToken) && jobToken)
+                op=arrival?Reply::Dock:Reply::Depart;
+        }
         else if(!strncmp(line,"ROBOT RESUME ",13)) {
             uint32_t id=0;
             if(desk::number(line+13,id) && id) { op=Reply::Resume; jobToken=id; }

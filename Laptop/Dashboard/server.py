@@ -171,6 +171,9 @@ class Handler(BaseHTTPRequestHandler):
             path = urlsplit(self.path).path
             if path == "/api/connect":
                 self.server.bridge.connect(body.get("port"))
+            elif path == "/api/dock/connect":
+                with self.server.bridge.lifecycle:
+                    self.server.bridge.dock.connect(body.get("port"))
             elif path == "/api/disconnect":
                 self.server.detector.stop()
                 self.server.bridge.cancel_target()
@@ -236,7 +239,7 @@ def main():
                 pass
         raise SystemExit(f"Port {args.port} is in use. Open the existing dashboard or choose --port 8766.")
     url = args.public_origin or f"http://127.0.0.1:{args.port}"
-    mode = "Read-only hosted preview." if args.public_origin else "Local computer only."
+    mode = "Read-only hosted preview." if args.public_origin else "Robot controls are local to this laptop."
     print(f"Robot dashboard: {url}\n{mode} Ctrl+C closes the server.", flush=True)
     if args.open:
         webbrowser.open(url)

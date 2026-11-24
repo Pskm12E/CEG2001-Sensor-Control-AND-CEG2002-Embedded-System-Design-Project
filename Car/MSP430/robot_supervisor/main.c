@@ -16,10 +16,18 @@
 #include "spray_job.h"
 #include "water_level.h"
 static SprayJob sprayJob;
-static uint16_t waterRaw,waterAt;
+static uint16_t waterRaw,waterAt,lastWaterSample;
 /* Two consecutive real P6.0 conversions must cross the threshold. The
  * zero-initialised telemetry value at boot is not a water measurement. */
 static WaterLevel tank;
+/* A nonzero visit belongs only to the reverse run interrupted by DOCK.
+ * Publish it after the Uno acknowledges STOP and reestablishes its link. */
+static uint32_t dockVisit;
+static uint8_t dockStopAck;
+static uint8_t dockReleaseDelay;
+static uint16_t dockCancelAt;
+static uint16_t dockClearAt;
+static uint8_t dockMode,dockClear;
 static void pumpOff(void) { P1OUT&=~PUMP_GATE_MASK; sprayJob.pump=0; }
 static void cancelSpray(void) { pumpOff(); sprayCancel(&sprayJob); }
 #else
@@ -165,6 +173,10 @@ static uint8_t zumoStopped(void) {
 static void stopRequested(void) {
 #ifdef ZUMO_BASE
     obstaclePaused=0;
+    /* Let cached telemetry and the station's pump permit expire before a
+     * local start after an interrupted dock visit. */
+    if(dockVisit) { dockCancelAt=ticks; dockReleaseDelay=1; }
+    dockVisit=0; dockStopAck=0;
 #endif
     cancelSpray();
     running=0; P4OUT&=~BIT7; queued=RL_STOP;
@@ -195,6 +207,7 @@ static void serviceObstacle(void) {
 static void userRequest(uint8_t request) {
     uint8_t op=0;
 #ifdef ZUMO_BASE
+    if(dockVisit && request) { stopRequested(); return; }
     if(request && sprayActive(&sprayJob)) { stopRequested(); return; }
 #endif
     if(!linked || running || queued || pending) return;
@@ -238,6 +251,26 @@ static const char *sensorName(uint8_t stable,uint8_t black) {
     return (peerFlags&black)?"BLACK":"WHITE";
 }
 #endif
+#ifdef ZUMO_BASE
+static void printId(uint32_t value) {
+    char digits[10]; uint8_t used=0;
+    do { digits[used++]=(char)('0'+value%10ul); value/=10ul; } while(value);
+    while(used) put(0,(uint8_t)digits[--used]);
+}
+#ifdef SUPERVISOR_ESP_UART
+/* Zero is reserved for an invalid or absent visit/job token. */
+static uint32_t parseToken(const char *text) {
+    uint32_t value=0;
+    if(*text<'1' || *text>'9') return 0;
+    while(*text) {
+        uint8_t digit=(uint8_t)(*text++-'0');
+        if(digit>9u || value>429496729u || (value==429496729u && digit>5u)) return 0;
+        value=value*10u+digit;
+    }
+    return value;
+}
+#endif
+#endif
 static void status(void) {
     print("STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=");
     print(linked?"READY":"SYNCING"); print(" RUN="); number(running);
@@ -255,13 +288,13 @@ static void status(void) {
     print(" BAD_FRAMES="); number(badFrames);
 #ifdef ZUMO_BASE
     print(" JOB="); number(sprayJob.phase);
-    print(" JOB_ID=");
-    { char digits[11]; uint8_t used=0; uint32_t n=sprayJob.id;
-      do { digits[used++]=(char)('0'+n%10ul); n/=10ul; } while(n);
-      while(used) put(0,(uint8_t)digits[--used]); }
+    print(" JOB_ID="); printId(sprayJob.id);
     print(" PUMP="); number(sprayJob.pump);
     print(" READY="); number(PUMP_DRIVER_VERIFIED);
     print(" WATER="); number(waterRaw);
+    print(" DOCK="); printId((dockStopAck && linked && !running && zumoStopped())?dockVisit:0);
+    print(" WET="); number(!tank.empty && (uint16_t)(ticks-lastWaterSample)<WATER_STALE_TICKS && waterRaw>WATER_LOW_THRESHOLD);
+    print(" DCLEAR="); number(dockClear);
 #endif
 #ifdef SUPERVISOR_ESP_UART
     print(" BRIDGE=ESP_UART_V1\r\n");
@@ -291,6 +324,29 @@ static uint8_t netCommand(const char *line) {
     else if(!strcmp(p,"SONAR")) sonarReport();
     else if(!strcmp(p,"STOP")) { stopRequested(); print("STOP REQUESTED\r\n"); }
 #ifdef ZUMO_BASE
+    else if(!strcmp(p,"APPROACH")) {
+        dockMode=1; dockClearAt=ticks; dockClear=!dockVisit;
+        print("APPROACH RECEIVED\r\n");
+    }
+    else if(!strncmp(p,"DOCK ",5) || !strncmp(p,"DEPART ",7)) {
+        uint8_t arrival=p[1]=='O';
+        uint32_t visit=parseToken(p+(arrival?5:7));
+        if(arrival && visit) {
+            dockClear=0;
+            if(dockVisit!=visit) {
+                uint8_t reversing=linked && running && (peerFlags&RL_ZUMO_REVERSING) &&
+                    queued!=RL_STOP && !stopButton && !motionBlocked() && !sprayActive(&sprayJob);
+                stopRequested();
+                if(reversing) dockVisit=visit;
+            }
+            print(dockVisit==visit?"DOCK ACCEPTED\r\n":"DOCK REFUSED\r\n");
+        } else if(!arrival && visit && visit==dockVisit && dockStopAck && linked && !running &&
+                  zumoStopped() && !queued && (!pending || pendingPacket.type==RL_STATUS) &&
+                  !tank.empty && waterRaw>WATER_LOW_THRESHOLD && (uint16_t)(ticks-lastWaterSample)<WATER_STALE_TICKS &&
+                  !motionBlocked() && !stopButton && !sprayActive(&sprayJob)) {
+            dockVisit=0; dockStopAck=0; queued=RL_START; print("DEPART ACCEPTED\r\n");
+        } else print(arrival?"DOCK REFUSED\r\n":"DEPART REFUSED\r\n");
+    }
     else if(!strcmp(p,"TARGET")) {
         uint8_t eligible=!tank.empty && linked && running && zumoFollowing() &&
             !motionBlocked() && !stopButton && queued!=RL_STOP;
@@ -301,13 +357,8 @@ static uint8_t netCommand(const char *line) {
         } else print("TARGET REFUSED\r\n");
     }
     else if(!strncmp(p,"RESUME ",7)) {
-        const char *token=p+7; uint32_t jobId=0; uint8_t good=*token>='1' && *token<='9';
-        while(*token && good) {
-            uint8_t d=(uint8_t)(*token++-'0');
-            if(d>9u || jobId>429496729u || (jobId==429496729u && d>5u)) good=0;
-            else jobId=jobId*10u+d;
-        }
-        if(good && !*token && !tank.empty && !motionBlocked() && !stopButton && linked && !running && !queued &&
+        uint32_t jobId=parseToken(p+7);
+        if(jobId && !tank.empty && !motionBlocked() && !stopButton && linked && !running && !queued &&
            zumoStopped() &&
            sprayAllowResume(&sprayJob,jobId,1)) {
             queued=RL_START; print("RESUME ACCEPTED\r\n");
@@ -394,15 +445,24 @@ static void sendRequest(uint8_t op) {
     if(op==RL_START && tank.empty) {
         stopRequested(); print("START REFUSED: TANK EMPTY\r\n"); return;
     }
-    if(op==RL_ZUMO_REVERSE && (!tank.empty || !linked || !running ||
-       !zumoFollowing() || stopButton || motionBlocked() || sprayActive(&sprayJob))) {
+    /* Refill changes direction only inside an active, supervised reverse. */
+    if(op==RL_KEEP && (peerFlags&RL_ZUMO_REVERSING))
+        op=tank.empty?RL_ZUMO_REVERSE:RL_ZUMO_REFILLED;
+    if(op==RL_ZUMO_REFILLED && (tank.empty || (uint16_t)(ticks-lastWaterSample)>=WATER_STALE_TICKS ||
+       (dockMode && !dockClear) ||
+       !linked || !running || !(peerFlags&RL_ZUMO_REVERSING) || stopButton ||
+       motionBlocked() || sprayActive(&sprayJob))) { stopRequested(); return; }
+    if(op==RL_ZUMO_REVERSE && (!tank.empty || (uint16_t)(ticks-lastWaterSample)>=WATER_STALE_TICKS ||
+       (dockMode && !dockClear) ||
+       !linked || !running || (!zumoFollowing() && !(peerFlags&RL_ZUMO_REVERSING)) ||
+       stopButton || motionBlocked() || sprayActive(&sprayJob))) {
         stopRequested(); return;
     }
 #endif
     if((op==RL_START || op==RL_ZUMO_CALIBRATE) &&
        (motionBlocked()
 #ifdef ZUMO_BASE
-        || stopButton
+        || stopButton || dockVisit || dockReleaseDelay
 #endif
        )) { stopRequested(); return; }
 #ifdef ZUMO_BASE
@@ -434,6 +494,9 @@ static void response(const RlPacket *p) {
        p->session!=pendingPacket.session || p->seq!=pendingPacket.seq) return;
     pending=0; peerFlags=p->arg; peerResult=p->detail;
 #ifdef ZUMO_BASE
+    if(op==RL_ZUMO_REFILLED && (p->detail!=RL_OK || !zumoFollowing())) {
+        stopRequested(); return;
+    }
     if(op==RL_ZUMO_REVERSE && (p->detail!=RL_OK ||
        (p->arg&(RL_MOVING|RL_ZUMO_REVERSING))!=(RL_MOVING|RL_ZUMO_REVERSING))) {
         stopRequested(); return; // Includes older Uno firmware.
@@ -453,7 +516,16 @@ static void response(const RlPacket *p) {
         stopRequested();
         return;
     }
-    if(op==RL_STOP) sprayStopAck(&sprayJob,ticks,p->detail==RL_OK && !(p->arg&RL_MOVING));
+    if(op==RL_STOP) {
+        sprayStopAck(&sprayJob,ticks,p->detail==RL_OK && !(p->arg&RL_MOVING));
+        if(dockVisit) {
+            dockStopAck=p->detail==RL_OK && zumoStopped();
+            if(!dockStopAck) stopRequested();
+        }
+    }
+    if(dockStopAck && op!=RL_STOP && (p->detail!=RL_OK || !zumoStopped())) {
+        stopRequested(); return;
+    }
 #endif
     if(op==RL_HELLO) linked=(p->detail==RL_OK);
     else if(op==RL_STOP) { linked=running=0; if(!queued) queued=RL_HELLO; }
@@ -530,9 +602,12 @@ static void serviceLink(void) {
 #endif
 #ifdef ZUMO_BASE
 static void serviceWater(void) {
+    if(dockClear && (uint16_t)(ticks-dockClearAt)>=40u) dockClear=0;
+    if(dockReleaseDelay && (uint16_t)(ticks-dockCancelAt)>=70u) dockReleaseDelay=0;
     if(ADC12IFG&BIT0) {
         waterRaw=ADC12MEM0;
         ADC12IFG&=~BIT0;
+        lastWaterSample=ticks;
         if(waterBecameEmpty(&tank,waterRaw)) {
             if(linked && running && zumoFollowing() && !queued &&
                (!pending || pendingPacket.type==RL_KEEP) && !motionBlocked() &&

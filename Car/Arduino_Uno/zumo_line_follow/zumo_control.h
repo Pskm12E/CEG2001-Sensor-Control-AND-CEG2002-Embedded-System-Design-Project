@@ -6,19 +6,18 @@
 enum ZumoEvent {
     ZE_BOOT, ZE_CALIBRATING, ZE_CAL_DONE, ZE_FOLLOWING, ZE_MSP_STOP,
     ZE_MSP_RESYNC, ZE_HEARTBEAT_LOST, ZE_UART_ERROR, ZE_LOCAL_STOP, ZE_SESSION_ERROR,
-    ZE_OBSTACLE_PAUSE, ZE_EMPTY_REVERSE, ZE_REVERSE_DONE
+    ZE_OBSTACLE_PAUSE, ZE_EMPTY_REVERSE, ZE_REVERSE_DONE, ZE_CAL_RESTORED
 };
 
 class ZumoControl {
 public:
     static const uint32_t LEASE_MS=1000;
-    static const uint32_t EMPTY_TANK_REVERSE_MS=1000;
     bool calibrated=false, following=false, calibrating=false;
     bool obstaclePaused=false, reversing=false;
     uint8_t reason=RL_OK, userRequest=0;
     uint8_t lastEvent=ZE_BOOT; // Persists across stopped STOP/HELLO exchanges.
     uint16_t session=0, sequence=0;
-    uint32_t lastLease=0, reverseStarted=0;
+    uint32_t lastLease=0, lastReverseGrant=0;
 
     bool moving() const { return following || calibrating || reversing; }
     uint8_t flags() const {
@@ -40,7 +39,9 @@ public:
     }
     void tick(uint32_t now) {
         if(moving() && uint32_t(now-lastLease)>=LEASE_MS) stop(RL_LEASE_LOST);
-        if(reversing && uint32_t(now-reverseStarted)>=EMPTY_TANK_REVERSE_MS) {
+        // An older supervisor sends regular KEEP packets after its single
+        // reverse grant. Preserve its one-second manoeuvre.
+        if(reversing && uint32_t(now-lastReverseGrant)>=LEASE_MS) {
             stop(RL_OK,false);
             lastEvent=ZE_REVERSE_DONE;
         }
@@ -59,7 +60,7 @@ public:
     RlPacket handle(const RlPacket &p, uint32_t now) {
         tick(now); // A late KEEP cannot revive expired motion.
         uint8_t result=RL_OK;
-        if(p.arg || p.detail || p.type<RL_HELLO || p.type>RL_ZUMO_REVERSE) {
+        if(p.arg || p.detail || p.type<RL_HELLO || p.type>RL_ZUMO_REFILLED) {
             stop(RL_BAD_FRAME); result=RL_BAD_COMMAND;
         } else if(p.type==RL_STOP) {
             if(moving()) lastEvent=ZE_MSP_STOP;
@@ -78,12 +79,20 @@ public:
             sequence=p.seq; lastType=p.type;
             switch(p.type) {
             case RL_STATUS: result=reason; break;
+            case RL_ZUMO_REFILLED:
+                // A late refill message cannot start a parked robot.
+                if(!reversing || !calibrated) result=RL_BAD_COMMAND;
+                else {
+                    reversing=false; following=true; lastLease=now;
+                    lastEvent=ZE_FOLLOWING;
+                }
+                break;
             case RL_ZUMO_REVERSE:
-                if(!following) result=RL_BAD_COMMAND;
+                if(!following && !reversing) result=RL_BAD_COMMAND;
                 else {
                     following=false;
                     reversing=true;
-                    lastLease=reverseStarted=now;
+                    lastLease=lastReverseGrant=now;
                     lastEvent=ZE_EMPTY_REVERSE;
                 }
                 break;

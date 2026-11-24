@@ -1,5 +1,11 @@
 # Changelog
 
+## One Hit Wounder · 24 November 2026
+
+- The Zumo follows a centred line at 90/400 and saves all six line-sensor ranges in EEPROM. After the first successful calibration, one tap starts a run on the same track. The operator completed a full track run at this speed.
+- The car supervisor supports continuous reverse after two water readings below 500 and a return to forward travel after two readings above 500. The laptop can coordinate a stop at the dock magnet and a timed refill with the matching station firmware. The docking sequence passed simulation and still needs a full physical refill trial.
+- The laptop launcher can share a view-only link to the camera and robot readings. The XIAO camera delivered live video at about 14 fps over the desk Pico during the camera check.
+
 ## V2_Working · 20 November 2026
 
 - The operator confirmed that replacing a resistor in the pump circuit restored

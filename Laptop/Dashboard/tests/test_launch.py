@@ -148,6 +148,27 @@ class LauncherLifecycleTests(unittest.TestCase):
         launch.close_owned_server(client, None)
         client.request.assert_not_called()
 
+    def test_share_uses_selected_port_and_preserves_existing_server(self):
+        with patch.object(launch, "ensure_server", return_value=None), \
+             patch.object(launch.LocalDashboard, "local_state"), \
+             patch.object(launch, "share_dashboard") as share, \
+             patch("sys.stdout", new_callable=StringIO):
+            code = launch.main(["--dashboard-only", "--no-browser", "--http-port", "9876", "--share"])
+        self.assertEqual(code, 0)
+        share.assert_called_once_with(9876, None)
+
+    def test_double_click_only_shares_when_chosen(self):
+        for answer in ("", "Y"):
+            with self.subTest(answer=answer), \
+                 patch.object(launch, "ensure_server", return_value=None), \
+                 patch.object(launch.LocalDashboard, "local_state"), \
+                 patch.object(launch, "share_dashboard") as share, \
+                 patch("sys.stdin.isatty", return_value=True), \
+                 patch("builtins.input", return_value=answer), \
+                 patch("sys.stdout", new_callable=StringIO):
+                self.assertEqual(launch.main(["--ask-share", "--dashboard-only", "--no-browser"]), 0)
+                self.assertEqual(share.called, answer == "Y")
+
 
 class LauncherHttpTests(unittest.TestCase):
     @classmethod
