@@ -6,8 +6,8 @@ $device = Get-PnpDevice -Class Ports -PresentOnly | Where-Object {
 }
 if (@($device).Count -ne 1) { throw "Expected CH340 ESP32 connection on $Port; no upload attempted" }
 $esptool = Join-Path $env:LOCALAPPDATA 'Arduino15/packages/esp32/tools/esptool_py/5.3.1/esptool.exe'
-$build = Join-Path $PSScriptRoot $(if($Direct) { 'build/esp32-direct' } else { 'build/esp32' })
-$sketch = if($Direct) { 'robot_wifi_gateway.ino' } else { 'laptop_gateway.ino' }
+$build = Join-Path $PSScriptRoot 'build/esp32-direct'
+$sketch = 'robot_wifi_gateway.ino'
 $boot = Join-Path $build "$sketch.bootloader.bin"
 $partitions = Join-Path $build "$sketch.partitions.bin"
 $bootApp = Join-Path $build 'boot_app0.bin'

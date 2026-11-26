@@ -88,6 +88,6 @@ build=ROOT/'Car/MSP430/build/console-interrupt-tests'
 build.mkdir(parents=True,exist_ok=True)
 cpp,exe=build/'console.cpp',build/'console.exe'
 cpp.write_text(prefix+function('static uint8_t put(')+function('__interrupt void usb_uart_isr(')+tests,encoding='utf-8')
-subprocess.run(['C:/msys64/ucrt64/bin/g++.exe','-std=c++17','-Wall','-Wextra','-Werror',
+subprocess.run(['g++','-std=c++17','-Wall','-Wextra','-Werror',
                 '-Wno-unused-function','-static','-I'+str(ROOT/'Car/MSP430/robot_supervisor'),str(cpp),'-o',str(exe)],check=True)
 subprocess.run([str(exe)]+(['--expect-stall'] if '--expect-stall' in sys.argv else []),check=True)

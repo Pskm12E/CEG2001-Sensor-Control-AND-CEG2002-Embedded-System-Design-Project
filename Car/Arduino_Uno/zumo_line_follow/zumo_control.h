@@ -19,13 +19,18 @@ public:
     uint16_t session=0, sequence=0;
     uint32_t lastLease=0, lastReverseGrant=0;
 
+    /* Return whether the tracks may be driven by the calibration, following or reversing
+     * states. */
     bool moving() const { return following || calibrating || reversing; }
+    /* Pack the current Uno motion and calibration state into the UART reply bit mask. */
     uint8_t flags() const {
         // MOVING includes authorisation for the calibration sweep's initial wait.
         return (calibrated?RL_CAL:0) | (moving()?RL_MOVING:0) |
             (calibrating?RL_CALIBRATING:0) | (reversing?RL_ZUMO_REVERSING:0) |
             (reason>=RL_LEASE_LOST?RL_FAULT:0);
     }
+    /* Stop all motion with reason why. Invalidate the UART session unless the caller
+     * explicitly preserves it. */
     void stop(uint8_t why, bool invalidate=true) {
         if((moving() || obstaclePaused) && why!=RL_OK) {
             if(why==RL_LEASE_LOST) lastEvent=ZE_HEARTBEAT_LOST;
@@ -37,6 +42,7 @@ public:
         following=calibrating=obstaclePaused=reversing=false; reason=why; userRequest=0;
         if(invalidate) { session=sequence=0; lastType=0; }
     }
+    /* Use monotonic milliseconds now to expire stale forward or reverse permission. */
     void tick(uint32_t now) {
         if(moving() && uint32_t(now-lastLease)>=LEASE_MS) stop(RL_LEASE_LOST);
         // An older supervisor sends regular KEEP packets after its single
@@ -46,6 +52,8 @@ public:
             lastEvent=ZE_REVERSE_DONE;
         }
     }
+    /* Latch operator request op for the next MSP poll; return false when busy or uncalibrated
+     * for that operation. */
     bool requestLocal(uint8_t op) {
         if(!session || moving() || userRequest) return false;
         if(op==RL_ZUMO_CALIBRATE) userRequest=RL_USER_ZUMO_CALIBRATE;
@@ -53,10 +61,14 @@ public:
         else return false;
         return true;
     }
+    /* Publish the completed six-sensor sweep so the next local press can request line
+     * following. */
     void finishCalibration() {
         // Match the original sketch: a completed 80-step sweep is accepted.
         calibrating=false; calibrated=true; reason=RL_OK; lastEvent=ZE_CAL_DONE;
     }
+    /* Apply one validated packet p at millisecond time now. Correlate the reply with its
+     * sequence and never revive an expired lease. */
     RlPacket handle(const RlPacket &p, uint32_t now) {
         tick(now); // A late KEEP cannot revive expired motion.
         uint8_t result=RL_OK;

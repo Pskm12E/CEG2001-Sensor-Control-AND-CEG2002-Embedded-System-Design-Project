@@ -1,6 +1,5 @@
 {
   "date": "2026-11-03",
-  "url": "https://pest.4bytedigi.com",
   "public_https_verified": true,
   "checks": {
     "/": 200,

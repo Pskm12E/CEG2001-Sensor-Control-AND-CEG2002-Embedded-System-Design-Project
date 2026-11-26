@@ -1,3 +1,14 @@
+/* Desk Raspberry Pi Pico W relay | Group P2-2 submission, November 2026.
+ * USB links the desk Pico to the laptop dashboard.
+ * Wi-Fi joins this board to the car's FireBeetle access point.
+ * Short gateway HTTP requests fetch status or relay a bounded action.
+ * Freshness checks distinguish gateway reachability from car telemetry.
+ * TCP callbacks handle partial replies and signal completion to the foreground.
+ * An independent TCP stream transports framed JPEG data from the XIAO camera.
+ * USB carries the video payload and the link-status messages to the laptop.
+ * Camera and control traffic use separate connection state and timeouts.
+ * The foreground polls the private network and recovers after disconnections.
+ */
 #include <cstdio>
 #include <cstring>
 #include "pico/stdlib.h"
@@ -15,15 +26,18 @@ static tcp_pcb *connection=nullptr;
 static desk::HttpResponse response;
 static desk::State remote;
 static bench::Line<64> usbLine;
-enum class Reply { None, Ping, State, Msp, Stop, Target, Resume, Dock, Depart, Approach };
+enum class Reply { None, Ping, State, Msp, Stop, Target, Resume, Dock, Depart, Approach, RefillMinimum };
 static Reply wanted=Reply::None;
 static uint32_t resumeToken=0;
+/* Return whether reply kind r represents a control request requiring the shorter action timeout. */
 static bool action(Reply r) { return r>=Reply::Stop; }
+/* Return the protocol action name for outgoing request kind r. */
 static const char *actionName(Reply r) {
     switch(r) {
     case Reply::Stop:return "STOP"; case Reply::Target:return "TARGET";
     case Reply::Dock:return "DOCK"; case Reply::Depart:return "DEPART";
     case Reply::Approach:return "APPROACH";
+    case Reply::RefillMinimum:return "RFMIN";
     default:return "RESUME";
     }
 }
@@ -41,12 +55,15 @@ static const char *lastFault="NONE";
 static int lastTcpError=0;
 static char lastFailure[3072]{};
 static size_t failedBytes=0,failedBody=0,failedLength=0;
+/* Read the RP2040 monotonic clock in milliseconds; elapsed-time comparisons tolerate rollover. */
 static uint32_t nowMs() { return to_ms_since_boot(get_absolute_time()); }
 static bool wifiUp();
 static tcp_pcb *videoConnection=nullptr;
 static video::Receiver videoFrames;
 static bool videoWanted=false,videoConnected=false,videoBad=false;
 static uint32_t videoAttempt=0,videoSeen=0;
+/* Detach lwIP callbacks and close the current camera socket before a new connection can reuse
+ * its state. */
 static void closeVideo() {
     if(videoConnection) {
         tcp_arg(videoConnection,nullptr);tcp_recv(videoConnection,nullptr);tcp_err(videoConnection,nullptr);
@@ -55,6 +72,8 @@ static void closeVideo() {
     }
     videoConnected=false;videoBad=false;videoFrames.reset();
 }
+/* Accept a pbuf chain p from camera PCB pcb. Feed its segments to the receiver and retire closed
+ * or failed connections. */
 static err_t videoReceived(void *,tcp_pcb *pcb,pbuf *p,err_t error) {
     if(!p) { videoBad=true;return ERR_OK; }
     if(error!=ERR_OK) { pbuf_free(p);videoBad=true;return ERR_OK; }
@@ -65,11 +84,16 @@ static err_t videoReceived(void *,tcp_pcb *pcb,pbuf *p,err_t error) {
     if(videoFrames.bad) videoBad=true;
     return ERR_OK;
 }
+/* Record an asynchronous camera TCP failure after lwIP has released the associated PCB. */
 static void videoError(void *,err_t) { videoConnection=nullptr;videoConnected=false;videoBad=true; }
+/* Mark a successful camera TCP connection available or report the lwIP error to the reconnect
+ * logic. */
 static err_t videoOpened(void *,tcp_pcb *pcb,err_t error) {
     if(error!=ERR_OK) { videoBad=true;return ERR_OK; }
     tcp_nagle_disable(pcb);videoConnected=true;videoSeen=nowMs();return ERR_OK;
 }
+/* Use monotonic time now to schedule camera connections, deadlines and delivery of framed video
+ * to USB. */
 static void serviceVideo(uint32_t now) {
     if(!videoWanted || !stdio_usb_connected() || !wifiUp()) { closeVideo();return; }
     if(videoBad || (videoConnection && static_cast<uint32_t>(now-videoSeen)>5000u)) closeVideo();
@@ -91,12 +115,19 @@ static void serviceVideo(uint32_t now) {
         videoFrames.ready=false;
     }
 }
+/* Return whether the desk Pico's Wi-Fi station currently has a usable link. */
 static bool wifiUp() { return cyw43_tcpip_link_status(&cyw43_state,CYW43_ITF_STA)==CYW43_LINK_UP; }
+/* Check gateway reachability using Wi-Fi and the age, in milliseconds, of the last successful
+ * state response. */
 static bool espUp(uint32_t now) { return wifiUp() && haveState && static_cast<uint32_t>(now-lastGood)<2500u; }
+/* Check end-to-end MSP health using gateway freshness at time now and the MSP status relayed by
+ * the gateway. */
 static bool mspUp(uint32_t now) {
     const uint32_t elapsed=now-lastGood;
     return espUp(now) && remote.fresh && remote.hasAge && remote.age<3500u && elapsed<3500u-remote.age;
 }
+/* Detach callbacks and close the HTTP PCB, including recovery when lwIP cannot close it
+ * gracefully. */
 static void closeConnection() {
     if(!connection) return;
     tcp_arg(connection,nullptr); tcp_recv(connection,nullptr); tcp_err(connection,nullptr);
@@ -105,11 +136,14 @@ static void closeConnection() {
     if(tcp_close(connection)!=ERR_OK) tcp_abort(connection);
     connection=nullptr;
 }
+/* Write a bounded USB error message carrying reason for the pending request. */
 static void errorReply(const char *reason) {
     if(action(wanted)) printf("ROBOT %s ERROR %s\n",actionName(wanted),reason);
     else if(wanted!=Reply::None) printf("ROBOT ERROR %s\n",reason);
     wanted=Reply::None;
 }
+/* Consume an HTTP pbuf chain from pcb, acknowledge received bytes and mark a closed or failed
+ * response. */
 static err_t received(void *,tcp_pcb *pcb,pbuf *p,err_t error) {
     if(!p) { if(!response.complete()) { failed=true; fault="EARLY_CLOSE"; } done=true; return ERR_OK; }
     if(error!=ERR_OK) { pbuf_free(p); fault="RECEIVE_ERROR"; tcpError=error; failed=done=true; return ERR_OK; }
@@ -121,20 +155,23 @@ static err_t received(void *,tcp_pcb *pcb,pbuf *p,err_t error) {
     else if(response.complete()) done=true;
     return ERR_OK;
 }
+/* Record lwIP error for the active gateway request; lwIP has already released its PCB. */
 static void networkError(void *,err_t error) {
     connection=nullptr; tcpError=error;
     if(!response.complete()) { fault="TCP_ERROR"; failed=true; }
     done=true;
 }
+/* Build and send the HTTP request on pcb once the TCP connection opens successfully. */
 static err_t connected(void *,tcp_pcb *pcb,err_t error) {
     if(error!=ERR_OK) { failed=done=true; return ERR_OK; }
     char resumeRequest[160];
     snprintf(resumeRequest,sizeof(resumeRequest),
-        "POST /api/%s?job_id=%lu HTTP/1.0\r\nHost: 192.168.4.1\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
-        wanted==Reply::Dock?"dock":wanted==Reply::Depart?"depart":"resume",static_cast<unsigned long>(resumeToken));
+        "POST /api/%s=%lu HTTP/1.0\r\nHost: 192.168.4.1\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
+        wanted==Reply::Dock?"dock?job_id":wanted==Reply::Depart?"depart?job_id":
+        wanted==Reply::RefillMinimum?"refill-minimum?raw":"resume?job_id",static_cast<unsigned long>(resumeToken));
     const char *request=wanted==Reply::Approach?
         "POST /api/approach HTTP/1.0\r\nHost: 192.168.4.1\r\nContent-Length: 0\r\nConnection: close\r\n\r\n":
-        (wanted==Reply::Resume || wanted==Reply::Dock || wanted==Reply::Depart)?resumeRequest:wanted==Reply::Target?
+        (wanted==Reply::Resume || wanted==Reply::Dock || wanted==Reply::Depart || wanted==Reply::RefillMinimum)?resumeRequest:wanted==Reply::Target?
         "POST /api/target HTTP/1.0\r\nHost: 192.168.4.1\r\nContent-Length: 0\r\nConnection: close\r\n\r\n":wanted==Reply::Stop?
         "POST /api/stop HTTP/1.0\r\nHost: 192.168.4.1\r\nContent-Length: 0\r\nConnection: close\r\n\r\n":
         "GET /api/state HTTP/1.0\r\nHost: 192.168.4.1\r\nConnection: close\r\n\r\n";
@@ -142,6 +179,8 @@ static err_t connected(void *,tcp_pcb *pcb,err_t error) {
         failed=done=true;
     return ERR_OK;
 }
+/* Start one gateway transaction for reply and optional jobToken. Return false if it cannot be
+ * started now. */
 static bool beginRequest(Reply reply,uint32_t jobToken=0) {
     if(!wifiUp()) return false;
     if(action(reply) && connection) {
@@ -164,6 +203,8 @@ static bool beginRequest(Reply reply,uint32_t jobToken=0) {
     if(tcp_connect(connection,&address,80,connected)!=ERR_OK) failed=done=true;
     return true;
 }
+/* Parse the completed response, update freshness and report the outcome of the pending USB
+ * request. */
 static void finishRequest() {
     if(action(wanted)) {
         uint32_t id=0;
@@ -200,6 +241,7 @@ static void finishRequest() {
     }
     wanted=Reply::None;
 }
+/* Dispatch one complete USB line to the allowed diagnostic, camera or bounded robot operations. */
 static void command(const char *line) {
     if(!strcmp(line,"VIDEO ON")) { videoWanted=true;videoAttempt=nowMs()-2000u;printf("VIDEO OK ON\n"); }
     else if(!strcmp(line,"VIDEO OFF")) { videoWanted=false;closeVideo();printf("VIDEO OK OFF\n"); }
@@ -230,6 +272,9 @@ static void command(const char *line) {
         else if(!strcmp(line,"ROBOT STOP")) op=Reply::Stop;
         else if(!strcmp(line,"ROBOT APPROACH")) op=Reply::Approach;
         else if(!strcmp(line,"ROBOT TARGET")) op=Reply::Target;
+        else if(!strncmp(line,"ROBOT RFMIN ",12)) {
+            if(desk::number(line+12,jobToken) && jobToken && jobToken<=4096u) op=Reply::RefillMinimum;
+        }
         else if(!strncmp(line,"ROBOT DOCK ",11) || !strncmp(line,"ROBOT DEPART ",13)) {
             const bool arrival=line[7]=='O';
             if(desk::number(line+(arrival?11:13),jobToken) && jobToken)
@@ -246,6 +291,8 @@ static void command(const char *line) {
         }
     }
 }
+/* Join the car's private access point and interleave USB, camera and status processing with
+ * reconnect deadlines. */
 int main() {
     stdio_init_all();
     stdio_set_translate_crlf(&stdio_usb,false);

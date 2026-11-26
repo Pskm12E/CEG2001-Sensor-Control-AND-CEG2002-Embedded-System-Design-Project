@@ -10,6 +10,7 @@ import time
 from camera_usb import serial, list_ports
 from camera_radio import RadioCamera, UsbMultiplexer
 from dock_relay import DockRelay
+import tank_scale
 
 ALLOWED_COMMANDS = frozenset({"PING", "STATUS"})
 STATUS_PATTERN = re.compile(
@@ -25,7 +26,7 @@ ZUMO_STATUS_PATTERN = re.compile(
     r"FLAGS=(\d{1,3}) RESULT=(\d{1,3}) PENDING=(\d{1,3}) "
     r"UART_ERRORS=(\d{1,10}) RX_DROPS=(\d{1,10}) BAD_FRAMES=(\d{1,10})"
     r"(?: JOB=(\d) JOB_ID=(\d{1,10}) PUMP=([01]) READY=([01]) WATER=(\d{1,4})"
-    r"(?: DOCK=(\d{1,10}) WET=([01]) DCLEAR=([01]))?)? BRIDGE=ESP_UART_V1"
+    r"(?: DOCK=(\d{1,10}) WET=([01]) DCLEAR=([01])(?: RFMIN=(\d{1,4}))?)?)? BRIDGE=ESP_UART_V1"
 )
 PICO_PATTERN = re.compile(
     r"STATUS BOARD=PICO_W ROLE=LAPTOP_BRIDGE FW=DESK_BRIDGE_V2 LED=ON "
@@ -70,11 +71,15 @@ def parse_status(line):
             if values[0] > 8 or values[1] > 4294967295 or values[4] > 4095:
                 return None
             result.update(zip(("job", "job_id", "pump", "driver_ready", "water_raw"), values))
-            visit, wet, clear = match.groups()[15:]
+            visit, wet, clear, minimum = match.groups()[15:]
             if visit is not None:
                 if int(visit) > 0xffffffff:
                     return None
                 result.update(dock_visit=int(visit), wet=int(wet), dock_clear=int(clear))
+            if minimum is not None:
+                if not 1 <= int(minimum) <= 4096:
+                    return None
+                result["refill_min_raw"] = int(minimum)
     for key in ("run", "flags", "result", "pending", "uart_errors", "rx_drops", "bad_frames"):
         result[key] = int(result[key])
     if any(result[k] > 255 for k in ("flags", "result", "pending")):
@@ -89,8 +94,8 @@ def available_ports():
 
 
 class Bridge:
-    def __init__(self, hosted=False):
-        self.hosted = hosted
+    def __init__(self):
+        self.tank_calibration = tank_scale.load()
         self.lock = threading.RLock()
         self.lifecycle = threading.Lock()
         self.events = deque(maxlen=100)
@@ -119,12 +124,12 @@ class Bridge:
         self.pending = queue.Queue(maxsize=8)
         self.dock = DockRelay(self)
         self.dock_pending = None
+        self.next_tank_sync = 0
         self.dock_stop_sent = threading.Event()
         self.dock_stop_sent.set()
         self.video=RadioCamera(self)
         self.usb=UsbMultiplexer(self.video.publish,self.video.reject)
-        self.event("info", "Hosted preview. Robot hardware is not linked." if hosted else
-                   "Connect the desk Pico to read robot status. Wireless camera video also arrives through the Pico.")
+        self.event("info", "Connect the desk Pico to read robot status. Wireless camera video also arrives through the Pico.")
 
     def event(self, kind, message):
         with self.lock:
@@ -146,18 +151,26 @@ class Bridge:
             error = self.error
             if self.connected and not fresh and not error:
                 error = "Waiting for fresh robot status through the Pico. Check power to the ESP32, MSP430 and Uno."
-            return {"mode": "hosted" if self.hosted else "local", "read_only": not self.target_supported,
-                    "target_jobs": self.target_supported and not self.hosted,
+            return {"mode": "local", "read_only": not self.target_supported,
+                    "target_jobs": self.target_supported,
                     "target_action": dict(self.target_action),
                     "connection": {"connected": self.connected, "port": self.port, "baud": 115200,
                                    "error": error, "fresh": fresh, "last_seen": self.last_seen},
-                    "dock": {"port": self.dock.port, "phase": self.dock.phase},
+                    "tank_calibration": self.tank_calibration, "dock": self.dock.snapshot(now),
                     "links": links, "telemetry": dict(self.telemetry) if self.telemetry else None,
                     "events": list(self.events)}
 
+    def set_tank_calibration(self, points):
+        with self.lock:
+            if self.dock.token and self.dock.release_raw is not None:
+                raise ValueError("Wait until the current docking visit ends to change tank calibration.")
+            try:
+                tank_scale.save(points)
+            except OSError as exc:
+                raise RuntimeError("Could not save tank calibration on this laptop.") from exc
+            self.tank_calibration = dict(points)
+
     def connect(self, port):
-        if self.hosted:
-            raise RuntimeError("Hardware connections are available only in the local dashboard.")
         with self.lifecycle:
             if not isinstance(port, str) or port not in {p["device"] for p in available_ports()}:
                 raise ValueError("Select the desk Pico USB port. Uno and MSP430 USB ports are excluded.")
@@ -300,8 +313,6 @@ class Bridge:
         """One job per target appearance; require one second of fresh absence to rearm."""
         now = time.monotonic()
         with self.lock:
-            if self.hosted:
-                return
             self.last_observation = now
             if not observation.get("detected"):
                 if observation.get("box") is None:
@@ -363,7 +374,7 @@ class Bridge:
     def cancel_target(self):
         with self.lock:
             self.last_observation = None
-            if self.hosted or not self.connected or not self.target_supported:
+            if not self.connected or not self.target_supported:
                 return
             if self.target_action["state"] in {"IDLE", "WAIT_DRIVING", "COMPLETE", "ABORTED", "DRIVER_DISABLED", "CANCELLED", "UNAVAILABLE"}:
                 return
@@ -384,7 +395,7 @@ class Bridge:
 
     def dock_command(self, command):
         with self.lock:
-            if not self.connected or self.hosted or not self.identity:
+            if not self.connected or not self.identity:
                 return
             if self.dock_pending and self.dock_pending[0] == "ROBOT STOP":
                 return
@@ -412,6 +423,24 @@ class Bridge:
     def _poll_input(self,device):
         data=device.read(max(1,min(device.in_waiting,8192)))
         if data:self.usb.feed(data)
+
+    def _sync_tank(self, device):
+        with self.lock:
+            car = self.telemetry or {}
+            desired = tank_scale.departure_raw(self.tank_calibration) or 4096
+            now = time.monotonic()
+            if (not self.target_supported or not self.state()["connection"]["fresh"]
+                    or car.get("refill_min_raw") in (None, desired) or car.get("run") != 0
+                    or car.get("pump") != 0 or self.dock.token or self.dock_pending
+                    or self.action_pending.is_set() or now < self.next_tank_sync):
+                return
+            self.next_tank_sync = now + 8
+        # The next MSP status echoes the installed cutoff. Older radio firmware
+        # can reject this optional setting while continuing normal telemetry.
+        try:
+            self._exchange(device, f"ROBOT RFMIN {desired}", "ROBOT RFMIN ", 1)
+        except TimeoutError:
+            pass  # Keep fresh robot telemetry while waiting for the next retry.
 
     def _exchange(self,device,command,prefix,timeout=10):
         # Never flush USB while video is running: text and binary share the same reader.
@@ -444,7 +473,7 @@ class Bridge:
                 raise RuntimeError("This Pico is not running desk bridge firmware. No robot requests were sent.")
             with self.lock:
                 self.identity = True
-                self.target_supported = reply == "PONG PICO_DESK_BRIDGE_V3" and not self.hosted
+                self.target_supported = reply == "PONG PICO_DESK_BRIDGE_V3"
             self.event("board", reply)
             while not self.stop.is_set():
                 try:
@@ -468,6 +497,7 @@ class Bridge:
                             self.error = "Robot link unavailable: " + reply
                     else:
                         self._receive(reply)
+                        self._sync_tank(device)
                 except ActionPriority:
                     continue
                 except (TimeoutError, TelemetryError) as exc:

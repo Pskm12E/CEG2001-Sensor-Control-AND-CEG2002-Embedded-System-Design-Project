@@ -19,8 +19,8 @@ prefix=r'''
 #include <cstdio>
 #include <cstring>
 #include <string>
-#include "../../Arduino_Uno/msp_line_follow/robot_link.h"
-#include "../../Arduino_Uno/msp_line_follow/control.h"
+#include "../../Arduino_Uno/zumo_line_follow/robot_link.h"
+#include "../tests/fixtures/legacy_peer.h"
 #include "../robot_supervisor/obstacle_guard.h"
 #define __disable_interrupt() ((void)0)
 #define __enable_interrupt() ((void)0)
@@ -191,6 +191,6 @@ cpp=build/'supervisor_logic_tests.cpp'
 cpp.write_text(prefix+function('receive')+function('pop','int')+function('takeLost','uint8_t')+
                ''.join(function(n) for n in ['stopRequested','serviceObstacle','userRequest','command','readUsb','sendRequest','response','serviceLink'])+tests)
 exe=build/'supervisor_logic_tests.exe'
-subprocess.run(['C:/msys64/ucrt64/bin/g++.exe','-std=c++11','-Wall','-Wextra',
+subprocess.run(['g++','-std=c++11','-Wall','-Wextra',
                '-Wno-unused-function','-Wno-unused-variable','-Werror','-static',str(cpp),'-o',str(exe)],check=True)
 subprocess.run([str(exe)],check=True)

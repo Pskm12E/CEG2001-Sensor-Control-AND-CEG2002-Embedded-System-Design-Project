@@ -4,9 +4,10 @@
 
 During an active line run, two consecutive P6.0 readings below 500 switch
 OG9 to straight reverse. Both tracks run at −100 while the MSP430 renews the
-reverse command. Two consecutive readings above 500
-return a reversing robot to forward line following. Exactly 500 keeps the
-current direction.
+reverse command. With the updated supervisor, two consecutive readings above
+500 park the reversing car. The MSP requests forward line following after the
+calibrated tank level stays above 60% for three seconds. An active coordinated
+dock visit also waits for station pump cutoff.
 The Zumo button, MSP STOP, a front obstacle, or loss of the drive link can
 also stop it. Keep the path behind the robot clear. A manual stop requires a
 new local start even if the probe subsequently gets wet.
@@ -186,16 +187,10 @@ MSP430 supervisor to enable automatic resume. The Uno build uses Pololu
 open the repository sketch `zumo_line_follow.ino`, select Arduino Uno, and keep
 its bundled headers beside it.
 
-Arduino copies the sketch into its build directory. Its bundled `robot_link.h`
-must remain byte-identical to `../msp_line_follow/robot_link.h`, used by MSP code;
-both the builder and host test check this. The MSP output is
+The Uno and MSP430 both compile the protocol from this sketch's `robot_link.h`. The MSP output is
 `Car/MSP430/robot_supervisor/Debug_wifi_zumo_pump/robot_supervisor.out`. CCS GUI
 builds for this profile define `SUPERVISOR_ESP_UART`, `ZUMO_BASE=1` and
 `PUMP_DRIVER_VERIFIED=1`. The `IR_DRIVING_TEST` bypass
 is rejected for Zumo. Do not upload the previous L298N sketches.
 
-Host checks exercise the actual sketch, MSP scheduler, sonar adapter and bridge
-parser with simulated hardware. The user reported the robot working after the
-installed no-echo update; full-track performance, range accuracy and physical
-braking distance remain unmeasured. Dated reports are kept in
-[verification](../../../Laptop/Artifacts/verification).
+Host checks exercise the sketch, MSP scheduler and sonar adapter with simulated hardware. The team also completed a physical track run. Braking distance and delivered volume remain unmeasured. See the [final report](../../../output/pdf/CEG2001_Report_P2-2.pdf).

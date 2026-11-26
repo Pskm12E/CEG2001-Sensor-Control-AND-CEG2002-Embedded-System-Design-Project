@@ -79,7 +79,7 @@ features demonstrated by Version 1.
 ### Earlier setup PDF
 
 [Plant-care robot setup guide](../../Artifacts/pdf/plant-care-robot-setup-guide.pdf)
-and its [source generator](../../Artifacts/setup/build_robot_setup.py) are retained
+is retained
 from the early concept stage. Use current sketch READMEs and wiring notes for
 the latest assignments.
 

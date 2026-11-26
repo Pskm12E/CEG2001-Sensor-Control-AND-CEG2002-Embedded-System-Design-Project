@@ -38,7 +38,7 @@ static std::string output;
 static void print(const char* text) { output+=text; }
 static void number(uint16_t value) { output+=std::to_string(value); }
 #include "../robot_supervisor/ultrasonic_hcsr04.h"
-#include "../../Arduino_Uno/msp_line_follow/control.h"
+#include "../tests/fixtures/legacy_peer.h"
 static uint16_t session=42,sequence,requestAt,lastPoll,lastLinkByte,badFrames;
 static uint8_t pending,linked,running,queued,peerFlags,peerResult,P4OUT;
 static RlPacket pendingPacket;
@@ -248,7 +248,7 @@ for name, flags in (("default", []), ("explicit_zero", ["-DIR_DRIVING_TEST=0"]),
                     ("enabled", ["-DIR_DRIVING_TEST=1"])):
     exe = build / ("ir_driving_test_" + name + ".exe")
     subprocess.run([
-        "C:/msys64/ucrt64/bin/g++.exe", "-std=c++11", "-Wall", "-Wextra", "-Werror",
+        "g++", "-std=c++11", "-Wall", "-Wextra", "-Werror",
         "-Wno-unknown-pragmas", "-Wno-unused-function", "-static", *flags, str(cpp), "-o", str(exe)
     ], check=True)
     subprocess.run([str(exe)], check=True)

@@ -32,14 +32,18 @@ typedef struct {
     volatile uint8_t pump;
 } SprayJob;
 
+/* Return whether job s is between its accepted stop request and its final continuation. */
 static uint8_t sprayActive(const SprayJob *s) {
     return s->phase >= SJ_STOPPING && s->phase <= SJ_RESUMING;
 }
+/* Drop the pump and resume flags on s; mark a job aborted only if it was active. */
 static void sprayCancel(SprayJob *s) {
     s->pump = 0;
     s->resumeQueued = 0;
     if (sprayActive(s)) s->phase = SJ_ABORTED;
 }
+/* Start one eligible target job s with nonzero id at scheduler tick now. Return zero for a
+ * repeat or busy job. */
 static uint8_t sprayBegin(SprayJob *s, uint16_t now, uint32_t id, uint8_t eligible) {
     if (!id || !eligible || sprayActive(s) || id == s->id) return 0;
     s->id = id;
@@ -49,6 +53,7 @@ static uint8_t sprayBegin(SprayJob *s, uint16_t now, uint32_t id, uint8_t eligib
     s->phase = SJ_STOPPING;
     return 1;
 }
+/* Record the Uno reply for s at tick now. A confirmed stopped state permits link settling. */
 static void sprayStopAck(SprayJob *s, uint16_t now, uint8_t stopped) {
     if (s->phase != SJ_STOPPING) return;
     if (!stopped) { sprayCancel(s); return; }
@@ -57,6 +62,8 @@ static void sprayStopAck(SprayJob *s, uint16_t now, uint8_t stopped) {
 }
 /* The completed pulse waits for a token-matched continuation from fresh laptop
  * observations. Camera/network loss therefore cannot auto-resume the robot. */
+/* Advance s at tick now using link readiness, obstacle/stop input and verified driver status.
+ * Update the logical gate request. */
 static uint8_t sprayTick(SprayJob *s, uint16_t now, uint8_t ready,
                          uint8_t blocked, uint8_t driverVerified) {
     if (!sprayActive(s)) return 0;
@@ -87,11 +94,14 @@ static uint8_t sprayTick(SprayJob *s, uint16_t now, uint8_t ready,
     }
     return 0;
 }
+/* Authorise one continuation for completed spray job id when the car is ready. Return true
+ * only for the first accepted request. */
 static uint8_t sprayAllowResume(SprayJob *s,uint32_t id,uint8_t ready) {
     if(s->phase!=SJ_RESUMING || s->pump || s->resumeQueued || id!=s->id || !ready) return 0;
     s->resumeQueued=1;
     return 1;
 }
+/* Finish the resuming job s using the actual Uno movement acknowledgement. */
 static void sprayResumeAck(SprayJob *s, uint8_t moving) {
     if (s->phase == SJ_RESUMING) s->phase = moving ? SJ_COMPLETE : SJ_ABORTED;
 }

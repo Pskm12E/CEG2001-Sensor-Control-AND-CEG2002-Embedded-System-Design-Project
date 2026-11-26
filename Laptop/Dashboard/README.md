@@ -3,11 +3,11 @@
 Open **http://127.0.0.1:8765** on the laptop. The robot MSP430 is the main
 embedded controller. The app runs locally; the laptop keeps its normal Wi-Fi.
 
-In `V2_Working`, the desk Pico V3 relays a confirmed blue target through the
-FireBeetle V2 to the MSP430. The supervisor stops the Zumo OG6, switches the
-P1.6 pump gate on for three seconds, then waits for fresh camera confirmation
-before resuming. The dashboard shows the commanded pump state and the P6.0
-water reading. [Pump wiring and cycle behavior](../../Car/MSP430/robot_supervisor/PUMP_SETUP.md)
+The Uno OG9 follows the line. A confirmed blue target reaches the car MSP430
+through the desk Pico and FireBeetle. The MSP430 stops the Zumo, pulses its
+P1.6 spray output for three seconds, and checks the camera job before resuming.
+The dashboard displays the P6.0 tank reading and the commanded pump state.
+[Pump wiring and cycle behavior](../../Car/MSP430/robot_supervisor/PUMP_SETUP.md)
 
 ## Start the system
 
@@ -22,20 +22,6 @@ water reading. [Pump wiring and cycle behavior](../../Car/MSP430/robot_superviso
    this stream automatically. Keep the terminal open if it started the server;
    **Ctrl+C** closes that server. A reused server keeps running independently.
 5. For the blue-square practice target, select **Start detection**.
-
-Double-clicking **Start Robot.cmd** also offers to share the live camera and readings.
-Press **Y**, then copy the HTTPS address printed after **Public view-only link**. The launcher
-waits until the public address opens from the laptop and answers for this session. This can
-take a few minutes on a Wi-Fi network that caches DNS. Anyone with the link can watch from another
-Wi-Fi network or mobile data. Press Enter at the prompt for a local session.
-
-To start sharing from a command line, run `".\Start Robot.cmd" --share` in CMD from the project
-root. Keep the laptop awake and the terminal open. Ctrl+C ends that session's link.
-Each new sharing session gets a new address. The viewer uses the local robot camera feed
-and blanks stale readings. Visitors can pause their own view, save the displayed camera
-frame and refresh the readings. On another Windows laptop, install `cloudflared` on PATH for
-public sharing. The optional viewer tank calibration lives in
-`%LOCALAPPDATA%\PlantRobotShare\tank.json` as raw ADC counts, e.g. `{"empty":1836,"full":2281}`.
 
 The launcher waits up to 30 seconds for hardware. Missing/busy USB ports or an
 offline camera produce **SETUP INCOMPLETE** rather than a false ready message.
@@ -61,9 +47,10 @@ From CMD in the project root:
 MSP430 ports are excluded. `--dashboard-only` leaves hardware disconnected.
 `--no-camera` connects only Pico telemetry; `--no-browser` skips opening a tab.
 For [coordinated docking](../../Docking_Station/README.md), also plug in the
-station MSP430 and supply its application UART using `--dock-port COM13`
-(replace COM13 with the station's port). The launcher checks for a clear
-dock and car acknowledgement. Dock events appear in the dashboard event log.
+station MSP430. The launcher identifies the station by its USB heartbeat.
+**Docking station** shows the Hall sensor and refill pump during setup.
+Use **Find station USB** if you connect it later, or `--dock-port COM3` to choose
+a known port. Dock events appear in the dashboard event log.
 Use `--wait 60` for slower board startup, or `--http-port 8766` if another app
 occupies port 8765. Closing another app's serial console can free a busy Pico.
 
@@ -99,11 +86,7 @@ same USB connection. The server checks JPEG framing and CRC32, keeps the newest
 frame and relays one persistent **MJPEG video stream** to the browser. There is
 no timed snapshot/capture loop and no camera USB video connection.
 
-Current setting: **320 x 240**, capped at approximately **15 fps**. The page shows
-the measured receive rate. Lighting, radio interference and distance can affect
-performance; this prototype does not promise HD or 30 fps. The USB camera bench
-sketches under `Car/XIAO_ESP32S3_Camera/Archive/xiao_camera_usb` are superseded and are not the car
-camera firmware. Current sources:
+Use the XIAO Wi-Fi camera build for the car. USB camera support in the dashboard is a separate diagnostic mode.
 
 - [Wireless camera](../../Car/XIAO_ESP32S3_Camera/xiao_camera_wifi/xiao_camera_wifi.ino): CAMERA_WIFI_V1.
 - [Desk Pico](../Pico_W/laptop_wifi_bridge/main.cpp): DESK_BRIDGE_V3.
@@ -152,8 +135,7 @@ This is **colour/shape detection, not YOLO or insect recognition**. Confirmed fr
 pump-on or unrestricted START command is exposed. One continuously visible target
 gets one cycle, with one second of fresh absence required to rearm. Missing
 camera data prevents post-spray continuation. Stop detection cancels an active
-cycle. The future YOLO checkpoint belongs on the laptop
-under [YOLO_Model/](../YOLO_Model/README.md); no trained weights are present. The full physical target-cycle trial and nozzle alignment remain pending.
+cycle. The submitted detector recognises a blue practice marker. The report distinguishes the physical track, pump and station trials from a complete dock-to-departure run.
 
 Sources: [OpenCV HSV thresholding](https://docs.opencv.org/4.x/da/d97/tutorial_threshold_inRange.html),
 [contour features](https://docs.opencv.org/4.x/dd/d49/tutorial_py_contour_features.html).
@@ -166,19 +148,38 @@ send PING and STATUS. Enabling blue-target detection permits bounded MSP target
 jobs; no unrestricted motion or direct pump command is exposed. The MSP430
 retains embedded robot authority.
 
-The Zumo button performs line calibration after each reset. The stopped reading
-comes from the supervisor. The **Water tank** panel under **Robot MSP430** shows
+With saved line calibration, a tap of the Zumo button requests line following.
+On first use, the first tap starts the calibration sweep. The supervisor reports
+whether the Zumo is stopped or running. The **Water tank** panel under **Robot MSP430** shows
 the live P6.0 sensor reading (0–4095) and the pump command. Before tank
 calibration, **Probe wetness** scales the reading between the measured dry
 and wet reference values of 15 and 1208. To see an estimated tank level,
 open **Calibrate water level** and record steady empty and full readings with the
 probe mounted in the tank and the robot stopped. The dashboard estimates the
-percentage between those readings and saves the calibration in this browser.
-The level is for monitoring. Water flow requires physical observation.
+percentage between those readings and saves the calibration on this laptop.
+The car supervisor uses the first ADC count above `empty + 0.60 × (full − empty)`
+and three seconds of fresh readings before starting after a refill. It can do
+this while the station is unplugged. With a coordinated dock visit, departure
+also waits for station pump cutoff. The **Water tank** panel reports the cutoff
+echoed by the car. The supervisor build reads the saved laptop calibration at
+build time. With the updated Pico and FireBeetle, edits to the endpoints sync
+to a parked car and are reapplied after reconnect or reset. Windows stores the
+endpoints in `%LOCALAPPDATA%\PlantRobotShare\tank.json`. The current empty/full
+pair (1836 and 2281) gives a restart threshold of **2104 / 4095**. Offline on power-up
+the car uses its build-time calibration. The separate target spray runs for three seconds.
 
 Stale status is blanked until a fresh reply arrives. A temporary unavailable
 MSP430 response must not close the independent camera relay. This was fixed and
 has a regression test. USB cable loss still requires an explicit reconnect.
+
+### Interpreting the dashboard
+
+| What you see | What to check |
+| --- | --- |
+| Live video, but **Robot ESP32** is **UP** and **ESP32 → MSP430** is **STALE** | Check car MSP430 power and its UART wiring to the FireBeetle. Water and pump readings return when fresh status reaches the laptop. |
+| Board readings update, but the camera shows **0 fps** | Check power to the XIAO camera. Once the desk Pico is connected, use **Stop camera** and **Start camera** to retry the video link. |
+| **Waiting for station** | Connect the LCD station's application UART by USB, close any serial monitor using it, then select **Find station USB**. The dashboard needs a heartbeat from the station firmware. |
+| Tank appears to read **60%**, but the car stays parked | Compare the raw ADC value with the displayed restart threshold. With 1836 empty and 2281 full, 2103 is exactly 60%. A parked, calibrated car must first see a lower reading, then at least 2104 for three seconds with a clear path. A manual stop cancels automatic departure. |
 
 ## Privacy and stopping
 
@@ -198,7 +199,7 @@ is needed only for a future firmware upload/debug session, not normal operation.
 Python 3.10+, pySerial 3.5, OpenCV headless 4.14, standard HTML/CSS/JavaScript. No Node build needed.
 The launcher uses a local `.venv` or the laptop's bundled Python and can reuse
 pySerial from `../../tmp/pico-tools-python` and OpenCV from `../../tmp/vision-python`.
-On another computer:
+From the `Laptop/Dashboard` folder on a new Windows laptop:
 
 ```powershell
 py -3 -m venv .venv
@@ -220,24 +221,17 @@ python tests/verify_camera_stream.py
 
 This checks a continuous 200-frame MJPEG response, CRCs, increasing sequence,
 frame rate and the wireless transport identity. It saves no images and sends no
-actuator commands. Pico native decoder tests are in `../Laptop/Tools/Communication/tests`.
+actuator commands. Pico native decoder tests are in `../Tools/Communication/tests`.
 
 5 November evidence: 32 software tests, 4,021 native video decoder assertions,
 531 existing HTTP/status decoder assertions. Initial wireless relay test passed
 200 frames at 15.02 fps, with zero corrupt frames and fresh robot status:
-`../Laptop/Artifacts/verification/camera-live-stream-2026-11-05-210148.json`.
+`../Artifacts/verification/camera-live-stream-2026-11-05-210148.json`.
 The power-bank transition and camera USB absence are recorded separately in
-`../Laptop/Artifacts/verification/camera-powerbank-wireless.json`. Final sustained test
+`../Artifacts/verification/camera-powerbank-wireless.json`. Final sustained test
 with the camera on power-bank power passed 200 frames at 14.91 fps, zero corrupt
 frames and fresh robot status:
-`../Laptop/Artifacts/verification/camera-live-stream-2026-11-05-211019.json`.
-
-## Hosted preview
-
-The existing [hosted preview](https://pest.4bytedigi.com) was not redeployed.
-Hosted mode cannot access this laptop's Pico or wireless camera relay, and all
-hardware POST routes/video routes are blocked. Normal webcam preview there stays
-in the visitor's browser. See [deployment notes](../Deployment/README.md).
+`../Artifacts/verification/camera-live-stream-2026-11-05-211019.json`.
 
 ## Blue detector verification — 5 November 2026
 
@@ -246,7 +240,7 @@ this is a photo check, not a live camera recognition result. An actual continuou
 annotated stream test passed 150 frames at 15.14 fps, with five distinct fresh
 robot-status updates during the run and no actuator commands. The scene was the
 ceiling, so positive live-target confirmation still needs the square in view.
-Evidence: `../Laptop/Artifacts/verification/blue-detection-stream-2026-11-05-215150.json`.
+Evidence: `../Artifacts/verification/blue-detection-stream-2026-11-05-215150.json`.
 
 The current checker reads the raw live stream and runs a private detector worker
 with its robot callback disconnected. Start the camera first; the check sends

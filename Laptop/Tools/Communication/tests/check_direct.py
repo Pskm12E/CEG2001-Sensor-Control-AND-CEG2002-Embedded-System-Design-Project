@@ -80,6 +80,6 @@ build = ROOT / 'Laptop/Tools/Communication/build/direct-tests'
 build.mkdir(parents=True, exist_ok=True)
 cpp, exe = build / 'direct_tests.cpp', build / 'direct_tests.exe'
 cpp.write_text(prefix + function('stopRequested') + function('netCommand', 'uint8_t') + function('command') + tests)
-subprocess.run(['C:/msys64/ucrt64/bin/g++.exe', '-std=c++17', '-Wall', '-Wextra', '-Werror', '-static',
+subprocess.run(['g++', '-std=c++17', '-Wall', '-Wextra', '-Werror', '-static',
                 '-I' + str(ROOT / 'Car/ESP32_Gateway/robot_wifi_gateway'), str(cpp), '-o', str(exe)], check=True)
 subprocess.run([str(exe)], check=True)

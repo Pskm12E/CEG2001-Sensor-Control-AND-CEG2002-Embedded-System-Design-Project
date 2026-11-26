@@ -5,7 +5,8 @@ segments hash-verified. USB PING, STATUS and STATE confirm V2 and AP ready.
 The desk Pico Wi-Fi link and live camera recovered after the restart. The user
 initially unplugged the MSP430 for upload. After reconnecting it, corrected an
 MSP UART idle-transmit bug; fresh MSP/Uno status now reaches the dashboard with
-zero UART errors while stopped. Pump remains disabled pending driver qualification.
+zero UART errors while stopped. The current car supervisor controls the verified
+P1.6 spray output. The FireBeetle relays its commands and status.
 
 Board: **DFRobot FireBeetle ESP32 DFR0478**. Source:
 [robot_wifi_gateway.ino](robot_wifi_gateway/robot_wifi_gateway.ino).
@@ -17,18 +18,19 @@ Build from the repository root:
 
 ```powershell
 python Laptop/Tools/Communication/configure.py
-./Laptop/Tools/Communication/build_direct.ps1 -Zumo
+./Laptop/Tools/Communication/build_direct.ps1 -Zumo -PumpDriverVerified
 ```
 
-Upload the current gateway using its explicit Direct option (check the current
-COM port; numbers can change):
+For a deliberate installation, use the FireBeetle's current USB port. The
+example below uses the port assigned on the project laptop.
 
 ```powershell
-./Laptop/Tools/Communication/upload_esp32.ps1 -Port COM20 -Direct
+./Laptop/Tools/Communication/upload_esp32.ps1 -Port COM20
 ```
 
-Omitting `-Direct` retains the historical laptop-gateway upload mode. The helper
-checks CH340 USB identity and uses the working uncompressed ROM-loader method.
+The helper always selects the car gateway image. It checks CH340 USB identity
+and uses the uncompressed ROM-loader method. Older commands with `-Direct`
+also select the car gateway.
 Compilation alone does not upload. Private settings, generated network headers
 and compiled images stay ignored; reuse the saved network settings across boards.
 

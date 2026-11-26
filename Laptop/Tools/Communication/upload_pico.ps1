@@ -1,15 +1,15 @@
 param([Parameter(Mandatory=$true)][ValidatePattern('^COM[0-9]+$')][string]$Port,
-      [ValidateSet('Robot','Desk')][string]$Role='Robot')
+      [ValidateSet('Desk')][string]$Role='Desk')
 $ErrorActionPreference='Stop'
 $projectRoot=[System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../..'))
-$firmware=Join-Path $projectRoot $(if($Role -eq 'Desk') { 'Laptop/Pico_W/laptop_wifi_bridge/build/laptop_wifi_bridge.uf2' } else { 'Car/Archive/Pico_W/wireless_robot_link/build/wireless_robot_link.uf2' })
+$firmware=Join-Path $projectRoot 'Laptop/Pico_W/laptop_wifi_bridge/build/laptop_wifi_bridge.uf2'
 if(-not (Test-Path -LiteralPath $firmware)) { throw 'Build the Pico firmware first.' }
-$python=Join-Path $env:USERPROFILE '.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe'
+. (Join-Path $PSScriptRoot 'build_env.ps1')
+$python=Get-RobotPython
 $existing=@([System.IO.DriveInfo]::GetDrives() | Where-Object { $_.IsReady -and $_.VolumeLabel -eq 'RPI-RP2' })
 if($existing.Count) { throw 'A BOOTSEL drive already exists. Identify it before using this automatic uploader.' }
 $resetScript=@'
 import sys,time
-sys.path.insert(0,sys.argv[2])
 import serial
 from serial.tools import list_ports
 port=sys.argv[1]
@@ -36,7 +36,7 @@ finally:
     s.close()
 print('Pico USB reset requested; waiting for its BOOTSEL drive.')
 '@
-& $python -c $resetScript $Port (Join-Path $projectRoot 'tmp/pico-tools-python')
+& $python -c $resetScript $Port
 if($LASTEXITCODE) { throw 'Pico USB reset failed' }
 $deadline=[DateTime]::UtcNow.AddSeconds(15)
 do {

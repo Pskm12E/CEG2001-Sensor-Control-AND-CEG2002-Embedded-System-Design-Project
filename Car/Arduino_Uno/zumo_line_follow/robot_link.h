@@ -23,6 +23,7 @@ enum { RL_CAL=1, RL_LEFT_BLACK=2, RL_RIGHT_BLACK=4, RL_MOVING=8,
 #define RL_ZUMO_REVERSING RL_LEFT_BLACK
 typedef struct { uint8_t type; uint16_t session, seq; uint8_t arg, detail; } RlPacket;
 typedef struct { uint8_t data[RL_SIZE], used; } RlParser;
+/* Compute the frame CRC over the supplied byte buffer and length. */
 static uint16_t rlCrc(const uint8_t *p, uint8_t count) {
     uint16_t crc=0xffffu;
     uint8_t bit;
@@ -32,6 +33,7 @@ static uint16_t rlCrc(const uint8_t *p, uint8_t count) {
     }
     return crc;
 }
+/* Encode the packet fields and CRC into the caller's fixed-size transmission buffer. */
 static void rlEncode(const RlPacket *p, uint8_t *b) {
     uint16_t crc;
     b[0]=0xa5; b[1]=0x5a; b[2]=p->type;
@@ -41,6 +43,8 @@ static void rlEncode(const RlPacket *p, uint8_t *b) {
     crc=rlCrc(b+2,7); b[9]=(uint8_t)crc; b[10]=(uint8_t)(crc>>8);
 }
 /* Sliding header search survives partial/startup garbage. 1=frame, -1=bad CRC. */
+/* Consume one received byte into the parser, resynchronising or returning a complete validated
+ * packet. */
 static int rlFeed(RlParser *s, uint8_t byte, RlPacket *p) {
     uint8_t i, keep;
     uint16_t crc;

@@ -10,6 +10,8 @@ static ObstacleGuard obstacle;
 static volatile uint8_t sonarPhase,sonarPulseValid;
 static volatile uint16_t sonarRise,sonarWidth,sonarSampleAt;
 static uint16_t sonarLastTrigger;
+/* Configure TRIG, divided ECHO and Timer_A2 so a measurement can finish independently of
+ * foreground UART traffic. */
 static void sonarInit(void) {
     obstacleInit(&obstacle);
     P3SEL&=~BIT2; P3REN&=~BIT2; P3OUT&=~BIT2; P3DIR|=BIT2;
@@ -18,6 +20,8 @@ static void sonarInit(void) {
     TA2CCTL0=0; TA2CTL=TASSEL__SMCLK|MC__CONTINUOUS|TACLR;
     sonarPhase=SONAR_IDLE; sonarLastTrigger=(uint16_t)(ticks-1u);
 }
+/* Start due measurements and convert a completed echo or timeout into the obstacle filter's next
+ * sample. */
 static void sonarService(void) {
     uint8_t done,valid=0;
     uint16_t width=0,sampledAt=0;
@@ -39,6 +43,7 @@ static void sonarService(void) {
         __enable_interrupt();
     }
 }
+/* Read the current obstacle decision used by the motion supervisor. */
 static uint8_t motionBlocked(void) {
 #if defined(IR_DRIVING_TEST) && IR_DRIVING_TEST
     /* Explicit bench build only: preserve sensor diagnostics, bypass its veto.
@@ -48,6 +53,7 @@ static uint8_t motionBlocked(void) {
     return obstacle.inhibit;
 #endif
 }
+/* Print the latest sonar result and filter state to the diagnostic UART. */
 static void sonarReport(void) {
     print("SONAR VALID="); number(obstacle.valid);
     print(" CM="); if(obstacle.valid) number(obstacle.cm); else print("UNKNOWN");
@@ -59,6 +65,8 @@ static void sonarReport(void) {
 #endif
     print("\r\n");
 }
+/* Advance the timed trigger/timeout sequence and wake the main loop when a measurement is
+ * complete. */
 #pragma vector=TIMER2_A0_VECTOR
 __interrupt void sonar_timer_isr(void) {
     if(sonarPhase==SONAR_TRIGGER) {
@@ -71,6 +79,7 @@ __interrupt void sonar_timer_isr(void) {
         __bic_SR_register_on_exit(LPM0_bits);
     }
 }
+/* Timestamp the ECHO transitions on Port 2 and wake the main loop when the pulse width is ready. */
 #pragma vector=PORT2_VECTOR
 __interrupt void sonar_echo_isr(void) {
     uint16_t now=TA2R;

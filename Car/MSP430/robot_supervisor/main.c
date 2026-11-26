@@ -1,16 +1,19 @@
-/* Robot MSP430F5529 supervisor. MSP is the authority for Uno line following.
- * UART0 P3.3/P3.4: Uno link; default UART1 P4.4/P4.5: USB console.
- * SUPERVISOR_ESP_UART: UART1 remapped P4.1 TX/P4.2 RX, status/STOP bridge.
- * HC-SR04 TRIG P3.2; divided ECHO P2.7. Zumo can resume an obstacle pause.
- * A completed target job requires its matching continuation before resuming.
- * IR_DRIVING_TEST=1 explicitly disables only the ultrasonic motion veto.
- * ZUMO_BASE=1: powered calibration/black-line Zumo follower, valid-near STOP.
- * Missing/stale sonar echoes are diagnostic only; see obstacle_guard.h.
+/* Car MSP430F5529 supervisor | Group P2-2 submission, 26 November 2026.
+ * Reset starts the P1.6 spray driver low before the gate becomes an output.
+ * ADC12 samples the tank on P6.0. Two dry readings qualify an empty tank.
+ * Timer_A2 and the P2.7 echo interrupt measure the forward ultrasonic range.
+ * UART0 exchanges framed motion permits and acknowledgements with the Uno.
+ * UART1 on P4.1/P4.2 receives gateway requests and returns status.
+ * The foreground schedules sonar, tank, link, dock and spray state machines.
+ * A confirmed stop and settling interval precede any timed spray command.
+ * Timer_A0 and the S2 stop interrupt can independently remove pump drive.
+ * After a qualifying refill, the car checks the tank, link and motion interlocks.
+ * The main loop sleeps in LPM0 between interrupts with UART clocks running.
  */
 #include <msp430.h>
 #include <stdint.h>
 #include <string.h>
-#include "../../Arduino_Uno/msp_line_follow/robot_link.h"
+#include "../../Arduino_Uno/zumo_line_follow/robot_link.h"
 #include "console_tx.h"
 #ifdef ZUMO_BASE
 #include "spray_job.h"
@@ -20,6 +23,7 @@ static uint16_t waterRaw,waterAt,lastWaterSample;
 /* Two consecutive real P6.0 conversions must cross the threshold. The
  * zero-initialised telemetry value at boot is not a water measurement. */
 static WaterLevel tank;
+static Refill refill = { DEFAULT_REFILL_RAW, 0, REFILL_WATCH, 0 };
 /* A nonzero visit belongs only to the reverse run interrupted by DOCK.
  * Publish it after the Uno acknowledges STOP and reestablishes its link. */
 static uint32_t dockVisit;
@@ -28,8 +32,18 @@ static uint8_t dockReleaseDelay;
 static uint16_t dockCancelAt;
 static uint16_t dockClearAt;
 static uint8_t dockMode,dockClear;
-static void pumpOff(void) { P1OUT&=~PUMP_GATE_MASK; sprayJob.pump=0; }
-static void cancelSpray(void) { pumpOff(); sprayCancel(&sprayJob); }
+/* Clear the physical gate before clearing the software pump flag. Callable from the foreground
+ * or a cutoff interrupt. */
+static void pumpOff(void) {
+    P1OUT &= ~PUMP_GATE_MASK;
+    sprayJob.pump = 0;
+}
+/* De-energise the pump and discard the current camera job so a late continuation cannot restart
+ * it. */
+static void cancelSpray(void) {
+    pumpOff();
+    sprayCancel(&sprayJob);
+}
 #else
 #define cancelSpray() ((void)0)
 #endif
@@ -61,6 +75,8 @@ static void bridgeInit(void);
 static void bridgeService(void);
 #endif
 
+/* Append byte b to UART ring r from its interrupt. Record error bits or a full ring so the
+ * foreground can discard a partial message. */
 static void receive(Ring *r,uint8_t b,uint8_t error) {
     uint8_t next=(r->head+1u)&127u;
     if(error) {
@@ -71,16 +87,21 @@ static void receive(Ring *r,uint8_t b,uint8_t error) {
     else if(next==r->tail) { ++rxDrops; r->lost=1; }
     else { r->data[r->head]=b; r->head=next; }
 }
+/* Consume the oldest byte in ring r. Return -1 if the interrupt has supplied no new data. */
 static int pop(Ring *r) {
     uint8_t b;
     if(r->head==r->tail) return -1;
     b=r->data[r->tail]; r->tail=(r->tail+1u)&127u; return b;
 }
+/* Read and clear the loss flag in ring r atomically. A nonzero return invalidates the current
+ * frame. */
 static uint8_t takeLost(Ring *r) {
     uint8_t lost;
     __disable_interrupt(); lost=r->lost; r->lost=0; __enable_interrupt();
     return lost;
 }
+/* Send byte b on the Uno link when link is nonzero, otherwise queue it for console TX. Return
+ * zero on timeout or a full queue. */
 static uint8_t put(uint8_t link,uint8_t b) {
     uint16_t start=ticks;
     /* Status replies are long at 9600 baud. Queue them so obstacle service
@@ -101,13 +122,17 @@ static uint8_t put(uint8_t link,uint8_t b) {
     UCA0TXBUF=b;
     return 1;
 }
+/* Queue the zero-terminated status string s for UART1. Stop at the first full queue. */
 static void print(const char *s) { while(*s) if(!put(0,(uint8_t)*s++)) return; }
+/* Write unsigned 16-bit value n as decimal digits without allocating memory. */
 static void number(uint16_t n) {
     char digits[6]; uint8_t used=0;
     do { digits[used++]=(char)('0'+n%10u); n/=10u; } while(n);
     while(used) put(0,(uint8_t)digits[--used]);
 }
 #include "ultrasonic_hcsr04.h"
+/* Configure the gate, ADC12, clocks, UARTs, timers, button and sonar before allowing the first
+ * Uno handshake. */
 static void init(void) {
     WDTCTL=WDTPW|WDTHOLD;
 #ifdef ZUMO_BASE
@@ -150,6 +175,7 @@ static void init(void) {
     UCA0BR0=109; UCA0BR1=0; UCA0MCTL=UCBRS_2;
     UCA0CTL1&=~UCSWRST; UCA0IE=UCRXIE;
     /* UART0 remains configured between requests; framed parser resynchronises. */
+    /* 32,768 Hz ACLK gives a nominal 100 ms scheduler tick and 20 ms S2 debounce tick. */
     TA0CCR0=3277u-1u; TA0CCTL0=CCIE; TA0CTL=TASSEL__ACLK|MC__UP|TACLR;
     TA1CCR0=655u-1u; TA1CCTL0=0; TA1CTL=TASSEL__ACLK|MC__STOP|TACLR;
     sonarInit();
@@ -163,15 +189,21 @@ static void init(void) {
 #endif
 }
 #ifdef ZUMO_BASE
+/* Return true only when the last acknowledged Uno flags describe calibrated, forward line
+ * following. */
 static uint8_t zumoFollowing(void) {
     return (peerFlags&(RL_CAL|RL_MOVING|RL_CALIBRATING|RL_FAULT|RL_ZUMO_REVERSING))==(RL_CAL|RL_MOVING);
 }
+/* Return true for a calibrated, stationary Uno with no calibration or fault in progress. */
 static uint8_t zumoStopped(void) {
     return (peerFlags&(RL_CAL|RL_MOVING|RL_CALIBRATING|RL_FAULT|RL_ZUMO_REVERSING))==RL_CAL;
 }
 #endif
+/* Cancel automatic motion and the active spray job, clear the local run indication and queue a
+ * session-independent STOP. */
 static void stopRequested(void) {
 #ifdef ZUMO_BASE
+    refill.mode=REFILL_OFF; refill.timing=0;
     obstaclePaused=0;
     /* Let cached telemetry and the station's pump permit expire before a
      * local start after an interrupted dock visit. */
@@ -181,6 +213,8 @@ static void stopRequested(void) {
     cancelSpray();
     running=0; P4OUT&=~BIT7; queued=RL_STOP;
 }
+/* Process the newest sonar result. A near echo requests a resumable pause only during ordinary
+ * line following. */
 static void serviceObstacle(void) {
     sonarService();
     if(!motionBlocked()) return;
@@ -204,11 +238,18 @@ static void serviceObstacle(void) {
         stopRequested(); print("ULTRASONIC NEAR-OBSTACLE STOP REQUESTED\r\n");
     }
 }
+/* Translate the Uno button request code into a local command after checking link, obstacle and
+ * refill state. */
 static void userRequest(uint8_t request) {
     uint8_t op=0;
 #ifdef ZUMO_BASE
     if(dockVisit && request) { stopRequested(); return; }
     if(request && sprayActive(&sprayJob)) { stopRequested(); return; }
+    if(request==RL_USER_START && linked && !running && zumoStopped() && !motionBlocked() &&
+       !stopButton && !obstaclePaused && (refill.mode==REFILL_WAIT || tank.empty)) {
+        stopRequested();  /* Acknowledge the parked button with the tracks off. */
+        refill.mode=REFILL_WAIT; return;
+    }
 #endif
     if(!linked || running || queued || pending) return;
     if(request==RL_USER_WHITE) op=RL_WHITE;
@@ -223,6 +264,8 @@ static void userRequest(uint8_t request) {
         stopRequested(); print("START REFUSED: ULTRASONIC OBSTACLE NEAR\r\n");
     } else queued=op;
 }
+/* Map a numeric Uno response reason to its diagnostic text; unknown values remain visible as
+ * UNKNOWN. */
 static const char *reasonName(uint8_t reason) {
     switch(reason) {
     case RL_OK: return "OK";
@@ -244,6 +287,8 @@ static const char *reasonName(uint8_t reason) {
     }
 }
 #ifndef ZUMO_BASE
+/* Decode legacy sensor stability and polarity masks against the most recent Uno status for the
+ * bench console. */
 static const char *sensorName(uint8_t stable,uint8_t black) {
     if(!linked) return "UNKNOWN";
     if(!(peerFlags&RL_CAL)) return "NC";
@@ -252,6 +297,7 @@ static const char *sensorName(uint8_t stable,uint8_t black) {
 }
 #endif
 #ifdef ZUMO_BASE
+/* Print the full unsigned 32-bit visit or job value in decimal on the status UART. */
 static void printId(uint32_t value) {
     char digits[10]; uint8_t used=0;
     do { digits[used++]=(char)('0'+value%10ul); value/=10ul; } while(value);
@@ -259,6 +305,8 @@ static void printId(uint32_t value) {
 }
 #ifdef SUPERVISOR_ESP_UART
 /* Zero is reserved for an invalid or absent visit/job token. */
+/* Parse a nonzero decimal uint32 from text. Invalid characters, overflow and zero produce an
+ * invalid token. */
 static uint32_t parseToken(const char *text) {
     uint32_t value=0;
     if(*text<'1' || *text>'9') return 0;
@@ -271,6 +319,8 @@ static uint32_t parseToken(const char *text) {
 }
 #endif
 #endif
+/* Emit a snapshot of controller identity, acknowledged drive state, sonar, tank, job and pump
+ * command flags. */
 static void status(void) {
     print("STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=");
     print(linked?"READY":"SYNCING"); print(" RUN="); number(running);
@@ -293,8 +343,9 @@ static void status(void) {
     print(" READY="); number(PUMP_DRIVER_VERIFIED);
     print(" WATER="); number(waterRaw);
     print(" DOCK="); printId((dockStopAck && linked && !running && zumoStopped())?dockVisit:0);
-    print(" WET="); number(!tank.empty && (uint16_t)(ticks-lastWaterSample)<WATER_STALE_TICKS && waterRaw>WATER_LOW_THRESHOLD);
+    print(" WET="); number(!tank.empty && (uint16_t)(ticks-lastWaterSample)<WATER_STALE_TICKS && waterRaw>=refill.minimum);
     print(" DCLEAR="); number(dockClear);
+    print(" RFMIN="); number(refill.minimum);
 #endif
 #ifdef SUPERVISOR_ESP_UART
     print(" BRIDGE=ESP_UART_V1\r\n");
@@ -305,6 +356,8 @@ static void status(void) {
 #ifdef SUPERVISOR_ESP_UART
 /* Wi-Fi requests status, STOP or a bounded MSP-owned target job.
  * Positive IDs correlate replies; malformed/overflow IDs never execute. */
+/* Handle one complete NET request from the gateway. Return zero for other input so the local
+ * console parser can handle it. */
 static uint8_t netCommand(const char *line) {
     const char *p=line,*idStart; uint32_t id=0; uint8_t digits=0;
     if(strncmp(p,"NET ",4)) return 0;
@@ -324,6 +377,18 @@ static uint8_t netCommand(const char *line) {
     else if(!strcmp(p,"SONAR")) sonarReport();
     else if(!strcmp(p,"STOP")) { stopRequested(); print("STOP REQUESTED\r\n"); }
 #ifdef ZUMO_BASE
+    else if(!strncmp(p,"RFMIN ",6)) {
+        uint32_t minimum=parseToken(p+6);
+        if(minimum && minimum<=REFILL_DISABLED && linked && !running && zumoStopped() &&
+           !queued && (!pending || pendingPacket.type==RL_STATUS) && !dockVisit && !sprayActive(&sprayJob)) {
+            if(refill.minimum!=minimum) {
+                refill.minimum=(uint16_t)minimum; refill.timing=0;
+                if(refill.mode==REFILL_WAIT) refill.mode=REFILL_WATCH;
+                tank.consecutive=0;
+            }
+            print("RFMIN ACCEPTED\r\n");
+        } else print("RFMIN REFUSED\r\n");
+    }
     else if(!strcmp(p,"APPROACH")) {
         dockMode=1; dockClearAt=ticks; dockClear=!dockVisit;
         print("APPROACH RECEIVED\r\n");
@@ -342,7 +407,7 @@ static uint8_t netCommand(const char *line) {
             print(dockVisit==visit?"DOCK ACCEPTED\r\n":"DOCK REFUSED\r\n");
         } else if(!arrival && visit && visit==dockVisit && dockStopAck && linked && !running &&
                   zumoStopped() && !queued && (!pending || pendingPacket.type==RL_STATUS) &&
-                  !tank.empty && waterRaw>WATER_LOW_THRESHOLD && (uint16_t)(ticks-lastWaterSample)<WATER_STALE_TICKS &&
+                  !tank.empty && waterRaw>=refill.minimum && (uint16_t)(ticks-lastWaterSample)<WATER_STALE_TICKS &&
                   !motionBlocked() && !stopButton && !sprayActive(&sprayJob)) {
             dockVisit=0; dockStopAck=0; queued=RL_START; print("DEPART ACCEPTED\r\n");
         } else print(arrival?"DOCK REFUSED\r\n":"DEPART REFUSED\r\n");
@@ -370,6 +435,7 @@ static uint8_t netCommand(const char *line) {
 }
 #endif
 #ifndef SUPERVISOR_ESP_UART
+/* List the commands supported by this firmware profile on its status UART. */
 static void help(void) {
     print("ROBOT SUPERVISOR V2 | 9600 baud\r\n");
 #ifdef ZUMO_BASE
@@ -384,6 +450,8 @@ static void help(void) {
     print("FLAGS: CAL=1 LBLACK=2 RBLACK=4 FOLLOW=8 FAULT=16 LSTABLE=32 RSTABLE=64 CALIBRATING=128\r\n");
 }
 #endif
+/* Dispatch the completed UART1 line in usbLine. Motion requests pass through the same scheduler
+ * as local control. */
 static void command(void) {
 #ifndef SUPERVISOR_ESP_UART
     uint8_t op=0;
@@ -421,6 +489,8 @@ static void command(void) {
     queued=op; print("QUEUED "); number(op); print("\r\n");
 #endif
 }
+/* Assemble bounded UART1 lines from the receive ring and discard damaged or overlong input
+ * through its terminator. */
 static void readUsb(void) {
     int c; uint8_t budget=64;
     if(takeLost(&usbRx)) {
@@ -439,15 +509,31 @@ static void readUsb(void) {
         }
     }
 }
+/* Validate command op against current interlocks, encode the session and sequence and start its
+ * reply timeout. */
 static void sendRequest(uint8_t op) {
     uint8_t b[RL_SIZE],i;
 #ifdef ZUMO_BASE
+    if(op==RL_START && refill.mode==REFILL_START &&
+       (!linked || !zumoStopped() || waterRaw<refill.minimum ||
+        (uint16_t)(ticks-lastWaterSample)>=WATER_STALE_TICKS || sprayActive(&sprayJob) || obstaclePaused)) {
+        stopRequested(); return;
+    }
+    if(op==RL_START || op==RL_ZUMO_CALIBRATE) { refill.mode=REFILL_OFF; refill.timing=0; }
     if(op==RL_START && tank.empty) {
         stopRequested(); print("START REFUSED: TANK EMPTY\r\n"); return;
     }
-    /* Refill changes direction only inside an active, supervised reverse. */
-    if(op==RL_KEEP && (peerFlags&RL_ZUMO_REVERSING))
-        op=tank.empty?RL_ZUMO_REVERSE:RL_ZUMO_REFILLED;
+    if(op==RL_KEEP && (peerFlags&RL_ZUMO_REVERSING)) {
+        if(!tank.empty) {
+            uint8_t refilling=linked && running && !stopButton && !motionBlocked() &&
+                !dockVisit && (!dockMode || dockClear) && !sprayActive(&sprayJob) &&
+                (uint16_t)(ticks-lastWaterSample)<WATER_STALE_TICKS;
+            stopRequested();
+            if(refilling) refill.mode=REFILL_WAIT;
+            return;
+        }
+        op=RL_ZUMO_REVERSE;
+    }
     if(op==RL_ZUMO_REFILLED && (tank.empty || (uint16_t)(ticks-lastWaterSample)>=WATER_STALE_TICKS ||
        (dockMode && !dockClear) ||
        !linked || !running || !(peerFlags&RL_ZUMO_REVERSING) || stopButton ||
@@ -484,6 +570,8 @@ static void sendRequest(uint8_t op) {
         print("LINK TRANSMIT FAILED; STOPPING\r\n"); return;
     }
 }
+/* Apply the Uno reply p only to the outstanding request. Acknowledgements advance the spray,
+ * dock and drive states. */
 static void response(const RlPacket *p) {
     uint8_t op=pendingPacket.type;
 #ifdef ZUMO_BASE
@@ -556,6 +644,8 @@ static void response(const RlPacket *p) {
     }
     if(op==RL_STATUS) userRequest(p->detail);
 }
+/* Parse received Uno frames, expire unanswered requests and give STOP priority over the next
+ * heartbeat or status poll. */
 static void serviceLink(void) {
     int c,result; uint8_t budget=64,op; RlPacket p;
     if(takeLost(&linkRx)) {
@@ -601,14 +691,17 @@ static void serviceLink(void) {
 #include "supervisor_i2c.h"
 #endif
 #ifdef ZUMO_BASE
+/* Consume completed P6.0 conversions. Debounce empty readings and time a qualified refill before
+ * queuing forward motion. */
 static void serviceWater(void) {
     if(dockClear && (uint16_t)(ticks-dockClearAt)>=40u) dockClear=0;
     if(dockReleaseDelay && (uint16_t)(ticks-dockCancelAt)>=70u) dockReleaseDelay=0;
     if(ADC12IFG&BIT0) {
-        waterRaw=ADC12MEM0;
+        if((uint16_t)(ticks-lastWaterSample)>=WATER_STALE_TICKS) refill.timing=0;
+        waterRaw=ADC12MEM0;  /* Use the completed conversion, including a valid zero reading. */
         ADC12IFG&=~BIT0;
         lastWaterSample=ticks;
-        if(waterBecameEmpty(&tank,waterRaw)) {
+        if(waterBecameEmpty(&tank,waterRaw,refill.minimum)) {
             if(linked && running && zumoFollowing() && !queued &&
                (!pending || pendingPacket.type==RL_KEEP) && !motionBlocked() &&
                !stopButton && !sprayActive(&sprayJob)) {
@@ -617,7 +710,22 @@ static void serviceWater(void) {
                       queued==RL_START || queued==RL_ZUMO_PAUSE ||
                       (pending && (pendingPacket.type==RL_START || pendingPacket.type==RL_ZUMO_PAUSE)) ||
                       (running && zumoFollowing())) {
+                uint8_t waterStoppedRun=sprayActive(&sprayJob) && !stopButton && !motionBlocked();
                 stopRequested();
+                if(waterStoppedRun) refill.mode=REFILL_WAIT;
+            }
+        }
+        if(refill.mode==REFILL_WATCH && linked && !running && zumoStopped() && !queued &&
+           !dockVisit && !obstaclePaused && !sprayActive(&sprayJob) &&
+           refill.minimum!=REFILL_DISABLED && waterRaw<refill.minimum) refill.mode=REFILL_WAIT;
+        if(refill.mode==REFILL_WAIT) {
+            if(waterRaw<refill.minimum || !linked || running || !zumoStopped() ||
+               dockVisit || dockReleaseDelay || motionBlocked() || stopButton ||
+               obstaclePaused || sprayActive(&sprayJob) || queued==RL_STOP) refill.timing=0;
+            else if(!refill.timing) { refill.timing=1; refill.since=ticks; }
+            else if((uint16_t)(ticks-refill.since)>=30u && !tank.empty && !queued &&
+                    (!pending || pendingPacket.type==RL_STATUS)) {
+                refill.mode=REFILL_START; queued=RL_START;
             }
         }
     }
@@ -626,6 +734,8 @@ static void serviceWater(void) {
     }
 }
 
+/* Advance the stop, settle and pulse sequence. Recheck the deadline and stop input before the
+ * final GPIO write. */
 static void serviceSpray(void) {
     /* A healthy pending STATUS does not invalidate a stopped grant. */
     uint8_t ready=linked && !running && !queued && zumoStopped() &&
@@ -643,6 +753,8 @@ static void serviceSpray(void) {
     __enable_interrupt();
 }
 #endif
+/* Service inputs and jobs cooperatively. Enter LPM0 only after an interrupt-protected check for
+ * pending work. */
 int main(void) {
     init(); print("ROBOT SUPERVISOR V2; STOPPED; TYPE HELP\r\n");
 #if defined(IR_DRIVING_TEST) && IR_DRIVING_TEST
@@ -671,9 +783,12 @@ int main(void) {
            || bridgePending
 #endif
         ) __enable_interrupt();
+        /* Enable interrupts and enter LPM0 together so an arriving byte cannot be missed. */
         else __bis_SR_register(LPM0_bits|GIE);
     }
 }
+/* Receive one UART1 byte or transmit from the console queue. RX wakes the foreground to
+ * interpret complete lines. */
 #pragma vector=USCI_A1_VECTOR
 __interrupt void usb_uart_isr(void) {
     int byte;
@@ -689,10 +804,13 @@ __interrupt void usb_uart_isr(void) {
     default: break;
     }
 }
+/* Capture a UART0 byte and its error flags from the Uno, then wake the foreground frame parser. */
 #pragma vector=USCI_A0_VECTOR
 __interrupt void link_uart_isr(void) {
     if(UCA0IV==2) { uint8_t err=UCA0STAT&(UCRXERR|UCFE|UCOE|UCPE|UCBRK),b=UCA0RXBUF; receive(&linkRx,b,err); __bic_SR_register_on_exit(LPM0_bits); }
 }
+/* Advance the 100 ms system tick and remove pump drive at the deadline even if foreground
+ * processing is delayed. */
 #pragma vector=TIMER0_A0_VECTOR
 __interrupt void heartbeat_isr(void) {
     static uint8_t step;
@@ -704,6 +822,8 @@ __interrupt void heartbeat_isr(void) {
     if(step==0u || step==2u) P1OUT|=BIT0; else P1OUT&=~BIT0;
     __bic_SR_register_on_exit(LPM0_bits);
 }
+/* Cut the gate on the first S2 press, latch a stop request and start Timer_A1 to qualify the
+ * release. */
 #pragma vector=PORT1_VECTOR
 __interrupt void button_isr(void) {
     if(P1IFG&BIT1) {
@@ -715,9 +835,59 @@ __interrupt void button_isr(void) {
         stopButton=1; __bic_SR_register_on_exit(LPM0_bits); // stop on first falling edge
     }
 }
+/* Re-arm S2 after two consecutive released samples so contact bounce cannot issue another press. */
 #pragma vector=TIMER1_A0_VECTOR
 __interrupt void button_release_isr(void) {
     if(P1IN&BIT1) {
         if(++buttonDown>=2u) { TA1CCTL0=0; TA1CTL=TASSEL__ACLK|MC__STOP|TACLR; P1IFG&=~BIT1; P1IE|=BIT1; }
     } else buttonDown=0;
 }
+
+/*
+ * Individual project reflections from the final team report (November 2026).
+ *
+ * Liong Yan Wei
+ * "One major challenge was the water-level sensor: connecting its analogue
+ * output directly to a digital input produced unreliable wet/dry detection.
+ * Introducing an LM339N comparator provided a defined switching threshold and
+ * a digital signal for the MSP430. However, residual water on the sensing
+ * tracks remained a limitation because it could delay the detection of low
+ * water."
+ * "For pump control, hardware timers supported the three-second docking delay
+ * and ten-second pumping limit, while sensor checks allowed pumping to stop
+ * when the robot undocked or station water became low."
+ *
+ * Pyie Sone Khaing Min
+ * "When the blue marker stopped the car but the pump stayed silent, I worked
+ * with my team to trace the request to the MSP430. We checked the flashed pin
+ * assignment against the gate wire on P1.6 and repeated the pump test after
+ * changing the pull-down resistor. This connected the sensor decisions we
+ * studied in CEG2001 with the GPIO and timer behaviour from CEG2002."
+ *
+ * Pyae Phyo Thu
+ * "One of the main challenges was identifying why the pump failed to operate
+ * despite successful camera detection. Through firmware verification,
+ * multimeter measurements and circuit testing, we identified incorrect GPIO
+ * assignments and inconsistent MOSFET startup behaviour. Replacing the gate
+ * pull-down resistor improved the observed pump operation."
+ * "This project strengthened my understanding of sensor interfacing, transistor
+ * switching, common-ground connections, UART communication and the relationship
+ * between embedded software and hardware."
+ *
+ * Chen Fan Fung
+ * "One challenge I vividly remember was trying to resolve why the IR sensors
+ * worked badly on my black tape. It occurred to me that the reflection on the
+ * tape was a crucial problem so we resolved it by implementing darker matte
+ * tape. Although we did change to the lab road map in the end, it was
+ * definitely memorable to me because we took several hours debugging the
+ * codes, stabilising the IR."
+ *
+ * Pun Zhi Hong
+ * "I also wrote the assembly guide and wiring handover that my teammate used
+ * to wire and program the dock. The main challenge was working apart from him
+ * while the design kept changing. I had to keep updating the drawings, parts
+ * list and report to match what was built, and I learned that a clear written
+ * handover saves more time."
+ * "CEG2002 came in through the MSP430 timers, interrupts and UART that run the
+ * refill program."
+ */

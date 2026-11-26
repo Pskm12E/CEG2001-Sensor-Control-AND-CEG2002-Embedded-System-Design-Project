@@ -18,18 +18,22 @@ struct Record {
     uint16_t crc;
 };
 
+/* Return the EEPROM byte offset of calibration slot A or B from its selector tag. */
 inline int address(uint8_t slot) {
     return slot == slotA ? 1 : 1 + sizeof(Record);
 }
 
+/* Invalidate the EEPROM selector so the next start requires a new calibration sweep. */
 inline void clear() {
     EEPROM.update(0, 0xff);
 }
 
+/* Compute the CRC over the stored min/max readings in record, excluding its CRC field. */
 inline uint16_t checksum(const Record &record) {
     return rlCrc(reinterpret_cast<const uint8_t*>(&record), offsetof(Record, crc));
 }
 
+/* Check all six min/max pairs in record for a nonempty span inside the sensor timing range. */
 inline bool usable(const Record &record) {
     for (uint8_t i = 0; i < sensorCount; ++i) {
         if (record.minimum[i] >= record.maximum[i] || record.maximum[i] > sensorTimeout)
@@ -38,6 +42,8 @@ inline bool usable(const Record &record) {
     return true;
 }
 
+/* Write the new reflectance calibration to the inactive EEPROM slot before switching the
+ * selector. */
 inline bool save(const ZumoReflectanceSensorArray &sensors) {
     if (!sensors.calibratedMinimumOn || !sensors.calibratedMaximumOn) return false;
     Record record;
@@ -54,6 +60,7 @@ inline bool save(const ZumoReflectanceSensorArray &sensors) {
     return true;
 }
 
+/* Restore all six sensor ranges only when the selected record passes CRC and range checks. */
 inline bool restore(ZumoReflectanceSensorArray &sensors) {
     const uint8_t slot = EEPROM.read(0);
     if (slot != slotA && slot != slotB) return false;

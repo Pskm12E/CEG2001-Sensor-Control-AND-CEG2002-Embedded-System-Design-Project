@@ -2,13 +2,14 @@
 
 The MSP430F5529 grants calibration and following to the Uno, measures obstacle
 range, samples the water probe on P6.0 and controls the three-second pump pulse
-on P1.6. Build the ESP-UART/Zumo profile with the pump driver enabled for
-`V2_Working`. [Build flags, wiring and spray sequence](PUMP_SETUP.md)
+on P1.6. While parked after a low tank reading, the supervisor requests forward
+motion after three seconds above the calibrated 60% threshold. A manual stop
+cancels the pending departure. [Build flags, wiring and spray sequence](PUMP_SETUP.md)
 
 ## Current sonar policy
 
 Automatic resume requires the pause acknowledgement introduced in Uno OG5
-and supported by the release's OG6 sketch.
+and supported by the current OG9 sketch.
 
 | Setting | Value |
 | --- | --- |
@@ -41,7 +42,7 @@ resume grant. A refused or timed-out pause falls back to a regular STOP.
 
 Use [the Zumo guide](../../Arduino_Uno/zumo_line_follow/README.md) for complete
 divider orientation and operation. The matching Uno source is **zumo_line_follow**,
-firmware **OG6**. The pump driver connects to P1.6.
+firmware **OG9**. The pump driver connects to P1.6.
 
 ```powershell
 ./Car/MSP430/build_robot_supervisor.ps1 -EspUart -Zumo -PumpDriverVerified -SpraySeconds 3
@@ -54,7 +55,7 @@ Commands run from the repo root and do not upload. The build produces ignored
 `Debug_wifi_zumo_pump/robot_supervisor.out`, using TI compiler 21.6.3.LTS. CCS GUI
 requires `SUPERVISOR_ESP_UART`, `ZUMO_BASE=1` and `PUMP_DRIVER_VERIFIED=1`; the old IR-only sonar bypass is
 rejected for Zumo. The shared protocol header remains outside this project in
-`Car/Arduino_Uno/msp_line_follow/robot_link.h`; retain the repository layout.
+`Car/Arduino_Uno/zumo_line_follow/robot_link.h`; retain the repository layout.
 
 ## Diagnostics and installed status
 
@@ -80,9 +81,7 @@ Cleanup builds do not replace installed firmware. The known installed `.out`
 and matching map are retained locally under ignored
 `build-installed-working-2026-11-17/`; use matching symbols for later debugging.
 
-[Previous L298N supervisor guide](LEGACY_L298N.md) and
-[12 November ultrasonic test history](ULTRASONIC_SETUP.md) retain dated results
-and old pins. They do not describe the current Zumo operating procedure.
+See the [current sonar wiring and operating guide](ULTRASONIC_SETUP.md).
 
 ## UART idle-restart correction — 18 November 2026
 

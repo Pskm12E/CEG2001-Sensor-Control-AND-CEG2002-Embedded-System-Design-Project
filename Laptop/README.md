@@ -8,11 +8,9 @@
 | [Tools/Communication](Tools/Communication/README.md) | Shared radio configuration, protocol library, builders, consoles and checks |
 | [Documentation](Documentation/diagrams/README.md) | Wiring notes and diagram gallery |
 | [Artifacts](Artifacts/README.md) | Saved diagrams, historical PDF and dated test reports |
-| [Deployment](Deployment/README.md) | Hosted-preview instructions; not required for local robot operation |
-| Archive | Superseded desk-side ESP32 gateway |
 
 Start the local app with [Start Robot.cmd](../Start%20Robot.cmd) at the project root.
 It opens the dashboard, connects the desk Pico and starts wireless video.
 [Dashboard/Start Dashboard.cmd](Dashboard/Start%20Dashboard.cmd) runs the same sequence.
 The live route is camera/car ESP32 → desk Pico → USB → local dashboard.
-The laptop can retain its ordinary Wi-Fi/internet connection.
+Open [the local dashboard](http://127.0.0.1:8765) on this laptop. The robot uses its own private Wi-Fi network.

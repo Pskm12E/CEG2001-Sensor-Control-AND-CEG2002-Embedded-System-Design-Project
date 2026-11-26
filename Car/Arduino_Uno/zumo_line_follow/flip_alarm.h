@@ -6,6 +6,7 @@
 
 class FlipAlarm {
 public:
+    /* Restore the alarm setting and initialise the shield accelerometer as needed. */
     void begin() {
         // Keep the existing mute byte across upgrades. An erased reference
         // stays unknown until the operator calibrates with the tracks down.
@@ -17,6 +18,7 @@ public:
         Wire.setWireTimeout(3000, true);
     }
 
+    /* Apply value as the flip-alarm preference and persist it for the next power cycle. */
     void setEnabled(bool value) {
         if (enabled == value) return;
         enabled = value;
@@ -27,6 +29,8 @@ public:
         nextSample = millis();
     }
 
+    /* Sample gravity at time now, establish orientation when calibratingAtRest permits it and
+     * schedule the inversion alarm. */
     void service(uint32_t now, bool calibratingAtRest) {
         if (!calibratingAtRest) levelSamples = 0;
         if ((!enabled && !calibratingAtRest) || int32_t(now - nextSample) < 0) return;
@@ -98,6 +102,7 @@ private:
     uint8_t consecutive = 0;
     uint8_t levelSamples = 0;
     int8_t candidateSign = 0;
+    /* Use the resting Z-axis sign to record the upright direction of this installed shield. */
     void learnUpright() {
         // Accept approximately one g on Z for consecutive parked readings.
         const int32_t magnitude = z < 0 ? -int32_t(z) : int32_t(z);
@@ -119,6 +124,7 @@ private:
     uint32_t nextSample = 0;
     uint32_t nextBeep = 0;
 
+    /* Reset the inversion state and silence the buzzer. */
     void clearAlarm() {
         if (flipped) buzzer.stopPlaying();
         flipped = false;

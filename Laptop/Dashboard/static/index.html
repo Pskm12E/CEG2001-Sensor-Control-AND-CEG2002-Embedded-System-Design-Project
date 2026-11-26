@@ -15,7 +15,7 @@
   <header class="topbar">
     <div class="shell topbar-inner">
       <a class="brand" href="/">Plant robot monitor</a>
-      <span id="deployment-mode" class="badge">Local bench</span>
+      <span class="badge">Local laptop</span>
     </div>
   </header>
   <main id="workspace" class="shell" tabindex="-1">
@@ -65,7 +65,8 @@
             <div><dt>Sensor reading</dt><dd id="water-raw">—</dd></div>
           </dl>
           <meter id="water-meter" min="0" max="100" value="0" aria-labelledby="water-level-label" hidden></meter>
-          <details id="water-calibration" hidden>
+          <p id="water-departure" class="helper" hidden></p>
+          <details id="water-calibration">
             <summary>Calibrate water level</summary>
             <p id="water-calibration-instructions" class="helper">Keep the probe mounted in the tank. Record a steady reading with the tank empty and another at your normal full level.</p>
             <div class="button-row" aria-describedby="water-calibration-instructions">
@@ -76,6 +77,13 @@
             <p id="water-points" class="helper">Empty — · Full —</p>
             <p id="water-calibration-message" class="helper" role="status"></p>
           </details>
+        </section>
+        <section class="water-panel" aria-labelledby="dock-title">
+          <div class="section-heading"><h3 id="dock-title">Docking station</h3><span id="dock-status" class="badge" role="status">Waiting for station</span></div>
+          <dl class="detail-readings"><div><dt>Station refill pump</dt><dd id="dock-pump">—</dd></div>
+            <div><dt>Refill cycle</dt><dd id="dock-phase">—</dd></div></dl>
+          <button id="dock-find" type="button" disabled>Find station USB</button>
+          <p id="dock-message" class="helper" role="status" hidden></p>
         </section>
         <form id="connect-form" class="connection-form">
           <div class="field"><label for="port-select">Desk Pico USB port</label><select id="port-select" name="port" aria-describedby="connection-message connection-error" required><option value="">Loading ports…</option></select></div>

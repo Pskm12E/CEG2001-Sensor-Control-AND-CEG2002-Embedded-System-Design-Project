@@ -67,12 +67,11 @@ class TargetJobTests(unittest.TestCase):
         self.assertTrue(b.action_pending.is_set())
 
     def test_stale_foreign_or_old_firmware_never_queues_a_job(self):
-        for kind in ("stale", "old-pico", "old-esp", "hosted", "not-driving"):
+        for kind in ("stale", "old-pico", "old-esp", "not-driving"):
             b = linked()
             if kind == "stale": b.last_seen_monotonic -= 5
             elif kind == "old-pico": b.target_supported = False
             elif kind == "old-esp": b.remote["firmware"] = "DIRECT_WIFI_V1"
-            elif kind == "hosted": b.hosted = True
             else: receive(b, running=False)
             b.observe_target(CONFIRMED)
             self.assertFalse(b.action_pending.is_set(), kind)

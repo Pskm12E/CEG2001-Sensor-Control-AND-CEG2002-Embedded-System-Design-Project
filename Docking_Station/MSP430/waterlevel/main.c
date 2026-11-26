@@ -24,6 +24,7 @@
  *
  * IMPLEMENTATION LIMITS:
  * The laptop renews a per-visit HOLD only from the stopped car acknowledgement.
+ * FULL for the held visit ends refill above the car's calibrated 60% threshold.
  * No ADC, keypad, manual stop or low-power sleep is implemented in this version.
  * An externally pulled-up, disconnected comparator signal can appear water-OK.
  * Residual wetness can delay the physical low-water signal; code cannot fix this.
@@ -67,14 +68,17 @@ enum DockPhase { BOOT, CLEAR, ARRIVAL, SETTLE, FILL, DONE, FAULT };
 static volatile enum DockPhase phase = BOOT;
 static volatile unsigned int visit, hold_tick;
 static volatile unsigned char hold_valid;
+static volatile unsigned char refill_satisfied;
 #define HOLD_TIMEOUT_TICKS 25u
+static unsigned char hold_fresh(void);
 
 /* UART RX is interrupt-driven so LCD writes cannot lose a multi-byte grant. */
+/* Read the UART RX byte from UCA1. Only a complete HOLD or FULL line with the current visit
+ * number can change the pump permit. */
 #pragma vector=USCI_A1_VECTOR
 __interrupt void dock_rx_isr(void)
 {
-    static const char prefix[] = "HOLD ";
-    static unsigned char length, invalid;
+    static unsigned char length, invalid, full_command;
     static unsigned int id;
     unsigned char error, c;
     if (UCA1IV != 2) return;
@@ -85,13 +89,18 @@ __interrupt void dock_rx_isr(void)
         if (!invalid && length > 5 && id && id == visit &&
             (phase == ARRIVAL || phase == SETTLE || phase == FILL) &&
             !(P2IN & HALL_BIT)) {
-            hold_tick = system_ticks;
-            hold_valid = 1;
+            if (!full_command) {
+                hold_tick = system_ticks;
+                hold_valid = 1;
+            } else if (hold_fresh() && robot_docked && (phase == SETTLE || phase == FILL)) {
+                refill_satisfied = 1;
+            }
         }
         length = invalid = 0;
         id = 0;
     } else if (!invalid) {
-        if (length < 5) invalid = c != prefix[length];
+        if (length == 0) full_command = c == 'F';
+        if (length < 5) invalid = c != (full_command ? "FULL " : "HOLD ")[length];
         else if (length >= 10 || c < '0' || c > '9' ||
                  id > 6553u || (id == 6553u && c > '5')) invalid = 1;
         else id = id * 10u + c - '0';
@@ -99,11 +108,13 @@ __interrupt void dock_rx_isr(void)
     }
 }
 
+/* Return true while the current visit's hold permit is younger than its timeout in 100 ms ticks. */
 static unsigned char hold_fresh(void)
 {
     return hold_valid && (unsigned int)(system_ticks - hold_tick) < HOLD_TIMEOUT_TICKS;
 }
 
+/* Transmit the Hall input, commanded pump output, visit number and named phase to the laptop. */
 static void report_phase(void)
 {
     static const char *const names[] = {"BOOT", "CLEAR", "ARRIVAL", "SETTLE", "FILL", "DONE", "FAULT"};
@@ -111,6 +122,11 @@ static void report_phase(void)
     unsigned int n = visit, i = 5;
     digits[i] = 0;
     do { digits[--i] = (char)('0' + n % 10); n /= 10; } while (n);
+    /* Report the actual Hall input even when the station boots already occupied.
+     * Keep the original DOCK1 phase line for existing laptop installations. */
+    uart_send("HALL1 ");
+    uart_send((P2IN & HALL_BIT) ? "0" : (robot_docked ? "1" : "?"));
+    uart_send(pump_running ? " PUMP=1\n" : " PUMP=0\n");
     uart_send("DOCK1 "); uart_send(digits+i); uart_send(" "); uart_send(names[phase]); uart_send("\n");
 }
 
@@ -134,7 +150,8 @@ static unsigned int ticks_now(void)
 
 /* pump_off()
  * Purpose: Remove the driver command and stop the pump deadline timer.
- * Parameters: reason: 1 = timeout, 2 = dock lost, 3 = low station water.
+ * Reasons: 1 = timeout, 2 = dock lost, 3 = low station water, 4 = hold lost,
+ * 5 = car refill threshold reached.
  * Returns/effects: None; updates P1.4, Timer A1, pump_running and a pending log event.
  * Operation: Callable from an ISR or foreground. GPIO is cleared before bookkeeping; UART is
  *   deferred to the foreground.
@@ -180,6 +197,7 @@ __interrupt void sensor_tick_isr(void)
         /* Raw comparator LOW means insufficient station water: stop on this tick. */
         else if (!(P3IN & WATER_OK_BIT)) pump_off(3);
         else if (!hold_fresh()) pump_off(4);
+        else if (refill_satisfied) pump_off(5);
     }
     tick_pending = 1; /* Request sensor/control/display processing in the foreground. */
 }
@@ -195,10 +213,10 @@ static void pump_test_update(void)
     unsigned char cutoff = pump_stop_event;
     if (cutoff) {
         pump_stop_event = 0;
-        phase = cutoff == 1 ? DONE : FAULT;
+        phase = (cutoff == 1 || cutoff == 5) ? DONE : FAULT;
     }
     if (P2IN & HALL_BIT) {
-        hold_valid = dock_waiting = dock_wait_seconds = 0;
+        refill_satisfied = hold_valid = dock_waiting = dock_wait_seconds = 0;
         if (absent_count < 5) ++absent_count;
         if (absent_count >= 5) phase = CLEAR;
         else if (phase != CLEAR && phase != BOOT) phase = FAULT;
@@ -220,10 +238,13 @@ static void pump_test_update(void)
         if (phase == SETTLE) {
             unsigned int elapsed = (unsigned int)(now - dock_wait_start);
             if (!hold_fresh() || !water_known || reservoir_low || !(P3IN & WATER_OK_BIT)) phase = FAULT;
+            else if (refill_satisfied) phase = DONE;
             else if (elapsed < 30u) dock_wait_seconds = (unsigned char)((30u-elapsed+9u)/10u);
             else {
                 __disable_interrupt();
-                if (hold_fresh() && !(P2IN & HALL_BIT) && (P3IN & WATER_OK_BIT)) {
+                if (!hold_fresh() || (P2IN & HALL_BIT) || !(P3IN & WATER_OK_BIT)) phase = FAULT;
+                else if (refill_satisfied) phase = DONE; /* FULL may have arrived just before interrupts were masked. */
+                else {
                     TA1CTL = MC_0;
                     TA1CCR0 = (unsigned int)(PUMP_TIMER_COUNTS-1UL);
                     TA1CCTL0 = CCIE;
@@ -231,7 +252,7 @@ static void pump_test_update(void)
                     pump_running = 1;
                     P1OUT |= BIT4;
                     phase = FILL;
-                } else phase = FAULT;
+                }
                 __enable_interrupt();
             }
             if (phase != SETTLE) dock_waiting = dock_wait_seconds = 0;

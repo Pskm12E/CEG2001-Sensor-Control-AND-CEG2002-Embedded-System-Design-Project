@@ -1,6 +1,7 @@
 $ErrorActionPreference='Stop'
 $projectRoot=[System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../..'))
-$python=Join-Path $env:USERPROFILE '.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe'
+. (Join-Path $PSScriptRoot 'build_env.ps1')
+$python=Get-RobotPython
 & $python (Join-Path $PSScriptRoot 'configure.py')
 if($LASTEXITCODE) { throw 'Network configuration failed' }
 $picoRoot=Join-Path $env:USERPROFILE '.pico-sdk'

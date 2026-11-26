@@ -15,8 +15,12 @@ struct Receiver {
     uint32_t bodyChecksum=0,bodySequence=0;
     uint32_t checksum=0,sequence=0,frames=0,dropped=0;
     bool ready=false,bad=false;
+    /* Read one unsigned 32-bit field from the little-endian frame header at p. */
     static uint32_t le(const uint8_t *p) { return uint32_t(p[0])|(uint32_t(p[1])<<8)|(uint32_t(p[2])<<16)|(uint32_t(p[3])<<24); }
+    /* Discard any partial camera header or JPEG and clear ready/error flags on reconnect. */
     void reset() { headerUsed=bodyUsed=bodyLength=length=0;ready=bad=false; }
+    /* Accept size bytes at data across arbitrary TCP splits. Publish the completed JPEG by
+     * exchanging buffers. */
     void feed(const uint8_t *data,size_t size) {
         while(size && !bad) {
             if(headerUsed<16) {

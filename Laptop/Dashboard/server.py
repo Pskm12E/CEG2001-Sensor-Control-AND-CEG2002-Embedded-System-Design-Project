@@ -1,4 +1,4 @@
-"""Laptop-only robot telemetry and XIAO camera dashboard; optional hosted preview."""
+"""Laptop-only robot telemetry and XIAO camera dashboard."""
 from __future__ import annotations
 
 import argparse
@@ -11,8 +11,7 @@ from urllib.parse import urlsplit
 from urllib.request import urlopen
 import webbrowser
 
-from desk_bridge import Bridge, ALLOWED_COMMANDS, parse_status, available_ports, timestamp, serial, list_ports
-from camera_usb import Camera, available_camera_ports
+from desk_bridge import Bridge, available_ports
 from blue_detector import DetectionVideo
 
 ROOT = Path(__file__).resolve().parent
@@ -28,13 +27,12 @@ class DashboardServer(ThreadingHTTPServer):
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
         super().server_bind()
 
-    def __init__(self, address, bridge, public_origin=None):
+    def __init__(self, address, bridge):
+        if address[0] != "127.0.0.1":
+            raise ValueError("The dashboard must bind to 127.0.0.1.")
         self.bridge = bridge
-        self.public_origin = public_origin
         self.camera = bridge.video
-        self.detector = DetectionVideo(self.camera, None if public_origin else bridge.observe_target)
-        if public_origin and not bridge.hosted:
-            raise ValueError("Public hosting requires a read-only bridge.")
+        self.detector = DetectionVideo(self.camera, bridge.observe_target)
         super().__init__(address, Handler)
 
 
@@ -42,8 +40,6 @@ class Handler(BaseHTTPRequestHandler):
     server_version = "RobotBench/1.0"
 
     def _camera_stream(self, detection=False):
-        if self.server.public_origin:
-            return self._reply(403, {"error": "Wireless camera relay is available only in the local dashboard."})
         camera = self.server.detector if detection else self.server.camera
         state = camera.state()
         if not state["connected"]:
@@ -83,9 +79,6 @@ class Handler(BaseHTTPRequestHandler):
 
     def _local_request(self):
         allowed = {f"localhost:{self.server.server_port}", f"127.0.0.1:{self.server.server_port}"}
-        if self.server.public_origin:
-            host = urlsplit(self.server.public_origin).netloc
-            allowed.update({host, f"{host}:443"})
         return self.headers.get("Host", "").lower() in allowed
 
     def _reply(self, code, data, content_type="application/json; charset=utf-8"):
@@ -113,17 +106,14 @@ class Handler(BaseHTTPRequestHandler):
             state["detection"] = self.server.detector.state()
             return self._reply(200, state)
         if path == "/api/ports":
-            return self._reply(200, {"ports": [] if self.server.public_origin else available_ports(),
-                                     "mode": "hosted" if self.server.public_origin else "local"})
+            return self._reply(200, {"ports": available_ports(), "mode": "local"})
         if path == "/api/camera/ports":
-            return self._reply(200, {"ports": [] if self.server.public_origin else [{"device": "PICO_WIFI", "description": "XIAO over private Wi-Fi via desk Pico"}]})
+            return self._reply(200, {"ports": [{"device": "PICO_WIFI", "description": "XIAO over private Wi-Fi via desk Pico"}]})
         if path == "/api/camera/stream":
             return self._camera_stream()
         if path == "/api/detection/stream":
             return self._camera_stream(detection=True)
         if path == "/api/camera/frame":
-            if self.server.public_origin:
-                return self._reply(403, {"error": "Wireless camera relay is available only in the local dashboard."})
             frame = self.server.camera.image()
             if not frame:
                 return self._reply(409, {"error": "Start the XIAO camera and capture an image first."})
@@ -148,8 +138,6 @@ class Handler(BaseHTTPRequestHandler):
             return self._reply(403, {"error": "This dashboard only accepts local requests."})
         origin = self.headers.get("Origin")
         expected = {f"http://127.0.0.1:{self.server.server_port}", f"http://localhost:{self.server.server_port}"}
-        if self.server.public_origin:
-            expected.add(self.server.public_origin)
         if origin is not None and origin not in expected:
             return self._reply(403, {"error": "Cross-site commands are not allowed."})
         if self.headers.get("Content-Type", "").split(";")[0] != "application/json":
@@ -163,10 +151,6 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError("Expected a JSON object")
         except (ValueError, UnicodeDecodeError):
             return self._reply(400, {"error": "Invalid JSON request."})
-        # Consume the bounded request body before refusing hosted commands, so
-        # closing the socket cannot discard unread data and reset the response.
-        if self.server.public_origin:
-            return self._reply(403, {"error": "USB controls are available only in the laptop dashboard."})
         try:
             path = urlsplit(self.path).path
             if path == "/api/connect":
@@ -174,6 +158,8 @@ class Handler(BaseHTTPRequestHandler):
             elif path == "/api/dock/connect":
                 with self.server.bridge.lifecycle:
                     self.server.bridge.dock.connect(body.get("port"))
+            elif path == "/api/tank/calibration":
+                self.server.bridge.set_tank_calibration(body)
             elif path == "/api/disconnect":
                 self.server.detector.stop()
                 self.server.bridge.cancel_target()
@@ -210,23 +196,12 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=8765)
-    parser.add_argument("--host", choices=("127.0.0.1", "0.0.0.0"), default="127.0.0.1")
-    parser.add_argument("--public-origin", help="HTTPS origin for a read-only hosted preview")
+    parser.add_argument("--host", choices=("127.0.0.1",), default="127.0.0.1")
     parser.add_argument("--open", action="store_true", help="Open the local page in the default browser")
     args = parser.parse_args()
-    if args.public_origin:
-        origin = urlsplit(args.public_origin)
-        if (origin.scheme != "https" or not origin.hostname or origin.username or origin.password
-                or origin.port is not None or origin.path or origin.query or origin.fragment):
-            parser.error("--public-origin must be an HTTPS origin such as https://pest.4bytedigi.com")
-        args.public_origin = args.public_origin.lower()
-    if args.host != "127.0.0.1" and not args.public_origin:
-        parser.error("Non-loopback hosting requires --public-origin and runs read-only.")
-    if args.open and args.public_origin:
-        parser.error("Use --open only for the local laptop dashboard.")
-    bridge = Bridge(hosted=bool(args.public_origin))
+    bridge = Bridge()
     try:
-        server = DashboardServer((args.host, args.port), bridge, args.public_origin)
+        server = DashboardServer((args.host, args.port), bridge)
     except OSError:
         if args.open:
             try:
@@ -238,9 +213,8 @@ def main():
             except (OSError, ValueError):
                 pass
         raise SystemExit(f"Port {args.port} is in use. Open the existing dashboard or choose --port 8766.")
-    url = args.public_origin or f"http://127.0.0.1:{args.port}"
-    mode = "Read-only hosted preview." if args.public_origin else "Robot controls are local to this laptop."
-    print(f"Robot dashboard: {url}\n{mode} Ctrl+C closes the server.", flush=True)
+    url = f"http://127.0.0.1:{args.port}"
+    print(f"Local robot dashboard: {url}\nPress Ctrl+C to close the server.", flush=True)
     if args.open:
         webbrowser.open(url)
     try:

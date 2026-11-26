@@ -46,6 +46,6 @@ int main() {
     printf("PASS %u camera decoder assertions: fragmentation, pending-frame integrity, bounds and latest-frame replacement.\n",checks);
 }
 ''',encoding='utf-8')
-subprocess.run(['C:/msys64/ucrt64/bin/g++.exe','-std=c++17','-Wall','-Wextra','-Werror','-static',
+subprocess.run(['g++','-std=c++17','-Wall','-Wextra','-Werror','-static',
                 '-I'+str(ROOT/'Laptop/Pico_W/laptop_wifi_bridge'),str(source),'-o',str(exe)],check=True)
 subprocess.run([str(exe)],check=True)

@@ -1,17 +1,6 @@
-# Board roles, connections and PC data path
+# Boards and signal connections
 
-Updated 20 November 2026 for `V2_Working`. Driving uses the Zumo Shield and Uno. The
-[Zumo guide](../../../Car/Arduino_Uno/zumo_line_follow/README.md) is the source
-of truth for firmware, sensor wiring and operation. The 5 November image below
-shows the previous L298N base; use the current connection tables instead.
-
-![Updated boards, pins and communication paths](../../Artifacts/diagrams/robot-system-connections-2026-11-05.png)
-
-[Full-size PNG](../../Artifacts/diagrams/robot-system-connections-2026-11-05.png) ·
-[Image source prompt](../../Artifacts/diagrams/robot-system-connections-2026-11-05.prompt.txt)
-
-The board drawings identify devices, not physical pin locations. Use the printed
-pin labels and the exact signal tables below when wiring.
+The [final hardware block diagram](../../Presentation/Robot%20and%20refill%20station%20-%20hardware%20block%20diagram.pdf) shows the desk, car and dock. Use the signal tables below for physical pins.
 
 ## Board placement and responsibilities
 
@@ -21,7 +10,7 @@ pin labels and the exact signal tables below when wiring.
 | Raspberry Pi Pico W | Beside laptop | USB-to-Wi-Fi relay for video and status; no GPIO wires to the car. |
 | Original FireBeetle ESP32, DFR0478 | Car | Creates the private 2.4 GHz Wi-Fi network and bridges robot status over UART. |
 | MSP430 #1, MSP-EXP430F5529LP | Car | Grants motion, monitors sonar and water, and controls the three-second spray cycle. |
-| Arduino Uno R3 + Zumo Shield | Car | OG6 reads the six line sensors, drives the tracks, acknowledges stops and sounds the optional flip alarm. |
+| Arduino Uno R3 + Zumo Shield | Car | OG9 reads the six line sensors, drives the tracks, acknowledges stops and sounds the optional flip alarm. |
 | XIAO ESP32-S3 Sense camera | Car | Sends continuous OV3660 camera video wirelessly through the existing ESP32 network. USB-C supplies power from a power bank. |
 | MSP430 #2 + Booster Board | Dock | P2.4 senses the magnet, P3.2 monitors the station reservoir and P1.4 controls the refill pump. [Dock project](../../../Docking_Station/README.md) |
 | Water pump and 2N7000 | Car | A separate four-AA pack powers the pump. MSP430 P1.6 drives the MOSFET gate. |
@@ -92,8 +81,8 @@ Uno D13 ── 2.2 kΩ ── RX junction ── MSP430 P3.4
 ```
 
 The two 2.2 kΩ resistors are in series between TX and GND, with MSP RX at
-their junction. Nominal output is 2.5V for a 5V input. Do not wire the Uno's
-5V TX directly to the MSP430. D13 is reserved for UART, including its shield LED.
+their junction. Nominal output is 2.5 V for a 5 V input. Do not wire the Uno's
+5 V TX directly to the MSP430. D13 is reserved for UART, including its shield LED.
 
 ### Zumo array, motors and MSP sensors
 
@@ -102,9 +91,9 @@ their junction. Nominal output is 2.5V for a 5V input. Do not wire the Uno's
 | Zumo six-sensor array and motor driver | Shield's built-in Uno connections |
 | MSP P3.2 | HC-SR04 TRIG |
 | HC-SR04 ECHO | 2.2kΩ -> MSP P2.7 junction -> 3.3kΩ -> GND |
-| HC-SR04 VCC / GND | 5V / common GND |
+| HC-SR04 VCC / GND | 5 V / common GND |
 | Water sensor S | MSP P6.0 / ADC A0 |
-| Water sensor V/+ and G/- | MSP 3.3V / common GND |
+| Water sensor V/+ and G/- | MSP 3.3 V / common GND |
 | MSP P1.6 | 2N7000 gate, with a pull-down from gate to source |
 
 No external L298N or two separate IR sensors are used. The supplied Zumo code
@@ -126,24 +115,6 @@ battery disconnected for communication-only work. Use spacers, keep boards dry,
 keep antennas clear of metal/batteries, mount IR sensors downward at matching
 height, and keep secured tubing away from electronics.
 
-## Verified progress and remaining work
+## Station signals and verification
 
-The desk Pico → ESP32 → MSP430 → Uno status path was verified on 5 November.
-The camera also streamed from power-bank power through the same private network:
-200 frames at 14.91 fps, no corrupted frames, and fresh MSP status at completion.
-See [camera evidence](../../Artifacts/verification/camera-live-stream-2026-11-05-211019.json)
-and [power-bank evidence](../../Artifacts/verification/camera-powerbank-wireless.json).
-These checks do not establish complete physical driving or autonomous spraying.
-
-The 20 November release includes target-triggered spraying, water telemetry and
-obstacle pause/resume. The operator reported that replacing a resistor restored
-pump operation. The [dock firmware](../../../Docking_Station/README.md) now
-handles local magnetic arrival and timed refill. The laptop relays magnetic arrival and refill completion between
-the station USB port and the existing desk Pico wireless link.
-
-## Historical illustration
-
-[4 November diagram](../../Artifacts/diagrams/robot-system-connections-2026-11-04.png)
-and [its notes](../../Artifacts/diagrams/robot-system-connections-2026-11-04-notes.md)
-show the superseded ESP-at-desk / Pico-on-car arrangement. Do not use that image
-for current wiring.
+The [station pin map](../../../Docking_Station/Booster_Board/README.md) gives the Hall input, reservoir comparator, pump output and LCD connections. See [the final report](../../../output/pdf/CEG2001_Report_P2-2.pdf) for the separate station and track trials and the remaining end-to-end test.

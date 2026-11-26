@@ -20,7 +20,7 @@ pulse. [Bench and installation record](../../../Laptop/Artifacts/verification/pu
 
 Manual STOP, an ultrasonic near obstacle, UART/link faults, refusal or lost
 calibration cancel the cycle with the pump off. They do not resume automatically.
-Outside a spray job, the MSP430 and Uno OG6 pause active line following
+Outside a spray job, the MSP430 and Uno OG9 pause active line following
 at **5 cm or closer** and resume after two consecutive valid readings at least
 **7 cm**. A spray job canceled by an obstacle requires a new local start.
 
@@ -70,22 +70,23 @@ Saving empty and full readings with the probe mounted in the tank enables a
 tank-level estimate. With the OG9-compatible supervisor, two consecutive readings
 below 500 cancel an active spray job. During ordinary line following they
 start continuous straight reverse. Away from the dock, two consecutive readings
-above 500 clear the empty state and restore line following during an active
-reverse. A refill alone cannot restart a manually stopped run.
+above 500 park the reversing Zumo. With the saved empty/full calibration, three
+seconds strictly above 60% allow forward travel to resume when the path is clear.
+During a coordinated visit the car also waits for the station's pump cutoff.
+A manual stop cancels automatic departure.
 
 ## Sources and builds
 
 | Board | Required version / source |
 | --- | --- |
-| Uno | OG6 for line following, obstacle pause/resume and the flip alarm. [Zumo sketch](../../Arduino_Uno/zumo_line_follow/README.md) |
+| Uno | OG9 for saved line calibration, forward and reverse driving, obstacle pause/resume and the flip alarm. [Zumo sketch](../../Arduino_Uno/zumo_line_follow/README.md) |
 | MSP430 | ESP-UART/Zumo build, [spray_job.h](spray_job.h) and [main.c](main.c) |
 | ESP32 | DIRECT_WIFI_V2, `robot_wifi_gateway` |
 | Desk Pico | DESK_BRIDGE_V3, `laptop_wifi_bridge` |
 | Laptop | Updated local dashboard; restart its server after installation |
 
 Old Pico/ESP images still provide monitoring but cannot perform the new cycle.
-There is no direct remote motor START, manual pump-on or calibration API. The
-hosted preview remains read-only. Queued target/continuation requests expire;
+There is no direct remote motor START, manual pump-on or calibration API. Queued target/continuation requests expire;
 uncertain actions are never replayed after timeout/reconnection. The MSP rejects
 duplicate job IDs and continuation outside the matching completed spray.
 

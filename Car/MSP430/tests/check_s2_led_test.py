@@ -98,6 +98,6 @@ int main() {
 }
 ''',encoding='utf-8')
 for defines in ([],['-DUSE_S1_BUTTON=1'],['-DAUTO_LED_TEST=1']):
-    subprocess.run(['C:/msys64/ucrt64/bin/g++.exe','-std=c++17','-Wall','-Wextra','-Werror','-static',
+    subprocess.run(['g++','-std=c++17','-Wall','-Wextra','-Werror','-static',
                     *defines,'-I'+str(build),str(source),'-o',str(exe)],check=True)
     subprocess.run([str(exe)],check=True)

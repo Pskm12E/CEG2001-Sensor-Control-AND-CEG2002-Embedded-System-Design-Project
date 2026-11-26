@@ -93,6 +93,6 @@ int main() {
 cpp=build/'ultrasonic_tests.cpp'
 cpp.write_text(source,encoding='utf-8')
 exe=build/'ultrasonic_tests.exe'
-subprocess.run(['C:/msys64/ucrt64/bin/g++.exe','-std=c++11','-Wall','-Wextra','-Werror',
+subprocess.run(['g++','-std=c++11','-Wall','-Wextra','-Werror',
                 '-Wno-unknown-pragmas','-static',str(cpp),'-o',str(exe)],check=True)
 subprocess.run([str(exe)],check=True)

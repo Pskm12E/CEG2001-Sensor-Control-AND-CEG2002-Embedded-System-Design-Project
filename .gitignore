@@ -50,3 +50,12 @@
 Thumbs.db
 
 # Keep Laptop/Artifacts/diagrams, PDF guides, screenshots and verification JSON in Git.
+
+# Keep the final report in Git. The hand-in ZIP can be rebuilt from its sources.
+/output/submission/
+/output/pdf/* - Content review.pdf
+
+# Superseded presentation drafts remain available locally.
+/Laptop/Presentation/Group P-12 - Robot presentation script.docx
+/Laptop/Presentation/Group P-12 - Robot system architecture.*
+/Laptop/Presentation/Group P-12 - Vision-guided plant-care robot.pptx

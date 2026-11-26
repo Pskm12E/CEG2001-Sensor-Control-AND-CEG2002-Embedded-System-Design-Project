@@ -4,7 +4,7 @@ import shutil
 import subprocess
 import tempfile
 
-project = Path(__file__).resolve().parents[1] / "MSP430/waterlevel"
+projects = Path(__file__).resolve().parents[1] / "MSP430"
 hardware = """
 #pragma once
 enum { BIT0=1,BIT1=2,BIT2=4,BIT3=8,BIT4=16,BIT5=32,BIT6=64,
@@ -23,7 +23,7 @@ static unsigned UCA1IV,UCA1STAT,UCA1RXBUF,UCA1TXBUF,UCA1CTL0,UCA1CTL1,
 #define __get_SR_register() GIE
 #define __delay_cycles(n) ((void)0)
 """
-harness = r"""
+coordinated = r"""
 #include <assert.h>
 #include <stdio.h>
 #define main station_main
@@ -68,15 +68,69 @@ int main(void) {
     arrive(); fill(); samples(1,0,1); assert(phase==FAULT && !(P1OUT&BIT4));
     arrive(); receive("HOLD 5\n"); samples(1,1,27);
     assert(phase==FAULT && !pump_running);
+    arrive(); fill(); receive("FULL 1\nFULL 6junk\n"); samples(1,1,1);
+    assert(phase==FILL && pump_running);
+    receive("FULL 6\n"); samples(1,1,1); assert(phase==DONE && !pump_running && !(P1OUT&BIT4));
+    arrive(); receive("HOLD 7\n"); samples(1,1,1); assert(phase==SETTLE);
+    receive("FULL 7\n"); samples(1,1,1); assert(phase==DONE && !pump_running);
+    arrive(); fill(); receive("FULL 8\n"); samples(1,0,1);
+    assert(phase==FAULT && !pump_running);
     puts("PASS station arrival, stopped-car permit, three-second settling, refill cutoff, stale permits, link loss, water and magnet interlocks");
 }
 """
-with tempfile.TemporaryDirectory() as directory:
-    tmp = Path(directory)
-    (tmp/"msp430.h").write_text(hardware)
-    (tmp/"msp430f5529.h").write_text('#include "msp430.h"\n')
-    (tmp/"dock.c").write_text(harness)
-    exe = tmp/"dock-test.exe"
-    subprocess.run([shutil.which("gcc") or "gcc", "-std=c11", "-I", str(tmp),
-                    "-I", str(project), str(tmp/"dock.c"), "-o", str(exe)], check=True)
-    subprocess.run([str(exe)], check=True)
+standalone = r"""
+#include <assert.h>
+#include <stdio.h>
+#define main station_main
+#include "main.c"
+#undef main
+void lcdinit(void) {}
+void lcdcmd(unsigned char c) {}
+void lcdData(unsigned char c) {}
+void gotoXy(unsigned char x, unsigned char y) {}
+
+static void samples(int present, int water, unsigned count) {
+    P2IN = present ? 0 : HALL_BIT;
+    P3IN = water ? WATER_OK_BIT : 0;
+    while (count--) {
+        sensor_tick_isr();
+        sensors_check();
+        pump_test_update();
+    }
+}
+static void arrive_and_fill(void) {
+    samples(0, 1, 5);
+    samples(1, 1, 5);
+    assert(robot_docked && dock_waiting && !(P1OUT & BIT4));
+    samples(1, 1, 29);
+    assert(!pump_running);
+    samples(1, 1, 1);
+    assert(pump_running && (P1OUT & BIT4) && TA1CCR0 == 40959);
+}
+int main(void) {
+    samples(1, 1, 50);
+    assert(!pump_running && !dock_waiting);  /* Occupied at boot. */
+    arrive_and_fill();
+    pump_deadline_isr();
+    assert(!pump_running && !(P1OUT & BIT4));
+    samples(1, 1, 50);
+    assert(!pump_running);                  /* Timer cutoff cannot rearm this visit. */
+    arrive_and_fill();
+    samples(0, 1, 1);
+    assert(!pump_running && !(P1OUT & BIT4));
+    arrive_and_fill();
+    samples(1, 0, 1);
+    assert(!pump_running && !(P1OUT & BIT4));
+    puts("PASS standalone dock arming, settling, ten-second deadline, magnet and reservoir cutoffs");
+}
+"""
+for name, harness in (("standalone", standalone), ("waterlevel", coordinated)):
+    with tempfile.TemporaryDirectory() as directory:
+        tmp = Path(directory)
+        (tmp / "msp430.h").write_text(hardware)
+        (tmp / "msp430f5529.h").write_text('#include "msp430.h"\n')
+        (tmp / "dock.c").write_text(harness)
+        exe = tmp / "dock-test.exe"
+        subprocess.run([shutil.which("gcc") or "gcc", "-std=c11", "-I", str(tmp),
+                        "-I", str(projects / name), str(tmp / "dock.c"), "-o", str(exe)], check=True)
+        subprocess.run([str(exe)], check=True)

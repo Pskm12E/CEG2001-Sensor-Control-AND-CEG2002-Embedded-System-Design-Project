@@ -5,6 +5,7 @@ let commandBusy = false, pollBusy = false, eventFingerprint = "";
 let stream = null, cameraActive = false, cameraBusy = false, cameraToken = 0, cameraTimer = null;
 let imageUrl = null, imageBlob = null;
 let detectionBusy = false, relayDetection = null;
+let dockBusy = false, tankBusy = false;
 const timeFormat = new Intl.DateTimeFormat(undefined, {hour: "2-digit", minute: "2-digit", second: "2-digit"});
 const text = (id, value) => { if ($(id).textContent !== String(value)) $(id).textContent = value; };
 const message = (id, value) => { text(id, value || ""); $(id).hidden = !value; };
@@ -39,10 +40,20 @@ function renderWater(data) {
   text("water-level", level !== null ? `${level}%` : "—");
   $("water-meter").hidden = level === null;
   if (level !== null) $("water-meter").value = level;
+  const desired = calibrated ? empty + Math.floor(3 * (full - empty) / 5) + 1 : 4096;
+  const actual = data?.refill_min_raw;
+  let refillInfo = "";
+  if (Number.isInteger(actual)) {
+    refillInfo = actual === 4096 ? "Automatic refill restart is disabled." :
+      `Refill restart above 60% · car threshold ${actual} / 4095 · 3-second wait.`;
+    if (actual !== desired) refillInfo += " Saved calibration is waiting to sync to the car.";
+  } else if (data && calibrated) {
+    refillInfo = `Refill restart needs the updated car firmware. Saved 60% setting starts at ${desired} / 4095.`;
+  }
+  message("water-departure", refillInfo);
   text("water-points", `Empty ${empty ?? "—"} · Full ${full ?? "—"}`);
-  $("water-calibration").hidden = state?.mode === "hosted";
-  for (const button of waterButtons) button.disabled = !available || data.run !== 0 || data.pump !== 0;
-  $("water-reset").disabled = empty === undefined && full === undefined;
+  for (const button of waterButtons) button.disabled = tankBusy || !available || data.run !== 0 || data.pump !== 0;
+  $("water-reset").disabled = tankBusy || (empty === undefined && full === undefined);
 
   let pumpStatus = "Pump status unavailable", tone = "";
   if (data?.driver_ready === 0) { pumpStatus = "Pump disabled"; tone = " warning"; }
@@ -52,12 +63,15 @@ function renderWater(data) {
   $("pump-status").className = `badge${tone}`;
 }
 
-function saveWaterCalibration(calibration, feedback) {
-  waterCalibration = calibration;
-  try { localStorage.setItem(waterKey, JSON.stringify(calibration)); }
-  catch { feedback += " Browser storage is unavailable. This calibration lasts until reload."; }
-  renderWater(liveTelemetry());
-  text("water-calibration-message", feedback);
+async function saveWaterCalibration(calibration, feedback) {
+  tankBusy = true; renderWater(liveTelemetry());
+  try {
+    await api("/api/tank/calibration", calibration);
+    waterCalibration = calibration;
+    try { localStorage.removeItem(waterKey); } catch { /* Storage can be disabled. */ }
+    text("water-calibration-message", feedback);
+  } catch (error) { text("water-calibration-message", error.message); }
+  finally { tankBusy = false; renderWater(liveTelemetry()); }
 }
 
 for (const button of waterButtons) button.addEventListener("click", () => {
@@ -91,12 +105,12 @@ async function api(path, body) {
 }
 
 function controls() {
-  const hosted = state?.mode === "hosted", connected = Boolean(state?.connection?.connected && serverAvailable);
-  $("connect").disabled = hosted || connected || connectionBusy || portBusy || !$("port-select").value || !serverAvailable;
+  const connected = Boolean(state?.connection?.connected && serverAvailable);
+  $("connect").disabled = connected || connectionBusy || portBusy || !$("port-select").value || !serverAvailable;
   $("disconnect").disabled = !connected || connectionBusy;
   $("port-select").disabled = connected || connectionBusy || portBusy;
-  $("refresh-ports").disabled = hosted || connectionBusy || portBusy;
-  $("bench-controls").disabled = hosted || !connected || paused || commandBusy || connectionBusy;
+  $("refresh-ports").disabled = connectionBusy || portBusy;
+  $("bench-controls").disabled = !connected || paused || commandBusy || connectionBusy;
   $("export-events").disabled = !state?.events?.length;
 }
 function renderEvents() {
@@ -117,14 +131,12 @@ function renderEvents() {
   $("events").replaceChildren(fragment);
 }
 function render() {
-  const hosted = state?.mode === "hosted", connection = state?.connection || {};
+  const connection = state?.connection || {};
   const connected = connection.connected && serverAvailable, fresh = connected && connection.fresh && !paused;
-  text("deployment-mode", hosted ? "Hosted preview" : "Local laptop");
-  $("connect-form").hidden = hosted; $("bench-controls").hidden = hosted; $("command-message").hidden = hosted;
-  text("connection-badge", !serverAvailable ? "Offline" : hosted ? "Not linked" : paused ? "Updates paused" : fresh ? "Connected" : connected ? "Waiting for robot" : "Disconnected");
+  text("connection-badge", !serverAvailable ? "Offline" : paused ? "Updates paused" : fresh ? "Connected" : connected ? "Waiting for robot" : "Disconnected");
   $("connection-badge").className = `badge${fresh ? " good" : connected ? " warning" : ""}`;
   text("reading-age", paused ? "Readings paused" : connection.last_seen ? `${fresh ? "Updated" : "Last reading"} ${formatTime(connection.last_seen)}` : "No reading yet");
-  text("connection-message", hosted ? "Robot USB is available in the laptop dashboard." : connected ? `${connection.port} at 115200 baud. Pico relays status over private Wi-Fi.` : "Choose the desk Pico USB port. Close the Pico console before connecting.");
+  text("connection-message", connected ? `${connection.port} at 115200 baud. Pico relays status over private Wi-Fi.` : "Choose the desk Pico USB port. Close the Pico console before connecting.");
   message("connection-error", connection.error || "");
   const data = liveTelemetry(), links = serverAvailable && !paused ? state?.links || {} : {};
   text("board-name", data?.board || "—");
@@ -137,8 +149,45 @@ function render() {
   const sensorName = (value) => value === "NC" ? "Not calibrated" : value;
   text("line-sensor-pins", data && data.base !== "ZUMO" ? "D4 left / D2 right" : "Zumo array");
   text("line-sensors", data ? (data.base === "ZUMO" ? "Black line on white" : `L: ${sensorName(data.left)} / R: ${sensorName(data.right)}`) : "Not linked");
-  renderWater(data); renderEvents(); renderCameraState(); renderDetection(); controls();
+  if (state?.tank_calibration && !tankBusy) waterCalibration = state.tank_calibration;
+  renderWater(data); renderDock(); renderEvents(); renderCameraState(); renderDetection(); controls();
 }
+
+function renderDock() {
+  const dock = serverAvailable && !paused ? state?.dock : null;
+  const label = !dock ? "Unavailable" : !dock.sensor_fresh ? "Waiting for station" :
+    dock.docked === null ? "Checking magnet" : dock.docked ? "Docked" : "Undocked";
+  text("dock-status", label);
+  $("dock-status").className = dock?.docked === true ? "badge good" : "badge";
+  text("dock-pump", dock?.pump === true ? "On" : dock?.pump === false ? "Off" : "—");
+  const phases = {BOOT:"Waiting for first undock", CLEAR:"Ready for arrival", ARRIVAL:"Waiting for stop",
+    SETTLE:"Settling", FILL:"Refilling", DONE:"Refill ended", FAULT:"Interrupted"};
+  const wait = dock?.departure_wait_s;
+  text("dock-phase", Number.isInteger(wait)
+    ? (wait > 0 ? `Departure check in ${wait} s` : "Waiting for departure")
+    : phases[dock?.phase] || "—");
+  $("dock-find").hidden = Boolean(dock && dock.phase !== "DISCONNECTED");
+  $("dock-find").disabled = dockBusy || !serverAvailable || paused || state?.links?.pico !== "UP";
+  let hint = "";
+  if (dock?.phase === "DISCONNECTED") hint = "Connect the station MSP430 to laptop USB.";
+  else if (dock?.phase === "SEARCHING") hint = "Checking station USB…";
+  else if (dock && phases[dock.phase] && !dock.sensor_fresh) hint = "Waiting for a Hall reading. Check the station firmware.";
+  else if (dock?.sensor_fresh && liveTelemetry() && !Number.isInteger(liveTelemetry().dock_visit))
+    hint = "The car needs the docking supervisor firmware for automatic refill and departure.";
+  else if (dock?.sensor_fresh && (!Number.isInteger(waterCalibration.empty) || !Number.isInteger(waterCalibration.full)))
+    hint = "Record empty and full tank readings to enable automatic departure.";
+  else if (dock?.sensor_fresh) {
+    const firstAbove = waterCalibration.empty + Math.floor(3 * (waterCalibration.full - waterCalibration.empty) / 5) + 1;
+    hint = `Above 60% (sensor reading ${firstAbove} or higher), the Zumo waits 3 seconds with the refill pump off before leaving.`;
+  }
+  message("dock-message", hint);
+}
+$("dock-find").addEventListener("click", async () => {
+  dockBusy = true; renderDock();
+  try { await api("/api/dock/connect", {port:"AUTO"}); await refreshState(); }
+  catch (error) { message("dock-message", error.message); }
+  finally { dockBusy = false; $("dock-find").disabled = state?.links?.pico !== "UP"; }
+});
 async function refreshState() {
   if (paused || pollBusy) return;
   pollBusy = true;
@@ -156,7 +205,7 @@ async function refreshPorts() {
   try {
     const result = await api("/api/ports"), ports = result.ports || [];
     $("port-select").replaceChildren();
-    if (!ports.length) $("port-select").add(new Option(result.mode === "hosted" ? "Available on the laptop" : "No desk Pico found", ""));
+    if (!ports.length) $("port-select").add(new Option("No desk Pico found", ""));
     for (const port of ports) $("port-select").add(new Option(`${port.device} — ${port.description}`, port.device));
     if (ports.some(p => p.device === previous)) $("port-select").value = previous;
   } catch (error) { message("connection-error", error.message); }
@@ -211,7 +260,6 @@ function cameraControls() {
 
 function detectionControls() {
   const running = Boolean(state?.detection?.enabled);
-  $("detection-panel").hidden = state?.mode === "hosted";
   $("detection-toggle").disabled = detectionBusy || cameraBusy || !serverAvailable ||
     (!running && (paused || !cameraActive || $("camera-source").value !== "xiao" || !state?.detection?.available));
   text("detection-toggle", detectionBusy ? "Updating…" : running ? "Stop detection" : "Start detection");
@@ -387,9 +435,7 @@ document.addEventListener("visibilitychange", () => {
 });
 (async () => {
   await refreshState();
-  if (state?.mode === "hosted") {
-    $("camera-source").value = "webcam"; $("camera-source").querySelector('[value="xiao"]').disabled = true;
-    $("camera-empty").querySelector("p").textContent = "Choose a webcam, then start the preview.";
-  }
+  if (state?.mode === "local" && state.tank_calibration === null && Object.keys(waterCalibration).length)
+    await saveWaterCalibration(waterCalibration, "Existing tank calibration saved on this laptop.");
   await Promise.all([refreshPorts(), cameraList()]); poll();
 })();

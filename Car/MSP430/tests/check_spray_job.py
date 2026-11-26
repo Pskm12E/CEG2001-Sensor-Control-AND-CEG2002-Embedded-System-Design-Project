@@ -64,6 +64,6 @@ int main() {
 '''
 cpp, exe = build / "spray.cpp", build / "spray.exe"
 cpp.write_text(source, encoding="utf-8")
-subprocess.run(["C:/msys64/ucrt64/bin/g++.exe", "-std=c++17", "-Wall", "-Wextra", "-Werror", "-static",
+subprocess.run(["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror", "-static",
                 "-I" + str(ROOT / "Car/MSP430/robot_supervisor"), str(cpp), "-o", str(exe)], check=True)
 subprocess.run([str(exe)], check=True)

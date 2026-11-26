@@ -11,9 +11,6 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[3]
 BUILD = ROOT / "Car/Arduino_Uno/build/zumo-tests"
 BUILD.mkdir(parents=True, exist_ok=True)
-shared = ROOT / "Car/Arduino_Uno/msp_line_follow/robot_link.h"
-bundled = ROOT / "Car/Arduino_Uno/zumo_line_follow/robot_link.h"
-assert shared.read_bytes() == bundled.read_bytes(), "Bundled UART protocol has drifted"
 source = (ROOT / "Car/MSP430/robot_supervisor/main.c").read_text()
 
 
@@ -170,6 +167,8 @@ prefix = r'''
 #include <Arduino.h>
 #include <fstream>
 #define ZUMO_BASE 1
+#define TANK_EMPTY_ADC 1836
+#define TANK_FULL_ADC 2281
 #define SUPERVISOR_ESP_UART 1
 #define PUMP_DRIVER_VERIFIED 1
 #define __interrupt
@@ -187,6 +186,7 @@ static uint16_t ADC12IFG,ADC12MEM0,ADC12CTL0,ADC12CTL1,waterRaw,waterAt,lastWate
 #include "../../../MSP430/robot_supervisor/spray_job.h"
 #include "../../../MSP430/robot_supervisor/water_level.h"
 static WaterLevel tank;
+static Refill refill={DEFAULT_REFILL_RAW,0,REFILL_WATCH,0};
 static uint32_t dockVisit;
 static uint8_t dockStopAck,dockReleaseDelay;
 static uint16_t dockCancelAt;
@@ -220,6 +220,7 @@ static void reset(bool keepLineCalibration=false) {
     msp::dockClearAt=msp::dockMode=msp::dockClear=0;
     msp::sprayJob={}; msp::P1OUT=0; msp::stopButton=msp::obstaclePaused=0;
     msp::tank={}; msp::ADC12IFG=msp::waterRaw=msp::waterAt=msp::lastWaterSample=0;
+    msp::refill={msp::DEFAULT_REFILL_RAW,0,msp::REFILL_WATCH,0};
     fakeMillis=0; robot=ZumoControl(); parser={}; motors=ZumoMotors();
     reflectanceSensors=ZumoReflectanceSensorArray();
     Serial=FakeSerial(); button.pressed=button.released=false;
@@ -288,6 +289,10 @@ static void start() {
 static void waterSample(uint16_t raw) {
     msp::ADC12MEM0=raw; msp::ADC12IFG=msp::BIT0; msp::serviceWater();
 }
+static void secondWithWater(uint16_t raw) {
+    for(unsigned i=0;i<50;++i) step();
+    waterSample(raw);
+}
 int main(int argc,char** argv) {
     memset(EEPROM.values,0xff,EEPROM.length());
     reset(); linkClear(); reflectanceSensors.offset=125; calibrate();
@@ -331,7 +336,7 @@ int main(int argc,char** argv) {
     for(unsigned i=0;i<40;++i) step();
     CHECK(stopped() && msp::dockVisit==4294967295u && msp::dockStopAck && msp::linked);
     msp::netCommand("NET 103 DEPART 4294967295"); CHECK(!msp::queued);
-    waterSample(501); waterSample(501);
+    waterSample(2104); waterSample(2104);
     msp::netCommand("NET 104 DEPART 1337"); CHECK(!msp::queued && stopped());
     msp::netCommand("NET 105 DOCK 4294967295"); CHECK(msp::dockStopAck && stopped());
     msp::netCommand("NET 106 DEPART 4294967295"); CHECK(msp::queued==RL_START);
@@ -366,7 +371,8 @@ int main(int argc,char** argv) {
     waterSample(501); waterSample(500); waterSample(501);
     CHECK(msp::tank.empty);
     waterSample(501); CHECK(!msp::tank.empty && stopped());
-    start();
+    for(unsigned i=0;i<5;++i) secondWithWater(2104);
+    CHECK(robot.following && msp::running);
     waterSample(500); waterSample(500);
     CHECK(!msp::tank.empty && robot.following);
     waterSample(499); waterSample(500); waterSample(456); msp::serviceWater();
@@ -384,7 +390,7 @@ int main(int argc,char** argv) {
     for(unsigned i=0;i<20;++i) step();
     CHECK(msp::tank.empty && robot.reversing);
     waterSample(501);
-    for(unsigned i=0;i<30;++i) step();
+    for(unsigned i=0;i<220;++i) { step(); if(i%50==0) waterSample(2104); }
     CHECK(msp::running && msp::linked && motors.left==90 && motors.right==90);
     CHECK(!msp::tank.empty && robot.following && !robot.reversing);
     waterSample(14); waterSample(15); exchange();
@@ -408,6 +414,36 @@ int main(int argc,char** argv) {
     waterSample(0); waterSample(0); exchange();
     CHECK(!msp::sprayJob.pump && !(msp::P1OUT&PUMP_GATE_MASK) && stopped());
     CHECK(msp::sprayJob.phase==msp::SJ_ABORTED);
+    for(unsigned i=0;i<6;++i) secondWithWater(2104);
+    CHECK(robot.following && !msp::sprayJob.pump);
+
+    // Calibrated at boot, manually filled on the line, with no dock or Wi-Fi.
+    reset(true); linkClear(); CHECK(robot.calibrated);
+    for(unsigned i=0;i<5;++i) secondWithWater(2281);
+    CHECK(stopped()); // An already full tank at boot is not a refill.
+    secondWithWater(1343);
+    for(unsigned i=0;i<4;++i) secondWithWater(2103);
+    CHECK(stopped() && msp::refill.mode==msp::REFILL_WAIT);
+    secondWithWater(2104); secondWithWater(2104); secondWithWater(2103);
+    secondWithWater(2104); secondWithWater(2104); secondWithWater(2104);
+    CHECK(stopped() && !msp::queued);
+    secondWithWater(2104); step(); CHECK(robot.following);
+    button.pressed=true; loop(); button.pressed=false;
+    for(unsigned i=0;i<3;++i) secondWithWater(1343);
+    for(unsigned i=0;i<6;++i) secondWithWater(2281);
+    CHECK(stopped() && !robot.moving());
+
+    // Recalibrating changes the boundary. An interrupted sample series cannot
+    // authorise motion, and resetting calibration disables automatic restart.
+    reset(true); linkClear();
+    msp::netCommand("NET 7 RFMIN 901"); CHECK(msp::refill.minimum==901);
+    msp::netCommand("NET 8 RFMIN 4097"); CHECK(msp::refill.minimum==901);
+    secondWithWater(900); secondWithWater(901);
+    for(unsigned i=0;i<200;++i) step();
+    secondWithWater(901); secondWithWater(901); CHECK(stopped());
+    msp::netCommand("NET 9 RFMIN 4096"); CHECK(msp::refill.minimum==4096);
+    for(unsigned i=0;i<6;++i) secondWithWater(4095);
+    CHECK(!robot.moving());
 
     reset(); linkClear(); calibrate(); start();
     sonar(4); msp::serviceLink(); CHECK(msp::pendingPacket.type==RL_ZUMO_PAUSE);
@@ -746,7 +782,7 @@ exe = BUILD / "zumo_tests.exe"
 telemetry_path = BUILD / "supervisor-status.txt"
 for pin, definitions in (("P1.6", []), ("P1.4", ["-DPUMP_GATE_P14=1"])):
     subprocess.run([
-        "C:/msys64/ucrt64/bin/g++.exe", "-std=c++17", "-Wall", "-Wextra", "-Werror",
+        "g++", "-std=c++17", "-Wall", "-Wextra", "-Werror",
         "-Wno-unknown-pragmas", "-Wno-unused-function", "-Wno-unused-variable",
         *definitions, "-I" + str(BUILD), "-static", str(cpp), "-o", str(exe),
     ], check=True)

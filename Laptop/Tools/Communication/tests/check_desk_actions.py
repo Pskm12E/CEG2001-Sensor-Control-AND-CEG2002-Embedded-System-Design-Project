@@ -3,6 +3,9 @@ from pathlib import Path
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[4]
+subprocess.run(["g++", "-std=c++17", "-fsyntax-only",
+                "-I" + str(ROOT / "Laptop/Tools/Communication/libraries/RobotBench/src"),
+                str(Path(__file__).with_name("protocol_tests.cpp"))], check=True)
 source = (ROOT / "Laptop/Pico_W/laptop_wifi_bridge/main.cpp").read_text()
 
 
@@ -54,7 +57,7 @@ static uint32_t nowMs() { return clockNow; }
 static bool wifiUp() { return wifi; }
 static bool espUp(uint32_t) { return true; }
 static bool mspUp(uint32_t) { return true; }
-enum class Reply { None,Ping,State,Msp,Stop,Target,Resume,Dock,Depart,Approach };
+enum class Reply { None,Ping,State,Msp,Stop,Target,Resume,Dock,Depart,Approach,RefillMinimum };
 static Reply wanted=Reply::None;
 static uint32_t resumeToken;
 static desk::HttpResponse response;
@@ -104,6 +107,11 @@ int main() {
     connected(nullptr,connection,ERR_OK); CHECK(sent.find("POST /api/depart?job_id=4294967295 ")==0);
     accepted(20);
     command("ROBOT DEPART 4294967296"); CHECK(!connection && wanted==Reply::None);
+    command("ROBOT RFMIN 2104"); CHECK(wanted==Reply::RefillMinimum);
+    connected(nullptr,connection,ERR_OK); CHECK(sent.find("POST /api/refill-minimum?raw=2104 ")!=std::string::npos);
+    accepted(21);
+    command("ROBOT RFMIN 0"); CHECK(!connection && wanted==Reply::None);
+    command("ROBOT RFMIN 4097"); CHECK(!connection && wanted==Reply::None);
     command("ROBOT TARGET"); CHECK(wanted==Reply::Target);
     failed=done=true; output.clear(); finishRequest();
     CHECK(output=="ROBOT TARGET ERROR NOT_CONFIRMED_NO_REPLAY\n");
@@ -128,7 +136,7 @@ parts = [("action", "bool"), ("actionName", "const char *"), ("closeConnection",
          ("errorReply", "void"), ("connected", "err_t"), ("beginRequest", "bool"),
          ("finishRequest", "void"), ("command", "void")]
 cpp.write_text(prefix + "".join(function(*p) for p in parts) + tests, encoding="utf-8")
-subprocess.run(["C:/msys64/ucrt64/bin/g++.exe", "-std=c++17", "-Wall", "-Wextra", "-Werror",
+subprocess.run(["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror",
                 "-Wno-unused-variable", "-static", "-I" + str(ROOT / "Laptop/Pico_W/laptop_wifi_bridge"),
                 "-I" + str(ROOT / "Car/ESP32_Gateway/robot_wifi_gateway"), str(cpp), "-o", str(exe)], check=True)
 subprocess.run([str(exe)], check=True)

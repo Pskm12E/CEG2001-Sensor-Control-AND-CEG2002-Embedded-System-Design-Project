@@ -1,132 +1,16 @@
-# Robot wiring and board connections
+# Final robot wiring
 
-## Current Zumo connections — 17 November 2026
+The [board-by-board connection table](../Tools/Communication/board-placement.md#exact-signal-connections) shows the FireBeetle, car MSP430, desk Pico and Uno links. For the station use the [Booster Board pin map](../../Docking_Station/Booster_Board/README.md).
 
-Use the [current Zumo connection table](../../Car/Arduino_Uno/zumo_line_follow/README.md#current-connections).
-MSP P3.3 -> Uno D6 RX; Uno D13 TX -> 2.2kΩ/2.2kΩ divider -> MSP P3.4.
-ESP GPIO17 TX -> P4.2 RX and P4.1 TX -> ESP GPIO16 RX. Sonar TRIG is P3.2;
-ECHO -> 2.2kΩ -> P2.7 junction -> 3.3kΩ -> GND. Water S is P6.0, powered
-from MSP 3.3V. All share GND. Pump/driver are not connected.
-
-The Uno uses the Zumo Shield's built-in motors and six-sensor array to follow
-black on white. No L298N or separate pair of IR sensors is used. The records
-below describe earlier bases and are retained as history.
-
-## Current DIGITAL line sensors — 12 November 2026
-
-User-confirmed wiring: LEFT OUT -> Uno D4; RIGHT OUT -> Uno D2; both sensor
-VCC -> Uno 5V and GND -> Uno GND. This supersedes the earlier A0/A1 and 3.3V
-assumptions. The current source uses digitalRead on D4/D2.
-Latest track clarification: WHITE road with BLACK borders; both white -> FORWARD,
-left black -> RIGHT, right black -> LEFT, both black -> STOP. Calibrate w/b at
-the same height to learn each head's digital polarity; equal or unstable
-captures reject calibration.
-Use [the active digital Uno guide](../../Car/Arduino_Uno/msp_line_follow/README.md).
-This supersedes old pin assignments, screenshots and placement diagrams.
-
-## Current direct Wi-Fi wiring — 5 November 2026
-
-The accepted route is laptop USB -> desk Pico W -> private Wi-Fi -> FireBeetle
-ESP32 on robot -> main MSP430 -> Uno. Use the
-[desk setup](../Tools/Communication/desk-pico-setup.md) and [ESP/MSP pin guide](../Tools/Communication/direct-wifi-wiring.md).
-ESP GPIO17 TX -> MSP P4.2 RX; ESP GPIO16 RX <- MSP P4.1 TX; GND -> GND.
-This requires the new remapped MSP UART build; older pin/USB notes below are historical.
-
-**Current development (3 November):** the older bench notes below are retained
-for Version 1. For the running Uno/MSP link, use the
-[supervisor wiring](../../Car/MSP430/robot_supervisor/LEGACY_L298N.md#wiring-retained).
-For the newly prepared Pico/MSP connection, use the
-[I2C bridge wiring](../Tools/Communication/msp-bridge-wiring.md). This supersedes the
-older proposed bus assignments below; do not move the USB RXD/TXD caps.
-
-Use these notes with the individual sketch README. They describe the known bench
-pin assignments, not a completed power distribution or integrated robot schematic.
-
-## Arduino Uno → L298N → wheels
-
-| From | To |
+| Signal | Pin or connection |
 | --- | --- |
-| Uno D7 | L298N IN1 |
-| Uno D8 | L298N IN2 |
-| Uno D9 | L298N IN3 |
-| Uno D10 | L298N IN4 |
-| Uno GND | L298N GND |
-| Left motor | OUT1 / OUT2 |
-| Right motor | OUT3 / OUT4 |
-| Suitable motor battery + | Driver motor-supply terminal, often labelled +12V / VIN |
-| Motor battery − | Driver GND |
+| Car sonar | MSP430 P3.2 trigger, P2.7 echo through its divider |
+| Car tank probe | MSP430 P6.0, ADC channel A0 |
+| Car spray pump command | MSP430 P1.6 to MOSFET gate, with gate-to-source pull-down |
+| Uno serial input | MSP430 P3.3 TX to Uno D6 RX |
+| MSP430 serial input | Uno D13 TX through the divider to MSP430 P3.4 RX |
+| FireBeetle to MSP430 | GPIO17 TX to MSP P4.2 RX and MSP P4.1 TX to GPIO16 RX |
+| Dock arrival and reservoir | Station P2.4 Hall input and P3.2 comparator output |
+| Dock refill pump and LCD | Station P1.4 pump command and P6.0–P6.6 LCD connections |
 
-The Uno is USB powered in the current bench setup. The separate four-AA holder
-was used for the driver. The terminal label `+12V` does not specify the motors'
-required voltage. Motor ratings, battery performance and the module's logic
-supply must be checked; four AAs may not provide enough headroom for its onboard
-5 V regulator. Do not feed the motor supply through a board's GPIO/5 V pin.
-
-The sketches assume **ENA and ENB enable jumpers** are fitted. These are separate
-from the **5V-EN regulator jumper**. Do not connect the driver's 5 V terminal to
-another supply without checking that regulator/jumper arrangement.
-
-## Current digital IR sensors → Uno
-
-| Sensor connection | Uno connection |
-| --- | --- |
-| Left OUT | D4 |
-| Right OUT | D2 |
-| Both VCC | Uno 5V, user-confirmed supply |
-| Both GND | GND |
-
-Left/right are viewed from behind the car, facing forward. The code uses INPUT
-without internal pull-ups. Both sensors share Uno GND.
-Calibrate each sensor over white and black at its mounted height. This line
-follower expects **both heads over the white road, inside its black borders**.
-
-## Robot MSP430
-
-Board: **MSP-EXP430F5529LP**, target **MSP430F5529**. The upper MSP430F5528 chip
-belongs to the debugger; it is not the firmware target.
-
-| Connection | Function in current robot_usb_console |
-| --- | --- |
-| USB through the LaunchPad debugger | Power/programming and Application UART console |
-| P1.0 | Red LED1, double blink |
-| P4.7 | Green LED2 |
-| P1.1 / S2 | Button toggles LED2 |
-| P4.4 TX / P4.5 RX | UART1 USB backchannel; used by current dashboard |
-| P3.3 TX / P3.4 RX | UART0 reserved for proposed Uno diagnostic link |
-
-### Proposed MSP430 ↔ Uno UART bench link
-
-This link is **not yet physically verified**. Use a suitable 3.3 V ↔ 5 V logic-level
-converter; inspect its actual pin labels first. The proposal uses 9600 baud:
-
-| From | Through converter | To |
-| --- | --- | --- |
-| MSP430 P3.3 TX | LV1 ↔ HV1 | Uno D5 RX |
-| MSP430 P3.4 RX | LV2 ↔ HV2 | Uno D6 TX |
-| MSP430 3V3 | LV reference | — |
-| Uno 5V | HV reference | — |
-| Both board grounds | Common GND | — |
-
-Power each board by USB for the bench test. Do not join their positive supply
-rails. Upload `uart_link_bench` to the Uno only for this test: the line-following
-sketch does not yet implement this serial protocol. Motor supply stays disconnected.
-
-## ESP32 and Pico W
-
-For Version 1, each uses its own USB data cable. **No header pins between them
-are needed**: the link is Wi-Fi. The Pico only drives its onboard LED during
-the wireless test. Its robot mounting is a future physical step.
-
-**Pico-to-MSP430 pins are still unassigned.** Do not connect another transmitter
-to P3.3/P3.4 while those pins are allocated to the Uno. P4.4/P4.5 are also occupied
-by the current USB console. Select the bus and pin allocation before integration.
-
-## Still to confirm
-
-- Dock MSP430 and Booster exact models, sensor pin map and communication path.
-- Pump voltage/current, driver, nozzle control, dosing feedback and tank sensing.
-- Ultrasonic model and final pin allocation; D11/D12 were only a proposal.
-- Regulated battery rails and current budget for the finished robot.
-- Stop-marker detection and reliable track calibration.
-
-Automatic charging and leak detection are not implemented in Version 1.
+The [Zumo wiring guide](../../Car/Arduino_Uno/zumo_line_follow/README.md#connections) covers the six reflectance inputs. Each motor uses its own driver and power supply. The logic circuits share the applicable ground reference.

@@ -11,8 +11,6 @@ from urllib.error import HTTPError, URLError
 from urllib.request import ProxyHandler, Request, build_opener
 import webbrowser
 
-from live_view.share import share_dashboard
-
 ROOT = Path(__file__).resolve().parent
 
 
@@ -82,7 +80,7 @@ def ensure_server(client, port, emit=print):
         raise
 
 
-def configure_hardware(client, *, pico_port=None, wait=30, camera=True,
+def configure_hardware(client, *, pico_port=None, dock_port=None, wait=30, camera=True,
                        detect=False, emit=print):
     """Use only the dashboard's verified Pico port list and monitoring APIs."""
     deadline = time.monotonic() + wait
@@ -115,6 +113,10 @@ def configure_hardware(client, *, pico_port=None, wait=30, camera=True,
             raise LaunchError(detail or "Pico firmware verification timed out. Use DESK_BRIDGE_V2 and close other serial consoles.")
         time.sleep(0.25)
 
+    dock = state.get("dock", {})
+    if dock_port or dock.get("phase") == "DISCONNECTED":
+        client.request("/api/dock/connect", {"port": dock_port or "AUTO"})
+
     if camera:
         emit("[3/4] Starting XIAO live video over the existing private Wi-Fi...")
         if not state["camera"]["connected"]:
@@ -135,7 +137,7 @@ def configure_hardware(client, *, pico_port=None, wait=30, camera=True,
     if detect and not state["detection"]["enabled"]:
         client.request("/api/detection/start", {})
         emit("      Blue-square practice detection enabled; this is not insect recognition.")
-    emit("[4/4] Monitoring ready. No movement, calibration or spray commands were sent.")
+    emit("[4/4] Monitoring ready.")
     links = state["links"]
     emit(f"      Wi-Fi: {links['wifi']} | ESP32: {links['esp']} | MSP430: {links['msp']} | Uno: {links['uno']}")
     if not state["connection"]["fresh"] or links["uno"] != "READY":
@@ -167,9 +169,6 @@ def main(argv=None):
     parser.add_argument("--no-camera", action="store_true", help="Connect the Pico for telemetry only")
     parser.add_argument("--dashboard-only", action="store_true", help="Open the dashboard without connecting hardware")
     parser.add_argument("--no-browser", action="store_true", help="Do not open another browser tab")
-    sharing = parser.add_mutually_exclusive_group()
-    sharing.add_argument("--share", action="store_true", help="Print a public view-only link for the live camera and readings")
-    sharing.add_argument("--ask-share", action="store_true", help="Offer a public link after local setup")
     args = parser.parse_args(argv)
     if args.detect and (args.no_camera or args.dashboard_only):
         parser.error("--detect requires automatic camera startup")
@@ -186,38 +185,28 @@ def main(argv=None):
             print("Open the dashboard URL above in your browser.", flush=True)
         if not args.dashboard_only:
             try:
-                configure_hardware(client, pico_port=args.pico_port, wait=args.wait,
+                configure_hardware(client, pico_port=args.pico_port, dock_port=args.dock_port, wait=args.wait,
                                    camera=not args.no_camera, detect=args.detect)
                 if args.dock_port:
-                    client.request("/api/dock/connect", {"port": args.dock_port})
                     deadline = time.monotonic() + 10
                     while time.monotonic() < deadline:
                         state = client.local_state()
                         phase = state.get("dock", {}).get("phase")
-                        if (phase == "CLEAR" and state["connection"]["fresh"] and
-                                (state.get("telemetry") or {}).get("dock_clear")):
+                        station = state.get("dock", {})
+                        car = state.get("telemetry") or {}
+                        if (station.get("sensor_fresh") and state["connection"]["fresh"] and
+                                "dock_visit" in car and (station.get("docked") is True or
+                                (phase == "CLEAR" and car.get("dock_clear")))):
                             break
                         if phase == "DISCONNECTED":
                             raise LaunchError("Dock USB heartbeat unavailable. Check the station port and firmware.")
                         time.sleep(.2)
                     else:
                         raise LaunchError("Dock path unconfirmed. Remove the magnet and check the station, Pico and robot firmware and connections.")
-                    print(f"Dock ready on {args.dock_port}. Keep both USB cables connected.", flush=True)
+                    print(f"Station on {args.dock_port}: {'Docked' if station['docked'] else 'Undocked'}. Keep both USB cables connected.", flush=True)
             except LaunchError as exc:
                 result = 2
                 print(f"\nSETUP INCOMPLETE: {exc}\nFix the connection and rerun this file, or use the dashboard buttons.", flush=True)
-        public = args.share
-        if args.ask_share and sys.stdin.isatty():
-            try:
-                public = input("\nShare live camera and readings with anyone who has the link? [y/N] ").strip().lower() in {"y", "yes"}
-            except EOFError:
-                public = False
-        if public:
-            try:
-                share_dashboard(args.http_port, child)
-            except OSError as exc:
-                result = 2
-                print(f"Public sharing unavailable: {exc}", flush=True)
         if child is not None:
             print("\nKeep this window open. Press Ctrl+C to close this dashboard server.", flush=True)
             code = child.wait()

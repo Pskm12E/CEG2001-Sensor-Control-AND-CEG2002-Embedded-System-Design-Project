@@ -11,6 +11,7 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import desk_bridge
 import server
 
 VALID = "STATUS BOARD=MSP430F5529 FW=SUPERVISOR_V2 LINK=READY RUN=0 CAL=NEEDED L2=NC R4=NC LED2=OFF FLAGS=96 RESULT=0 PENDING=0 UART_ERRORS=1 RX_DROPS=0 BAD_FRAMES=0 BRIDGE=ESP_UART_V1"
@@ -29,8 +30,25 @@ def fresh_bridge():
     return bridge
 
 class BridgeTests(unittest.TestCase):
+    def test_sync_refill_threshold_while_parked_without_station(self):
+        bridge = fresh_bridge()
+        bridge.target_supported = True
+        bridge.tank_calibration = {"empty": 1836, "full": 2281}
+        status = ZUMO.replace(" BRIDGE=", " JOB=0 JOB_ID=0 PUMP=0 READY=1 WATER=1343 DOCK=0 WET=0 DCLEAR=0 RFMIN=900 BRIDGE=")
+        bridge._receive(remote_line(telemetry=status))
+        with patch.object(bridge, "_exchange") as send:
+            bridge._sync_tank(None)
+            send.assert_called_once_with(None, "ROBOT RFMIN 2104", "ROBOT RFMIN ", 1)
+            bridge.next_tank_sync = 0
+            bridge._receive(remote_line(telemetry=status.replace("RFMIN=900", "RFMIN=2104")))
+            bridge._sync_tank(None)
+            self.assertEqual(send.call_count, 1)
+            bridge.tank_calibration = {}
+            bridge._sync_tank(None)
+            send.assert_called_with(None, "ROBOT RFMIN 4096", "ROBOT RFMIN ", 1)
+
     def test_zumo_status_and_fresh_bridge(self):
-        value = server.parse_status(ZUMO)
+        value = desk_bridge.parse_status(ZUMO)
         self.assertEqual(value["base"], "ZUMO")
         self.assertEqual(value["line"], "BLACK")
         self.assertIsNone(value["left"])
@@ -45,10 +63,10 @@ class BridgeTests(unittest.TestCase):
                       ZUMO.replace("ZUMO", "OTHER"), ZUMO.replace("LINE=BLACK", "LINE=WHITE"),
                       ZUMO.replace("LED2=OFF", "L2=NC R4=NC LED2=OFF")):
             with self.subTest(value=value):
-                self.assertIsNone(server.parse_status(value))
+                self.assertIsNone(desk_bridge.parse_status(value))
 
     def test_parse_supervisor_status(self):
-        value = server.parse_status(VALID)
+        value = desk_bridge.parse_status(VALID)
         self.assertEqual(value["uno_link"], "READY")
         self.assertEqual(value["calibration"], "NEEDED")
         self.assertEqual(value["run"], 0)
@@ -56,7 +74,7 @@ class BridgeTests(unittest.TestCase):
 
     def test_reject_incomplete_or_foreign_firmware(self):
         for value in [VALID.replace(" BRIDGE=ESP_UART_V1", ""), VALID + " trailing", VALID.replace("OFF", "MAYBE"), VALID.replace("MSP430F5529", "ARDUINO"), "PONG MSP430", VALID.replace("FLAGS=96", "FLAGS=999")]:
-            with self.subTest(value=value): self.assertIsNone(server.parse_status(value))
+            with self.subTest(value=value): self.assertIsNone(desk_bridge.parse_status(value))
 
     def test_freshness_expires_and_disconnect_keeps_last_known(self):
         bridge = fresh_bridge()
@@ -91,7 +109,7 @@ class BridgeTests(unittest.TestCase):
         self.assertTrue(bridge.connected)
         self.assertTrue(bridge.video.enabled)
         self.assertTrue(bridge.video.state()['connected'])
-        self.assertIsNone(server.parse_status(None))
+        self.assertIsNone(desk_bridge.parse_status(None))
 
     def test_no_actuator_or_multiline_commands(self):
         bridge = fresh_bridge()
@@ -106,9 +124,9 @@ class BridgeTests(unittest.TestCase):
 
     def test_only_pico_port_listed(self):
         ports = [SimpleNamespace(device="COM13", description="MSP Application UART1", vid=0x2047, pid=0x0013), SimpleNamespace(device="COM14", description="MSP Debug Interface", vid=0x2047, pid=0x0013), SimpleNamespace(device="COM12", description="Arduino Uno", vid=0x2341, pid=0x0043), SimpleNamespace(device="COM11", description="Pico USB", vid=0x2e8a, pid=0x000a)]
-        with patch.object(server.list_ports, "comports", return_value=ports):
+        with patch.object(desk_bridge.list_ports, "comports", return_value=ports):
             self.assertEqual([p["device"] for p in server.available_ports()], ["COM11"])
-            with self.assertRaises(ValueError), patch.object(server.serial, "Serial") as open_port:
+            with self.assertRaises(ValueError), patch.object(desk_bridge.serial, "Serial") as open_port:
                 server.Bridge().connect("COM12")
             open_port.assert_not_called()
 
@@ -154,6 +172,10 @@ class HttpTests(unittest.TestCase):
         with self.assertRaises(OSError):
             server.DashboardServer(("127.0.0.1", self.http.server_port), server.Bridge())
 
+    def test_server_requires_loopback(self):
+        with self.assertRaisesRegex(ValueError, "127.0.0.1"):
+            server.DashboardServer(("0.0.0.0", 0), self.bridge)
+
     def test_unrelated_hosts_and_origins_rejected(self):
         self.assertEqual(self.request("/api/state", headers={"Host": "attacker.example"})[0], 403)
         self.assertEqual(self.request("/api/command", {"command": "ON"}, {"Origin": "https://attacker.example"})[0], 403)
@@ -186,65 +208,6 @@ class HttpTests(unittest.TestCase):
         _, headers, _ = self.request("/api/state")
         self.assertEqual(headers["X-Frame-Options"], "DENY")
         self.assertEqual(headers["Permissions-Policy"], "camera=(self), microphone=()")
-
-
-class HostedHttpTests(unittest.TestCase):
-    def test_hosted_preview_is_read_only_and_host_restricted(self):
-        bridge = server.Bridge(hosted=True)
-        http = server.DashboardServer(("127.0.0.1", 0), bridge, "https://pest.4bytedigi.com")
-        thread = threading.Thread(target=http.serve_forever, daemon=True)
-        thread.start()
-        url = f"http://127.0.0.1:{http.server_port}"
-
-        def request(path, body=None, host="pest.4bytedigi.com"):
-            data = json.dumps(body).encode() if body is not None else None
-            req = Request(url + path, data=data,
-                          headers={"Host": host, "Content-Type": "application/json"})
-            try:
-                return urlopen(req, timeout=3)
-            except HTTPError as response:
-                return response
-
-        try:
-            with patch.object(server, "available_ports") as ports, patch.object(bridge, "connect") as connect:
-                for path in ("/", "/styles.css", "/app.js", "/api/health"):
-                    with self.subTest(path=path), request(path) as response:
-                        self.assertEqual(response.status, 200)
-                with request("/api/state") as response:
-                    state = json.load(response)
-                    self.assertEqual(state["mode"], "hosted")
-                    self.assertFalse(state["connection"]["connected"])
-                    self.assertIsNone(state["telemetry"])
-                with request("/api/ports") as response:
-                    self.assertEqual(json.load(response)["ports"], [])
-                for path, body in (("/api/connect", {"port": "COM13"}),
-                                   ("/api/command", {"command": "ON"}), ("/api/disconnect", {}),
-                                   ("/api/camera/connect", {"port": "COM17"}),
-                                   ("/api/camera/capture", {}), ("/api/camera/disconnect", {}),
-                                   ("/api/detection/start", {}), ("/api/detection/stop", {})):
-                    with self.subTest(path=path), request(path, body) as response:
-                        self.assertEqual(response.status, 403)
-                with request("/api/camera/frame") as response:
-                    self.assertEqual(response.status, 403)
-                with request("/api/camera/stream") as response:
-                    self.assertEqual(response.status, 403)
-                with request("/api/detection/stream") as response:
-                    self.assertEqual(response.status, 403)
-                ports.assert_not_called()
-                connect.assert_not_called()
-                for host in ("attacker.example", "pest.4bytedigi.com.attacker.example"):
-                    with self.subTest(host=host), request("/api/state", host=host) as response:
-                        self.assertEqual(response.status, 403)
-                with urlopen(url + "/api/health", timeout=3) as response:
-                    self.assertEqual(response.status, 200)
-        finally:
-            http.shutdown()
-            http.server_close()
-            thread.join()
-
-    def test_public_host_cannot_enable_usb_bridge(self):
-        with self.assertRaises(ValueError):
-            server.DashboardServer(("127.0.0.1", 0), server.Bridge(), "https://pest.4bytedigi.com")
 
 
 if __name__ == "__main__":

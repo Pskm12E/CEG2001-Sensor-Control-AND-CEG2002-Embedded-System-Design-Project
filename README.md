@@ -1,166 +1,89 @@
-# Pest-Monitoring & Spot-Spraying Robot
+# Pest-monitoring and spot-spraying robot
 
-CEG2001 Sensors and Control · CEG2002 Embedded System Design
+CEG2001 Sensors and Control · CEG2002 Embedded System Design · Group P2-2
 
-## Low-water reverse · OG9
+The Zumo follows a black line, stops at a confirmed blue marker representing a pest and delivers a timed water spray. A separate refill station detects the robot with a magnet and checks its own water supply before pumping.
 
-With the matching MSP430 supervisor and Uno OG9 firmware, two consecutive
-P6.0 readings **below 500** during line following switch both tracks to slow,
-continuous reverse. Two consecutive readings **above 500**
-while reversing switch it back to forward line following. Exactly 500 keeps
-the current direction. Press the Zumo button
-to stop it at any time. The ultrasonic sensor faces forward, so keep the path
-behind the tracks clear.
+## Submission materials
 
-For [laptop-connected docking](Docking_Station/README.md), connect both the
-station MSP430 and the desk Pico by USB. The dock magnet stops a reversing
-Zumo through the laptop relay. The refill begins after a confirmed stop.
-Forward travel resumes after normal pump cutoff and two car readings above 500.
+- [Watch the final demonstration on YouTube](https://youtu.be/T4geuTmunvc)
+- [View the final 17-slide presentation on Canva](https://www.canva.com/d/4f2vKg5oXtSbtI9)
+- [Read the final report on Google Docs](https://docs.google.com/document/d/1eeSYC1oTbA5qsdeJ9ge7zVoWEp7Dm4dpvsCEs_sKDfw/edit) or [open the submitted-format PDF](output/pdf/CEG2001_Report_P2-2.pdf).
+- [Hardware block diagram](Laptop/Presentation/Robot%20and%20refill%20station%20-%20hardware%20block%20diagram.pdf) and [presentation notes in slide order](Laptop/Presentation/Robot%20presenter%20notes%20-%2017%20slides.md).
 
-If the tank goes empty during a spray job, the pump switches off and the Zumo
-stays parked. Refilling a parked robot enables a new line-following run.
-Tap the Zumo button to start again. The MSP samples once per second and uses
-raw ADC counts independently of the dashboard's percentage calibration.
+The team demonstrated track following, target and obstacle stops, timed car-pump operation and a separate physical dock refill. A complete automatic return, refill and departure on the track is still to be verified. The test liquid was water and the camera detected a blue marker.
 
-## V2_Working · 20 November 2026
+## Source map
 
-The Zumo follows a black line. Its Arduino Uno runs **OG6**, which reads the
-six line sensors and drives the tracks. The **MSP430F5529** grants motion,
-reads the ultrasonic and water sensors, and switches the pump. The operator
-confirmed that the pump worked after replacing a resistor in the pump circuit.
+| Where | Code | Responsibility |
+| --- | --- | --- |
+| Car | [MSP430F5529 supervisor](Car/MSP430/robot_supervisor) | Reads sonar and tank level, grants motion and times the spray pump on P1.6. |
+| Car | [Arduino Uno and Zumo Shield](Car/Arduino_Uno/zumo_line_follow) | Calibrates six reflectance sensors, follows the line, drives the tracks and sounds the flip alarm. |
+| Car | [FireBeetle ESP32](Car/ESP32_Gateway/robot_wifi_gateway) | Hosts the local Wi-Fi access point and bridges commands and status to the car MSP430 over UART. |
+| Car | [XIAO ESP32-S3 Sense](Car/XIAO_ESP32S3_Camera/xiao_camera_wifi) | Captures camera frames and sends them to the desk Pico over Wi-Fi. |
+| Desk | [Raspberry Pi Pico W](Laptop/Pico_W/laptop_wifi_bridge) | Relays video, status and requests between the private Wi-Fi network and laptop USB. |
+| Laptop | [Dashboard and OpenCV detector](Laptop/Dashboard/README.md) | Shows video and readings, confirms the marker and coordinates visits with a connected station. |
+| Dock | [Standalone station](Docking_Station/MSP430/standalone) | Handover CCS project. The station's Hall sensor, reservoir comparator, timers and LCD manage a refill locally. |
+| Dock | [Laptop-coordinated station](Docking_Station/MSP430/waterlevel) | Alternative CCS project for the same station board. The laptop confirms a stopped car and renews a refill permit. |
 
-| Event | Robot behavior |
+Read the [station guide](Docking_Station/README.md) to choose the station image. Each station project contains its own MSP430 source, LCD driver, linker command file and CCS target configuration.
+
+## Run the demonstration
+
+1. Install the [dashboard dependencies](Laptop/Dashboard/README.md#dependencies-and-tests). Power the car boards and connect the desk Pico W to laptop USB. The coordinated station also needs its own USB connection.
+2. Open [Start Robot.cmd](Start%20Robot.cmd). The monitor opens at [the local dashboard](http://127.0.0.1:8765). Wait for live camera frames and a ready MSP430-to-Uno link. Choose **Start detection** to enable the blue-marker test.
+3. Place the Zumo on the line. On first use, tap the Zumo button and let it sweep the sensors over black and white. Re-centre the robot, then tap again to drive. Later power-ups restore the saved calibration. A full tank at power-up still requires the start button.
+4. To enable automatic departure after a refill, open **Calibrate water level** with the probe mounted. Record a stable **empty** and **full** reading. The dashboard sends the resulting threshold to the supervisor. With an incomplete calibration, automatic refill departure stays disabled.
+5. During a run, press the Zumo button to stop. For wiring, replacement sensors and recalibration, see the [Zumo guide](Car/Arduino_Uno/zumo_line_follow/README.md) and [car pump guide](Car/MSP430/robot_supervisor/PUMP_SETUP.md).
+
+| Trigger | Programmed response |
 | --- | --- |
-| Camera confirms a blue square while following | The Zumo stops and acknowledges. After about 300 ms, the MSP430 drives the MOSFET gate on **P1.6** for **3 seconds**. A fresh continuation for the same camera job allows line following to resume. |
-| Ultrasonic measures **5 cm or closer** while following | The Zumo pauses. Two consecutive valid readings of **7 cm or farther** allow it to resume. Missing echoes leave it paused. |
-| Near obstacle, manual stop or link failure during a spray job | The supervisor cancels the job and switches the pump off. Starting again requires a new local request. |
-| Zumo stays upside down | The shield buzzer beeps. Hold the parked Zumo's user button for **2 seconds** to toggle the alarm. The Uno remembers the setting. |
+| Confirmed target during eligible line following | The car requests STOP. After the Uno acknowledges and about 300 ms elapse, the verified P1.6 driver delivers a three-second pump command. |
+| Sonar measures 5 cm or closer while following | The car pauses. Two consecutive valid readings of at least 7 cm allow the obstacle pause to resume. |
+| Two successive tank readings below 500 while following | The Zumo reverses slowly. A coordinated magnetic arrival requests a stop. Two readings above 500 while reversing can also park it. The sonar faces forward. |
+| Parked car after a qualifying low-water event | A calibrated reading strictly above 60% for three seconds can restart line following when the motion interlocks allow it. The saved example of 1836 empty and 2281 full first qualifies at 2104. |
+| Qualified arrival at the standalone station | The station waits three seconds, checks its reservoir and commands its own P1.4 refill pump for up to ten seconds. A missing magnet or low reservoir cuts the command. |
 
-The laptop dashboard shows live camera video and the **P6.0 water reading**.
-Its Water tank panel shows probe wetness until you save empty and full readings
-with the probe mounted in the tank. It then shows estimated tank level.
-The pump indicator shows the MSP430 gate command. [Dashboard guide](Laptop/Dashboard/README.md)
+## Build the firmware
 
-## Ultrasonic pause and resume
-
-The HC-SR04 accepts echoes from 2–400 cm. A previous near reading expires after
-about 300 ms without a valid echo. This permits a new local start in open
-space. An existing obstacle pause still requires two confirmed clear readings.
-The 5 cm setting is the sensor threshold. Physical braking distance has not
-been measured. [Sonar policy](Car/MSP430/robot_supervisor/README.md#current-sonar-policy)
-
-## Calibrate and drive
-
-1. Power the MSP430 and Uno, enable the Zumo motor supply, and put the array over
-   the black line with room to rotate across both black and white.
-2. **First use:** once the MSP/Uno link is ready, tap the Zumo user button. It
-   waits one second, performs an 80-step rotating sweep at ±200, then
-   stops and saves the six sensors' black and white limits to EEPROM.
-3. Re-centre on the line if needed, then **press and release again** to follow it.
-4. Press the Zumo button during motion or an obstacle pause to stop. MSP S2
-   also requests STOP.
-   After an interrupted calibration, repeat the sweep before starting.
-
-On later power-ups the Uno restores its saved calibration and stays parked.
-Place it on the line and tap the button once to start. If the track or lighting
-changes, send `C` to the parked Uno in Serial Monitor (9600 baud, newline) to
-run a fresh sweep and save its readings. The Uno
-cruises at 90/400 on a centred line to give the camera more time to confirm a blue square.
-Steering uses `kp=1`, `kd=0` and centre 2500, with turn limits of +250 and −400. USB status is
-**9600 baud**, source firmware **OG9**.
-See [the complete Zumo wiring and operating guide](Car/Arduino_Uno/zumo_line_follow/README.md).
-
-## Find the code
-
-| Folder | Role |
-| --- | --- |
-| [Car/MSP430](Car/MSP430/README.md) | Main supervisor, sonar, pump cutoff and movement permission |
-| [Car/Arduino_Uno](Car/Arduino_Uno/README.md) | Active `zumo_line_follow` sketch; previous L298N sketches retained as history |
-| [Car/ESP32_Gateway](Car/ESP32_Gateway/README.md) | FireBeetle private Wi-Fi access point and MSP UART bridge |
-| [Car/XIAO_ESP32S3_Camera](Car/XIAO_ESP32S3_Camera/README.md) | Car-mounted wireless camera |
-| [Laptop/Dashboard](Laptop/Dashboard/README.md) | Local monitor and OpenCV blue-square practice detector |
-| [Laptop/Pico_W](Laptop/Pico_W/README.md) | Desk USB/Wi-Fi video and status relay |
-| [Laptop/Tools/Communication](Laptop/Tools/Communication/README.md) | Protocol, private network configuration, build helpers and checks |
-| [Docking_Station](Docking_Station/README.md) | Station MSP430 firmware, magnetic arrival sensor and timed refill |
-
-The camera currently recognizes a blue practice target. Trained insect
-recognition is planned.
-
-## Laptop monitor
-
-1. Power the car FireBeetle, camera and controllers; connect the **desk Pico W**
-   to laptop USB.
-2. Double-click **[Start Robot.cmd](Start%20Robot.cmd)**. It opens
-   **http://127.0.0.1:8765**, finds the Pico and requests wireless video.
-3. Select **Start detection** for the blue-square practice test, or launch with
-   `"Start Robot.cmd" --detect`. The default launcher does not calibrate or start
-   motors; enabling detection permits the bounded cycle once all required
-   firmware and the verified pump driver are installed.
-
-[Start Dashboard.cmd](Laptop/Dashboard/Start%20Dashboard.cmd) uses the same
-launcher. Keep its server window open. Missing hardware leaves the dashboard
-available with a setup message; see [launcher options](Laptop/Dashboard/README.md#launcher-options).
-Press **Ctrl+C** in the launcher terminal to close its dashboard, video and
-detection. Use the robot's stop control to stop independent line following.
-
-```text
-Car camera ── Wi-Fi ── FireBeetle AP ── Wi-Fi ── Desk Pico ── USB ── Laptop
-                           |
-                      UART 9600
-                           |
-                    Main car MSP430 ── HC-SR04
-                           |
-                   UART + TX divider
-                           |
-                     Arduino Uno ── Zumo Shield ── tracks
-```
-
-Driving/calibration use the MSP/Uno link directly. Each board needs its own
-appropriate supply; common GND does not power the boards. Motors use the AA supply.
-
-## Build and check
-
-From the repository root, compile without uploading:
-
-```powershell
-./Car/Arduino_Uno/build_zumo.ps1
-./Car/MSP430/build_robot_supervisor.ps1 -EspUart -Zumo -PumpDriverVerified -SpraySeconds 3
-```
-
-Radio builds reuse the existing private configuration:
+The following PowerShell commands compile the projects without uploading them. Run them from this folder. For the car install the TI MSP430 compiler, the Arduino AVR and ESP32 cores, the Pololu ZumoShield library and the Raspberry Pi Pico SDK. The [communications guide](Laptop/Tools/Communication/README.md) lists the tools and explains how to generate matching private network settings. For both station projects you can also use **Import CCS Projects** in Code Composer Studio.
 
 ```powershell
 python Laptop/Tools/Communication/configure.py
+./Car/Arduino_Uno/build_zumo.ps1
+./Car/MSP430/build_robot_supervisor.ps1 -EspUart -Zumo -PumpDriverVerified -SpraySeconds 3
 ./Laptop/Tools/Communication/build_direct.ps1 -Zumo -PumpDriverVerified
-./Laptop/Tools/Communication/build_desk_pico.ps1
 ./Car/XIAO_ESP32S3_Camera/build_camera_wifi.ps1
+./Laptop/Tools/Communication/build_desk_pico.ps1
+./Docking_Station/MSP430/build_station.ps1 -Variant standalone
+./Docking_Station/MSP430/build_station.ps1 -Variant coordinated
 ```
 
-The helpers use the original Windows Arduino/CCS/Pico toolchains; installation
-paths may need adjustment elsewhere. For dashboard dependencies, use its guide.
-Software-only regression checks do not open hardware:
+The direct radio build also compiles the car supervisor. Keep the same locally generated network settings when building all three Wi-Fi boards. Network passwords, flashed binaries and camera captures are excluded from the submission.
+
+## Check the software
+
+Run these checks from the repository root with Python and a C/C++ host compiler. Install the dashboard dependencies before its tests. The checks simulate sensors, links and outputs without operating hardware.
 
 ```powershell
 python Car/Arduino_Uno/tests/check_zumo.py
+python Car/MSP430/tests/check_supervisor_logic.py
 python Car/MSP430/tests/check_ultrasonic.py
 python Car/MSP430/tests/check_console_tx_interrupt.py
 python Car/MSP430/tests/check_spray_job.py
-python Laptop/Tools/Communication/tests/check_desk_actions.py
-python Car/MSP430/tests/check_supervisor_logic.py
+python Docking_Station/tests/check_dock.py
 python Laptop/Tools/Communication/tests/check_direct.py
+python Laptop/Tools/Communication/tests/check_desk_actions.py
+python Laptop/Tools/Communication/tests/check_desk_pico.py
+python Laptop/Tools/Communication/tests/check_video_receiver.py
 python -m unittest discover -s Laptop/Dashboard/tests -p "test_*.py"
 python Laptop/Tools/check_layout.py
 ```
 
-## Design and history
+## Embedded implementation
 
-- [Agreed two-plant track](Car/Track/README.md)
-- [Zumo enclosure CAD and print guide](Car/Mechanical/Zumo_Enclosure/README.md)
-- [Current boards and wiring](Laptop/Tools/Communication/board-placement.md)
-- [Diagram gallery](Laptop/Documentation/diagrams/README.md)
-- [Saved verification evidence](Laptop/Artifacts/README.md) and [changelog](CHANGELOG.md)
-- [Folder migration](Laptop/Documentation/folder-organisation.md) and [hosted preview](Laptop/Deployment/README.md)
+The car supervisor's `init`, `serviceWater` and `serviceSpray` show ADC12 sampling and how a water reading affects the tracks and pump. Its Timer_A0 interrupt enforces the pump deadline. Timer_A2 and a Port 2 interrupt time the sonar echo. USCI_A0 and USCI_A1 carry the Uno and FireBeetle UART traffic. The car sleeps in LPM0 between events. The dock program shows separate Hall and reservoir inputs, Booster LCD output and an independent refill cutoff on Timer_A1.
 
-Wi-Fi credentials, generated network headers, compiled firmware, board backups,
-private camera images and local session notes stay out of Git. Build radio
-firmware locally with your private network settings.
+Earlier bench wiring and software are available in the [project's tagged Git history](https://github.com/Pskm12E/CEG2001-Sensor-Control-AND-CEG2002-Embedded-System-Design-Project/tree/One-Hit-Wounder).
+
+To recreate the submission ZIP from a clean checkout, run `python Laptop/Tools/make_submission.py`. The packager includes the report PDF, presenter notes and diagram alongside the firmware and test sources.

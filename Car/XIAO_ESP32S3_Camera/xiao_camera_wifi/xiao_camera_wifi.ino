@@ -1,3 +1,14 @@
+/* XIAO ESP32-S3 Sense camera | Group P2-2 submission, November 2026.
+ * The OV3660 supplies JPEG frames from the front of the car.
+ * The camera joins the private FireBeetle Wi-Fi network as a station.
+ * One desk Pico connection can receive video on TCP port 4243.
+ * Every frame has a length, CRC and sequence in a 16-byte PCV1 header.
+ * The receiver uses these fields to detect damaged or incomplete frames.
+ * Captured buffers are returned to the camera after sending or timing out.
+ * Lost Wi-Fi or a short TCP write closes the viewer for a fresh connection.
+ * The local USB console reports camera identity, readiness and frame count.
+ * The laptop interprets the blue marker from these camera images.
+ */
 #include <Arduino.h>
 #include <WiFi.h>
 #include <NetworkConfig.h>
@@ -11,18 +22,23 @@ static bool ready=false;
 static uint32_t frameSequence=0,lastFrame=0,lastReconnect=0;
 static char commandLine[40];
 static size_t commandUsed=0;
+/* Compute the Ethernet CRC-32 of size bytes at data so the laptop can detect a damaged JPEG. */
 static uint32_t crc32(const uint8_t *data,size_t size) {
     uint32_t crc=0xffffffffu;
     while(size--) { crc^=*data++; for(unsigned n=0;n<8;++n) crc=(crc>>1)^((crc&1)?0xedb88320u:0u); }
     return ~crc;
 }
+/* Write value as four little-endian bytes into the frame header at p. */
 static void little(uint8_t *p,uint32_t value) {
     for(unsigned n=0;n<4;++n) p[n]=static_cast<uint8_t>(value>>(8*n));
 }
+/* Report sensor readiness, Wi-Fi state and frame count to the local USB diagnostic console. */
 static void info() {
     Serial.printf("INFO BOARD=XIAO_ESP32S3 FW=CAMERA_WIFI_V1 CAMERA_READY=%u WIFI=%s IP=%s PORT=4243 USB_VIDEO=OFF FRAMES=%lu\n",
                   ready?1u:0u,WiFi.status()==WL_CONNECTED?"UP":"DOWN",WiFi.localIP().toString().c_str(),static_cast<unsigned long>(frameSequence));
 }
+/* Configure the OV3660 interface, select JPEG capture and start the single-viewer TCP service on
+ * the private network. */
 void setup() {
     Serial.begin(115200);
     camera_config_t config={};
@@ -42,6 +58,8 @@ void setup() {
     videoServer.begin();
     info();
 }
+/* Capture and send a bounded JPEG at the frame interval. Release every camera buffer, including
+ * after a short write. */
 void loop() {
     while(Serial.available()) {
         const int c=Serial.read();

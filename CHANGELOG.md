@@ -1,10 +1,19 @@
 # Changelog
 
+## Submition Version · 26 November 2026
+
+- The submission includes the car, laptop and dock source, the final report PDF and links to the demonstration and the group's final presentation. The main README lists the board programs, build steps and tests.
+- The standalone dock project from the team handover is included alongside the laptop-coordinated version. Both have tests for the refill deadline, loss of the magnet and a low reservoir.
+- Retired bench sketches and duplicate firmware were removed. The Zumo and car MSP430 now use the same UART protocol header.
+
+- Start Robot opens the laptop dashboard on `127.0.0.1:8765`. Public sharing and the hosted preview have been removed.
+- The car can resume after a refill using its saved empty and full ADC readings. With empty 1836 and full 2281, departure requires at least 2104 for three seconds. The car firmware was flashed and read back. A physical refill-and-departure test is pending.
+
 ## One Hit Wounder · 24 November 2026
 
 - The Zumo follows a centred line at 90/400 and saves all six line-sensor ranges in EEPROM. After the first successful calibration, one tap starts a run on the same track. The operator completed a full track run at this speed.
 - The car supervisor supports continuous reverse after two water readings below 500 and a return to forward travel after two readings above 500. The laptop can coordinate a stop at the dock magnet and a timed refill with the matching station firmware. The docking sequence passed simulation and still needs a full physical refill trial.
-- The laptop launcher can share a view-only link to the camera and robot readings. The XIAO camera delivered live video at about 14 fps over the desk Pico during the camera check.
+- That release offered a view-only link to the camera and robot readings. The XIAO camera delivered live video at about 14 fps over the desk Pico during the camera check.
 
 ## V2_Working · 20 November 2026
 

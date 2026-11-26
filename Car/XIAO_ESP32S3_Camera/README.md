@@ -15,6 +15,3 @@ python Laptop/Tools/Communication/configure.py
 This compiles only. Arduino target: `esp32:esp32:XIAO_ESP32S3:PSRAM=opi`.
 The camera's possible future onboard AI deployment is separate work. The current
 blue-square detector, and the proposed trained YOLO model, run on the laptop.
-
-`Archive/xiao_camera_usb` and its builder are superseded USB bench software.
-They are retained for history and are not the current wireless camera firmware.

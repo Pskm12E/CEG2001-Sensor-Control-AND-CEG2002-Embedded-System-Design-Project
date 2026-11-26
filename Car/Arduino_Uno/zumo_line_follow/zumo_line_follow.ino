@@ -1,6 +1,15 @@
-// Black line on white, based on the user's working ZumoShield PD follower.
-// MSP P3.3 -> D6 RX; D13 TX -> 2.2k/2.2k divider -> MSP P3.4 RX.
-// D13 is UART TX: do not use LED_BUILTIN or a buzzer here.
+/* Arduino Uno and Zumo Shield | OG9 | Group P2-2 submission, November 2026.
+ * Six reflectance channels give the position of the line under the chassis.
+ * A first local request performs a rotating sweep over both track surfaces.
+ * A valid sweep is saved in EEPROM and restored at the next power-up.
+ * A second press requests line following from the car MSP430.
+ * SoftwareSerial receives the MSP on D6 and replies on D13 at 9600 baud.
+ * A framed session and motion lease bound the age of a drive permission.
+ * The steering loop adjusts both tracks, with a slower fixed speed in reverse.
+ * Local stop and lost heartbeat remove motor commands before the next run.
+ * The accelerometer and buzzer provide the optional inversion warning.
+ * USB reports the state and accepts local diagnostic commands.
+ */
 #include <Wire.h>
 #include <ZumoShield.h>
 #include <SoftwareSerial.h>
@@ -48,11 +57,18 @@ bool usbDiscard=false;
 uint8_t usbReportPart=0; // 0 idle, 1 motion, 2 last event, 3 flip alarm.
 
 void disableEarlyWatchdog(void) __attribute__((naked,section(".init3"),used));
+/* Disable an inherited watchdog during AVR startup before the sketch configures its own
+ * watchdog. */
 void disableEarlyWatchdog(void) { MCUSR=0; wdt_disable(); }
 
+/* Write zero to both motor channels as soon as the current robot state no longer permits
+ * movement. */
 void applyStop() { if(!robot.moving()) motors.setSpeeds(0,0); }
+/* Record local stop reason why, stop both tracks and reset accumulated line error. */
 void stopLocal(uint8_t why) { robot.stop(why); motors.setSpeeds(0,0); lastError=0; }
 
+/* Write one USB diagnostic segment when there is room, leaving the motion loop free between
+ * segments. */
 void reportUsb() {
     if(!usbReportPart) return;
     char line[64];
@@ -90,6 +106,8 @@ void reportUsb() {
     }
 }
 
+/* Consume bounded diagnostic and calibration commands from USB and discard malformed or overlong
+ * lines. */
 void readUsb() {
     uint8_t budget=32;
     while(budget-- && Serial.available()) {
@@ -114,6 +132,8 @@ void readUsb() {
     }
 }
 
+/* Distinguish a short press from a parked long hold. Stop moving tracks immediately on a local
+ * stop. */
 void serviceButton() {
     // Stop on press, consume its release so the same press cannot restart.
     const bool pressed = button.isPressed();
@@ -141,6 +161,8 @@ void serviceButton() {
     }
 }
 
+/* Validate complete MSP frames, apply a command and send the corresponding Uno state and
+ * acknowledgement. */
 void serviceLink() {
     uint32_t now=millis();
     robot.tick(now); applyStop();
@@ -171,6 +193,8 @@ void serviceLink() {
     }
 }
 
+/* Advance the timed calibration, reverse or line-follow state and calculate each track speed
+ * from sensor position. */
 void serviceMotion() {
     uint32_t now=millis();
     robot.tick(now); applyStop();
@@ -215,6 +239,8 @@ void serviceMotion() {
     }
 }
 
+/* Initialise the shield, serial links and watchdog, then restore valid EEPROM line calibration
+ * while parked. */
 void setup() {
     motors.setSpeeds(0,0);
     Serial.begin(SERIAL_BAUD);
@@ -228,6 +254,8 @@ void setup() {
     wdt_enable(WDTO_1S);
 }
 
+/* Service local input, MSP traffic, motion and flip monitoring frequently enough to enforce the
+ * movement lease. */
 void loop() {
     wdt_reset();
     serviceLink();

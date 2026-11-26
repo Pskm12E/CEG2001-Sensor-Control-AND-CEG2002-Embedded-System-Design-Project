@@ -16,6 +16,7 @@ typedef struct {
     uint8_t haveValid, valid, inhibit, clearCount, fault;
 } ObstacleGuard;
 
+/* Reset filter s to unknown range and clear its stop and clearance counters. */
 static void obstacleInit(ObstacleGuard *s) {
     s->cm = s->lastValid = 0;
     s->haveValid = s->valid = s->clearCount = 0;
@@ -23,6 +24,7 @@ static void obstacleInit(ObstacleGuard *s) {
     s->fault = 1;
 }
 
+/* Expire a previous valid echo in filter s once its age at tick now reaches the stale limit. */
 static void obstacleAge(ObstacleGuard *s, uint16_t now) {
     if (!s->haveValid || (uint16_t)(now - s->lastValid) >= OBSTACLE_STALE_TICKS) {
         s->valid = 0;
@@ -32,6 +34,8 @@ static void obstacleAge(ObstacleGuard *s, uint16_t now) {
     }
 }
 
+/* Apply one echo (cm, valid) to filter s at tick now. Two confirmed clear measurements
+ * release an obstacle pause. */
 static void obstacleSample(ObstacleGuard *s, uint16_t now, uint16_t cm, uint8_t valid) {
     s->valid = valid && cm >= 2u && cm <= 400u;
     if (!s->valid) {
@@ -56,6 +60,8 @@ static void obstacleSample(ObstacleGuard *s, uint16_t now, uint16_t cm, uint8_t 
 }
 
 /* SMCLK = REFO(32768) * 32 = 1048576 Hz in main.c. Approx. sound speed 343m/s. */
+/* Convert the captured echo width in Timer_A2 counts into round-trip-derived, one-way
+ * centimetres. */
 static uint16_t obstacleCmFromCounts(uint16_t width) {
     return (uint16_t)(((uint32_t)width * 34300ul + 1048576ul) / 2097152ul);
 }

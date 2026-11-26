@@ -1,6 +1,6 @@
 # Car MSP430 — main controller
 
-The `V2_Working` supervisor grants motion to the Uno OG6, stops the tracks for
+The current supervisor grants motion to the Uno OG9, stops the tracks for
 a confirmed target and drives the pump gate on **P1.6 for three seconds**.
 The HC-SR04 pauses line following at **5 cm**. Resume requires two consecutive
 valid readings of **7 cm or farther**. The P6.0 ADC reports water-probe
@@ -13,8 +13,7 @@ supervisor; creating/building it does not change the running robot.
 
 ## Coursework minimums in the normal robot firmware
 
-The `-EspUart -Zumo` supervisor meets the minimum requirements independently of
-the temporary S2 debug control.
+The `-EspUart -Zumo` supervisor meets the minimum requirements with the timer, sensor and communications code identified below.
 
 | Requirement | Functional implementation |
 | --- | --- |
@@ -23,15 +22,14 @@ the temporary S2 debug control.
 | One ADC | ADC12 channel A0 reads the water sensor on P6.0 |
 | One power-saving mode | LPM0 idle sleep with interrupt wakeup |
 
-Timer_A1 and the PORT1/TIMER1_A0 handlers also exist for S2 debugging. S2 is
-scheduled for later removal. The standalone LED diagnostic uses fixed delays
-and does not exercise these coursework features.
+P1.1 (S2) requests an immediate stop. Timer_A1 debounces its release before the port interrupt is re-armed.
 
-## Previous installed milestone — 17 November 2026
+## Build the car supervisor
 
 Board: **MSP-EXP430F5529LP**. Current source:
 [robot_supervisor/main.c](robot_supervisor/main.c), built for **ESP UART + Zumo**.
-The user confirmed the driving setup working on 17 November 2026.
+On 24 November the car MSP430 was flashed and verified by readback with the
+calibrated refill threshold of 2104. The physical refill departure is pending.
 
 ```powershell
 ./Car/MSP430/build_robot_supervisor.ps1 -EspUart -Zumo -PumpDriverVerified -SpraySeconds 3
@@ -45,7 +43,7 @@ and `PUMP_DRIVER_VERIFIED=1` for the installed pump profile.
 The supervisor owns movement grants, HC-SR04 range and STOP/timeout handling.
 **Current STOP trigger, updated 18 November, is a valid range ≤5 cm.** Two readings ≥7 cm clear
 a recent near inhibit. Missing/invalid/stale echoes do not block movement;
-old near data expires after about 300 ms. With the matching Uno OG5 firmware,
+old near data expires after about 300 ms. With the matching Uno OG9 firmware,
 line following resumes from an acknowledged obstacle pause after two consecutive
 valid readings at least 7 cm away. Manual and communication stops cancel the
 pause. These thresholds are configurable. Physical braking distance is unmeasured.
@@ -57,8 +55,3 @@ the source cleanup does not flash a replacement image.
 
 Water S → P6.0 / ADC A0 is sampled once per second as raw 12-bit data. The pump
 driver is connected to P1.6 and short bench operation is confirmed. The MSP does not run YOLO or camera processing.
-
-`robot_led_test` and `robot_usb_console` are earlier bench programs; flashing one
-replaces the supervisor. [Historical IR-only test notes](LEGACY_L298N.md) and
-[previous supervisor instructions](robot_supervisor/LEGACY_L298N.md) are retained
-for the L298N base. `-Zumo -IrDrivingTest` is deliberately rejected.

@@ -10,6 +10,7 @@ struct State {
     bool fresh=false,ap=false,hasAge=false,hasTelemetry=false;
     uint32_t age=0;
 };
+// Parse a decimal unsigned integer from p and reject overflow before updating n.
 inline bool number(const char *p,uint32_t &n) {
     n=0; if(!*p || (*p=='0' && p[1])) return false;
     for(;*p;++p) {
@@ -20,7 +21,9 @@ inline bool number(const char *p,uint32_t &n) {
     }
     return true;
 }
+// Advance the input cursor p over JSON whitespace.
 inline void space(const char *&p) { while(*p==' ' || *p=='\r' || *p=='\n' || *p=='\t') ++p; }
+// Decode a quoted ASCII JSON string from p into out, reserving one of cap bytes for the terminator.
 inline bool string(const char *&p,char *out,size_t cap) {
     if(*p++!='"') return false;
     size_t n=0;
@@ -33,12 +36,14 @@ inline bool string(const char *&p,char *out,size_t cap) {
     if(*p!='"') return false;
     ++p; out[n]=0; return true;
 }
+// Copy in into a fixed-size destination only when the entire string fits.
 template<size_t N> inline bool copy(char (&out)[N],const char *in) {
     if(strlen(in)>=N) return false;
     strcpy(out,in); return true;
 }
 // The ESP API is a bounded, flat JSON object. Duplicate known keys and nested
 // values are rejected; quoted strings never become terminal control bytes.
+// Decode the gateway identity, freshness and telemetry fields from p; commit result only after successful validation.
 inline bool state(const char *p,State &result) {
     State s; unsigned keys=0;
     space(p); if(*p++!='{') return false;
@@ -83,7 +88,9 @@ struct HttpResponse {
     size_t used=0,bodyAt=0,length=0;
     bool bad=false,headers=false;
     unsigned statusCode=0;
+    // Forget the previous HTTP reply and initialise the buffer for the next request.
     void reset() { used=bodyAt=length=0; bad=headers=false; statusCode=0; buffer[0]=0; }
+    // Compare the bounded header range from p to end with expected, ignoring ASCII case.
     static bool equalHeader(const char *p,const char *end,const char *expected) {
         while(*expected && p<end) {
             char c=*p++; if(c>='A' && c<='Z') c+=32;
@@ -91,8 +98,11 @@ struct HttpResponse {
         }
         return !*expected && p==end;
     }
+    // Return true only when the response has exactly its declared content length.
     bool complete() const { return !bad && headers && used==bodyAt+length; }
+    // Return the start of the stored response body; the caller checks completeness first.
     const char *body() const { return buffer+bodyAt; }
+    // Append n received HTTP bytes from data and reject malformed headers or an oversized response.
     void feed(const char *data,size_t n) {
         if(bad) return;
         if(memchr(data,0,n)) { bad=true; return; }
@@ -131,6 +141,7 @@ struct HttpResponse {
 
 // A 202 reply proves dispatch only. MSP acknowledgement and a subsequent fresh
 // stopped Uno status must be checked separately using this correlated ID.
+// Read the accepted request id from the JSON reply p and verify the expected action acknowledgement.
 inline bool stopAccepted(const char *p,uint32_t &id) {
     unsigned keys=0; uint32_t parsed=0;
     space(p); if(*p++!='{') return false;

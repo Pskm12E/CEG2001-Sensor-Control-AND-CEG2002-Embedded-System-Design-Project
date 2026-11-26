@@ -1,10 +1,19 @@
-# Second MSP430 — dock controller
+# Docking-station MSP430F5529
 
-Import [waterlevel](waterlevel) into Code Composer Studio for the station's
-MSP430F5529. The project includes the LCD driver, linker script and debugger
-configuration from the supplied 24 November project. Its CCS settings select
-TI MSP430 compiler 21.6.2.LTS. The project also builds with 21.6.3.LTS.
+Choose one CCS project for the station. The car uses a separate [supervisor](../../Car/MSP430/robot_supervisor).
 
-The station uses P2.4 for magnet detection, P3.2 for its own reservoir comparator
-and P1.4 for the refill driver. Its USB backchannel uses 9600 baud, 8N1.
-The [car supervisor](../../Car/MSP430/robot_supervisor) is a separate image.
+| Project folder | How a refill starts | Laptop connection |
+| --- | --- | --- |
+| [standalone](standalone) | A clear bay followed by a confirmed magnet starts a three-second wait. A sufficient reservoir allows a timed refill. | USB is optional for status. The station runs the sequence locally. |
+| [waterlevel](waterlevel) | The station confirms the magnet and waits for a matching stop permit from the laptop before settling and pumping. | The dashboard must renew the permit. A matching full-tank message ends the refill early. |
+
+Each project includes `main.c`, the supplied `lcd16.c` and `lcd16.h`, the device linker file and the CCS project and debugger settings. The standalone firmware is from the 25 November team handover. The original source files were checked against the handover manifest. The CCS project name distinguishes it when both projects are imported. The LCD library retains its original credit.
+
+In CCS select **Project → Import CCS Projects**, choose the relevant directory and build for MSP430F5529. From a PowerShell prompt in the repository root, use either command below. Both compile and link only.
+
+```powershell
+./Docking_Station/MSP430/build_station.ps1 -Variant standalone
+./Docking_Station/MSP430/build_station.ps1 -Variant coordinated
+```
+
+The helper accepts `MSP430_CGT_ROOT` for the TI compiler directory and `MSP430_DEVICE_ROOT` for the CCS device-support directory containing `include` and `lib`. Each variant builds in its own directory. See the [station pin map](../Booster_Board/README.md) and [operating sequence](../README.md).

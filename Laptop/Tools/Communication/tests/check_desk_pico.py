@@ -92,7 +92,7 @@ cpp=cpp.replace('BAD_JSONS',','.join(json.dumps(s) for s in bad))
 build=ROOT/'Laptop/Tools/Communication/build/desk-tests'; build.mkdir(parents=True,exist_ok=True)
 source,exe=build/'desk_tests.cpp',build/'desk_tests.exe'
 source.write_text(cpp,encoding='utf-8')
-subprocess.run(['C:/msys64/ucrt64/bin/g++.exe','-std=c++17','-Wall','-Wextra','-Werror','-static',
+subprocess.run(['g++','-std=c++17','-Wall','-Wextra','-Werror','-static',
                '-I'+str(ROOT/'Laptop/Pico_W/laptop_wifi_bridge'),'-I'+str(ROOT/'Car/ESP32_Gateway/robot_wifi_gateway'),
                str(source),'-o',str(exe)],check=True)
 subprocess.run([str(exe)],check=True)

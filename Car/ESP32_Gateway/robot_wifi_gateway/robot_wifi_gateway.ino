@@ -1,3 +1,14 @@
+/* FireBeetle ESP32 gateway | Group P2-2 submission, November 2026.
+ * The board on the car hosts a private access point for the camera and desk Pico.
+ * UART2 on GPIO16/17 connects the gateway to the MSP430 at 9600 baud.
+ * A request ID ties each response to a specific outstanding request.
+ * Identity and status polls expire when the supervisor stops replying.
+ * HTTP GET returns the last confirmed status and its freshness.
+ * Allowed HTTP POST operations are translated into bounded MSP requests.
+ * Visit and job tokens identify dock and camera actions across retries.
+ * The MSP decides whether a motion or pump request is permissible.
+ * The gateway services Wi-Fi, UART and its diagnostic USB console cooperatively.
+ */
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WebServer.h>
@@ -22,7 +33,10 @@ uint32_t stopId=0;
 uint32_t targetId=0;
 char targetState[40]="NONE";
 
+/* Return whether the identified MSP430 has supplied a response inside the status freshness
+ * window. */
 bool fresh() { return identified && seen && static_cast<uint32_t>(millis()-lastSeen)<3500u; }
+/* Return text escaped for a JSON string in the gateway status response. */
 String quoted(const char *text) {
     String out="\"";
     while(*text) {
@@ -32,6 +46,8 @@ String quoted(const char *text) {
     }
     out+='"'; return out;
 }
+/* Serialise current gateway identity, link health and the most recent MSP response for the desk
+ * Pico. */
 String stateJson() {
     String json="{\"board\":\"ESP32_FIREBEETLE\",\"firmware\":\"DIRECT_WIFI_V2\",\"main_controller\":\"MSP430F5529\",\"ap_ready\":";
     json+=apReady?"true":"false";
@@ -47,6 +63,8 @@ String stateJson() {
     json+=",\"target_state\":"; json+=quoted(targetState);
     json+="}"; return json;
 }
+/* Send op to the MSP430 when the link permits it. fromUsb directs the reply to USB; jobToken
+ * correlates a visit, job or refill setting. */
 bool request(direct::Op op,bool fromUsb=false,uint32_t jobToken=0) {
     const bool action=op!=direct::Op::Ping && op!=direct::Op::Status;
     if(action && !fresh()) return false;
@@ -62,11 +80,13 @@ bool request(direct::Op op,bool fromUsb=false,uint32_t jobToken=0) {
     sentAt=lastAttempt=millis();
     if(op==direct::Op::Stop) { stopId=pendingId; strcpy(stopState,"SENT_OUTCOME_UNKNOWN"); }
     if(op==direct::Op::Target) { targetId=pendingId; strcpy(targetState,"SENT_OUTCOME_UNKNOWN"); }
-    if(op==direct::Op::Resume || op==direct::Op::Dock || op==direct::Op::Depart)
+    if(op==direct::Op::Resume || op==direct::Op::Dock || op==direct::Op::Depart || op==direct::Op::RefillMinimum)
         supervisor.printf("NET %lu %s %lu\n",static_cast<unsigned long>(pendingId),direct::name(op),static_cast<unsigned long>(jobToken));
     else supervisor.printf("NET %lu %s\n",static_cast<unsigned long>(pendingId),direct::name(op));
     return true;
 }
+/* Match an incoming MSP UART line to its pending request and update published state only for
+ * accepted replies. */
 void receive(const char *line) {
     uint32_t id=0; const char *payload=nullptr;
     if(!direct::frame(line,id,payload) || !pendingId || id!=pendingId) return;
@@ -85,6 +105,8 @@ void receive(const char *line) {
     if(usbRequest) { Serial.print("MSP "); Serial.println(payload); }
     pendingId=0; pendingOp=direct::Op::None; usbRequest=false;
 }
+/* Handle one completed USB diagnostic line; the command whitelist bounds the operations
+ * available here. */
 void command(const char *line) {
     if(!strcmp(line,"PING")) Serial.println("PONG ESP32_DIRECT_WIFI_V2");
     else if(!strcmp(line,"STATUS")) {
@@ -103,6 +125,8 @@ void command(const char *line) {
         Serial.println("PING | STATUS | STATE | MSP PING | MSP STATUS | MSP STOP. No start/spray/calibration commands.");
     else Serial.println("ERROR unsupported command");
 }
+/* Start the local access point, initialise the MSP UART and register the status and bounded-
+ * action HTTP routes. */
 void setup() {
     Serial.begin(115200);
     supervisor.begin(9600,SERIAL_8N1,16,17);
@@ -125,14 +149,14 @@ void setup() {
         http.send(202,"application/json",String("{\"request_id\":")+String(pendingId)+",\"state\":\"SENT_OUTCOME_UNKNOWN\"}");
     });
     auto visitCommand=[](direct::Op op) {
-        const String token=http.arg("job_id"); uint32_t id=0; const char *p=token.c_str();
+        const String token=http.arg(op==direct::Op::RefillMinimum?"raw":"job_id"); uint32_t id=0; const char *p=token.c_str();
         bool good=*p>='1' && *p<='9';
         while(*p && good) {
             const uint8_t d=static_cast<uint8_t>(*p++-'0');
             if(d>9 || id>429496729u || (id==429496729u && d>5u)) good=false;
             else id=id*10u+d;
         }
-        if(!good || *p || !request(op,false,id)) {
+        if(!good || *p || (op==direct::Op::RefillMinimum && id>4096) || !request(op,false,id)) {
             http.send(503,"application/json","{\"error\":\"Invalid job, MSP unavailable or busy; nothing queued\"}"); return;
         }
         http.send(202,"application/json",String("{\"request_id\":")+String(pendingId)+",\"state\":\"SENT_OUTCOME_UNKNOWN\"}");
@@ -140,11 +164,14 @@ void setup() {
     http.on("/api/resume",HTTP_POST,[visitCommand]() { visitCommand(direct::Op::Resume); });
     http.on("/api/dock",HTTP_POST,[visitCommand]() { visitCommand(direct::Op::Dock); });
     http.on("/api/depart",HTTP_POST,[visitCommand]() { visitCommand(direct::Op::Depart); });
+    http.on("/api/refill-minimum",HTTP_POST,[visitCommand]() { visitCommand(direct::Op::RefillMinimum); });
     http.onNotFound([]() { http.send(404,"application/json","{\"error\":\"Unsupported route or method\"}"); });
     http.begin();
     Serial.println("ESP32 DIRECT_WIFI_V2; MSP main; status/STOP/target jobs.");
     command("STATUS");
 }
+/* Service HTTP, serial replies and periodic identity or status polls without blocking the car's
+ * own control loop. */
 void loop() {
     // Drain UART before handling HTTP to limit overrun at the MSP's 9600 baud.
     for(unsigned n=0;n<384 && supervisor.available();++n) {

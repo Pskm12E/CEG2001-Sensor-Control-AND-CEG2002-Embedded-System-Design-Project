@@ -65,6 +65,6 @@ int main() {
     printf("PASS %u pump voltage-test assertions: press trigger, LED blinking, steady gate, cutoff, cancel, reset and no repeat.\n",checks);
 }
 ''', encoding='utf-8')
-subprocess.run(['C:/msys64/ucrt64/bin/g++.exe','-std=c++17','-Wall','-Wextra','-Werror','-static',
+subprocess.run(['g++','-std=c++17','-Wall','-Wextra','-Werror','-static',
                 '-I'+str(ROOT/'Car/MSP430/pump_voltage_test'),str(source),'-o',str(exe)],check=True)
 subprocess.run([str(exe)],check=True)

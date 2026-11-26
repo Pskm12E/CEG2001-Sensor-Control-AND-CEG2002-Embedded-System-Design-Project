@@ -5,8 +5,8 @@ $ErrorActionPreference = 'Stop'
 if($Zumo -and $IrDrivingTest) { throw 'Zumo requires ultrasonic stopping; do not combine -Zumo with -IrDrivingTest.' }
 if($PumpDriverVerified -and -not $Zumo) { throw 'Pump jobs require the Zumo configuration.' }
 if($PumpGateP14 -and -not $Zumo) { throw 'The P1.4 pump gate requires the Zumo configuration.' }
-$taskCompiler = 'D:/Apps/ccs/tools/compiler/ti-cgt-msp430_21.6.3.LTS'
-$taskDevice = 'D:/Apps/ccs/ccs_base/msp430'
+$taskCompiler = if ($env:MSP430_CGT_ROOT) { $env:MSP430_CGT_ROOT } else { 'D:/Apps/ccs/tools/compiler/ti-cgt-msp430_21.6.3.LTS' }
+$taskDevice = if ($env:MSP430_DEVICE_ROOT) { $env:MSP430_DEVICE_ROOT } else { 'D:/Apps/ccs/ccs_base/msp430' }
 $taskProject = Join-Path $PSScriptRoot 'robot_supervisor'
 $taskBuildName = if($EspUart) { 'Debug_wifi' } else { 'Debug' }
 if($Zumo) { $taskBuildName += '_zumo' }
@@ -18,6 +18,20 @@ $taskDefines = @()
 if($EspUart) { $taskDefines += '--define=SUPERVISOR_ESP_UART' }
 if($Zumo) { $taskDefines += '--define=ZUMO_BASE=1' }
 if($Zumo) { $taskDefines += "--define=PUMP_SPRAY_TICKS=$($SpraySeconds*10)" }
+if($Zumo -and $env:LOCALAPPDATA) {
+    $tankFile = Join-Path $env:LOCALAPPDATA 'PlantRobotShare/tank.json'
+    if(Test-Path -LiteralPath $tankFile) {
+        $points = Get-Content -Raw -LiteralPath $tankFile | ConvertFrom-Json
+        if ($points.empty -isnot [ValueType] -or $points.full -isnot [ValueType] -or
+            [string]$points.empty -notmatch '^\d{1,4}$' -or [string]$points.full -notmatch '^\d{1,4}$' -or
+            $points.full -gt 4095 -or $points.full -le $points.empty) {
+            Write-Host 'Tank calibration is incomplete. Automatic refill restart will wait for a valid dashboard calibration.'
+        } else {
+            $taskDefines += "--define=TANK_EMPTY_ADC=$($points.empty)", "--define=TANK_FULL_ADC=$($points.full)"
+            Write-Host "Using saved tank calibration: empty $($points.empty), full $($points.full)."
+        }
+    }
+}
 if($PumpDriverVerified) { $taskDefines += '--define=PUMP_DRIVER_VERIFIED=1' }
 if($PumpGateP14) { $taskDefines += '--define=PUMP_GATE_P14=1' }
 if($IrDrivingTest) {
